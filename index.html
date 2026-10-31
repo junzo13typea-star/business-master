@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="診断士PassPro">
+  <meta name="theme-color" content="#070a13">
+  <meta name="description" content="中小企業診断士 1次試験 攻略Study OS - 忘却曲線復習・出題傾向模擬試験・法改正完全準拠">
+  <title>診断士 PassPro | 1次試験 合格特化 Study OS</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Outfit:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- PWA & Mobile Web App Settings -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+
+  <link rel="stylesheet" href="index.css">
+</head>
+<body class="theme-dark">
+  <!-- Dynamic Glow Backgrounds -->
+  <div class="bg-orb orb-primary"></div>
+  <div class="bg-orb orb-emerald"></div>
+
+  <div id="passApp" class="pass-app-shell">
+    
+    <!-- Top Global App Bar -->
+    <header class="app-top-bar" id="appTopBar">
+      <div class="bar-left">
+        <button id="btnHeaderBack" class="icon-btn-round" style="display: none;" title="一覧に戻る">
+          ←
+        </button>
+        <div class="brand-container">
+          <div class="brand-logo-mark">
+            <span>Pass</span>
+          </div>
+          <div>
+            <h1 class="brand-title">診断士 <span class="gradient-text">PassPro</span></h1>
+            <span class="compliance-tag" title="最新の会社法・意匠法・中小企業定義に完全準拠">🛡️ 最新法改正対応版</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bar-right">
+        <!-- Live Pass Probability Gauge -->
+        <div class="pass-prob-meter" id="passProbMeter" title="総合正答率に基づく合格判定">
+          <span class="prob-label">合格判定</span>
+          <span class="prob-badge grade-b" id="topPassGrade">B判定</span>
+          <span class="prob-rate" id="topPassRate">65%</span>
+        </div>
+
+        <!-- Streak Counter -->
+        <div class="streak-badge" id="streakBadge" title="学習継続記録">
+          🔥 <span id="streakNum">1</span>日
+        </div>
+
+        <!-- DevFlow Hub Link -->
+        <a href="http://localhost:8765" class="hub-link-chip" target="_blank" title="DevFlow Hubへ戻る">
+          ⚡ Hub
+        </a>
+      </div>
+    </header>
+
+    <!-- Top Navigation Tabs (Desktop & Tablet) -->
+    <nav class="app-nav-tabs" id="appNavTabs">
+      <button class="nav-tab active" data-view="viewHome" id="tabSubjects">
+        <span class="tab-emoji">📚</span>
+        <span>科目別トレーニング</span>
+      </button>
+      <button class="nav-tab" data-view="viewMockExam" id="tabMock">
+        <span class="tab-emoji">⏱</span>
+        <span>本番模擬試験</span>
+      </button>
+      <button class="nav-tab" data-view="viewWeakness" id="tabWeakness">
+        <span class="tab-emoji">⚠️</span>
+        <span>弱点克服 (ミス復習)</span>
+        <span class="counter-pill" id="weaknessCountPill">0</span>
+      </button>
+      <button class="nav-tab" data-view="viewAnalytics" id="tabAnalytics">
+        <span class="tab-emoji">📊</span>
+        <span>合格診断・分析</span>
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-stage" id="mainStage">
+
+      <!-- ===================================================================
+           VIEW 1: HOME / 科目一覧 & 忘却曲線
+           =================================================================== -->
+      <section id="viewHome" class="stage-view active">
+        
+        <!-- Live Pass Prediction Hero Card (Benchmark Unlock System) -->
+        <div class="prediction-hero-card" id="predictionHeroCard">
+          <div class="hero-header">
+            <div>
+              <span class="hero-eyebrow">🎓 AI合格判定シミュレーター (本番母数200問連動)</span>
+              <h2 class="hero-headline" id="heroHeadlineText">正式合格判定: <span class="highlight-grade" id="heroPassGrade">データ蓄積中</span></h2>
+              <p class="hero-summary" id="heroPassSummary">
+                診断士1次試験（約225問）と同等の演習母数をこなすことで、真の実力と合格可能性（A〜E判定）が正式アンロックされます。
+              </p>
+            </div>
+            <div class="hero-gauge-circle" id="heroGaugeCircle">
+              <span class="gauge-value" id="heroPassProbPct">--%</span>
+              <span class="gauge-sub" id="heroGaugeSub">信頼度 0%</span>
+            </div>
+          </div>
+
+          <!-- Benchmark Unlock Progress Bar -->
+          <div class="benchmark-progress-box" id="benchmarkProgressBox">
+            <div class="bench-labels">
+              <span>🎯 正式合格判定アンロック進捗</span>
+              <span id="benchCountText">現在 0 / 150問 達成</span>
+            </div>
+            <div class="bench-track">
+              <div class="bench-fill" id="benchFillBar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Cutoff Warning Alert (if any subject < 40%) -->
+          <div class="cutoff-alert-banner" id="cutoffAlertBanner" style="display: none;">
+            <span class="alert-icon">🚨</span>
+            <div class="alert-body">
+              <strong>足切り危険警告 (40%未満の科目があります):</strong>
+              <span id="cutoffSubjectsList">経営法務 (33%)</span>
+            </div>
+          </div>
+
+          <!-- Hero Action Buttons -->
+          <div class="hero-action-buttons">
+            <button class="btn btn-primary" id="btnHeroAnkiReview">
+              <span>🧠 忘却曲線 復習スタート</span>
+              <span class="badge-bubble" id="heroAnkiDueCount">0問</span>
+            </button>
+            <button class="btn btn-secondary" id="btnHeroWeakness">
+              <span>⚠️ 間違えた問題だけを特訓</span>
+            </button>
+            <button class="btn btn-outline" id="btnHeroMock">
+              <span>⏱ 過去問傾向 模擬試験</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: Exam Year Archive Selector (NEW) -->
+        <div class="exam-year-selector-card">
+          <div class="year-header">
+            <span class="year-tag">📑 過去問年度別アーカイブ</span>
+            <h3 class="year-title">出題年度から選んで過去問演習</h3>
+            <p class="year-sub">過去問を本番年度順に解く。法改正があった問題は「現行法での正しい解釈」を注釈解説しています。</p>
+          </div>
+          <div class="year-pills-row" id="yearPillsRow">
+            <button class="year-pill active" data-year="all">全年度 (精選)</button>
+            <button class="year-pill" data-year="令和8年度">🌟 令和8年度</button>
+            <button class="year-pill" data-year="令和7年度">🔥 令和7年度</button>
+            <button class="year-pill" data-year="令和6年度">📑 令和6年度</button>
+            <button class="year-pill" data-year="令和5年度">📑 令和5年度</button>
+            <button class="year-pill" data-year="令和4年度">📑 令和4年度</button>
+            <button class="year-pill" data-year="令和3年度">📑 令和3年度</button>
+            <button class="year-pill" data-year="令和2年度">📑 令和2年度</button>
+            <button class="year-pill" data-year="令和元年度">📑 令和元年度</button>
+          </div>
+        </div>
+
+        <!-- Section: 7 Subjects Grid -->
+        <div class="section-title-bar">
+          <div>
+            <h3 class="title-text">第1次試験 全7科目トレーニング</h3>
+            <p class="title-sub">合格基準: 全科目平均60点以上 ＆ 各科目40点以上（足切りなし）</p>
+          </div>
+          <span class="compliance-badge">⚖️ 法改正安全確認済</span>
+        </div>
+
+        <div class="subjects-mosaic" id="subjectsMosaic">
+          <!-- Populated by JS -->
+        </div>
+
+      </section>
+
+      <!-- ===================================================================
+           VIEW 2: 模擬試験モード (Mock Exam)
+           =================================================================== -->
+      <section id="viewMockExam" class="stage-view">
+        <div class="mock-intro-card">
+          <div class="mock-badge">⏱ 本番直結 演習セッション</div>
+          <h2 class="mock-title">中小企業診断士 1次試験 全国統一プレ模擬試験</h2>
+          <p class="mock-desc">
+            過去の出題傾向分析に基づき、全7科目から合否を分ける超頻出・重要論点をバランスよく厳選。
+            本番同様の緊張感で、全体得点と各科目の「足切りリスク（40%未満）」を精密に測定します。
+          </p>
+
+          <div class="mock-params-grid">
+            <div class="param-card">
+              <span class="param-label">出題数</span>
+              <span class="param-val" id="mockQuestionCountText">21 問</span>
+            </div>
+            <div class="param-card">
+              <span class="param-label">制限時間</span>
+              <span class="param-val">40 分</span>
+            </div>
+            <div class="param-card">
+              <span class="param-label">合格基準</span>
+              <span class="param-val">60% 以上</span>
+            </div>
+            <div class="param-card alert-param">
+              <span class="param-label">足切り条件</span>
+              <span class="param-val">40% 未満不可</span>
+            </div>
+          </div>
+
+          <div class="mock-compliance-info">
+            <strong>🛡️ 法改正保証:</strong> 本模擬試験は、令和元年会社法改正、意匠法改正（出願25年）、現行中小企業基本法基準に完全対応しています。法改正による誤った知識の定着を防ぎます。
+          </div>
+
+          <button id="btnStartMockExam" class="btn btn-primary btn-lg btn-block pulse-btn">
+            <span>⏱ 模擬試験を開始する</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 3: 弱点克服モード (Weakness Drill)
+           =================================================================== -->
+      <section id="viewWeakness" class="stage-view">
+        <div class="weakness-intro-card">
+          <div class="weakness-header">
+            <div>
+              <span class="weak-tag">⚠️ 弱点集中特訓</span>
+              <h2 class="weak-title">間違えた問題だけの復習ドリル</h2>
+              <p class="weak-desc">過去に1度でも誤答した問題を抽出し、完全正解できるまで徹底的に反復します。</p>
+            </div>
+            <div class="weak-count-badge" id="weaknessBigCount">0問</div>
+          </div>
+
+          <div id="weaknessEmptyState" class="empty-state-box" style="display: none;">
+            <div class="empty-icon">🎉</div>
+            <h3 class="empty-title">現在、間違えた問題はありません！</h3>
+            <p class="empty-desc">素晴らしい理解度です。模擬試験や科目別トレーニングでさらなる得点源を広げましょう。</p>
+            <button class="btn btn-primary" id="btnEmptyGoSubjects">科目別トレーニングへ</button>
+          </div>
+
+          <div id="weaknessActionArea">
+            <button id="btnStartWeaknessDrill" class="btn btn-primary btn-lg btn-block">
+              <span>⚠️ 弱点克服ドリルを開始する</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 4: QUIZ WORKSPACE (演習・本番クイズ画面)
+           =================================================================== -->
+      <section id="viewQuiz" class="stage-view">
+        
+        <!-- Quiz Control Bar -->
+        <div class="quiz-nav-strip">
+          <div class="quiz-meta-left">
+            <span class="quiz-sub-pill" id="quizSubPill">
+              <span id="quizSubIcon">📈</span>
+              <span id="quizSubTitle">企業経営理論</span>
+            </span>
+            <span class="quiz-mode-pill" id="quizModePill">通常演習</span>
+          </div>
+
+          <!-- Timer (Only visible in Mock Exam) -->
+          <div class="exam-timer-box" id="examTimerBox" style="display: none;">
+            <span class="timer-icon">⏳</span>
+            <span class="timer-digits" id="timerDigits">30:00</span>
+          </div>
+
+          <!-- Question Progress & Font Controls -->
+          <div class="quiz-meta-right">
+            <div class="font-sizer">
+              <button class="btn-font-size" id="btnFontDecrease" title="文字サイズ縮小">A-</button>
+              <button class="btn-font-size" id="btnFontIncrease" title="文字サイズ拡大">A+</button>
+            </div>
+            <button class="bookmark-btn" id="btnBookmarkToggle" title="この問題をブックマーク">
+              <span id="bookmarkIcon">☆</span>
+            </button>
+            <div class="progress-indicator-text">
+              <span id="currentQIndexText">1</span> / <span id="totalQCountText">10</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Bar Line -->
+        <div class="quiz-progress-track">
+          <div class="quiz-progress-bar-fill" id="quizProgressBarFill" style="width: 10%;"></div>
+        </div>
+
+        <!-- Question Sheet Card -->
+        <div class="question-sheet-card" id="questionSheetCard">
+          
+          <!-- Tags & Compliance Note -->
+          <div class="question-header-row">
+            <div class="tags-cluster">
+              <span class="category-chip" id="qCategoryChip">経営戦略論</span>
+              <span class="source-chip" id="qSourceChip">過去問精選</span>
+              <span class="difficulty-stars" id="qDifficultyStars">★★☆</span>
+            </div>
+            <div class="compliance-chip" id="qComplianceChip" title="最新法規・出題基準準拠">
+              🛡️ 法改正チェック済
+            </div>
+          </div>
+
+          <!-- Revision Note Banner (Special notice for Law & Policy) -->
+          <div class="revision-notice-banner" id="revisionNoticeBanner" style="display: none;">
+            <span class="rev-icon">📌</span>
+            <span class="rev-text" id="revisionNoticeText">法改正注記</span>
+          </div>
+
+          <!-- Question Text -->
+          <div class="question-text-area" id="questionTextArea">
+            問題文読み込み中...
+          </div>
+
+          <div class="elimination-hint-bar">
+            <span>💡 選択肢横の「✕」を押すと、消去法（取り消し線）で候補を絞り込めます</span>
+          </div>
+
+          <!-- Options Grid -->
+          <div class="options-sheet" id="optionsSheet">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Answer & In-depth Explanation Drawer -->
+          <div class="explanation-drawer" id="explanationDrawer" style="display: none;">
+            
+            <div class="verdict-status-strip" id="verdictStatusStrip">
+              <span class="verdict-icon-big" id="verdictIconBig">⭕</span>
+              <div>
+                <h3 class="verdict-heading" id="verdictHeading">正解！完璧な理解です</h3>
+                <span class="verdict-subtext" id="verdictSubtext">正解の論点と他肢の誤答理由を確認しましょう</span>
+              </div>
+            </div>
+
+            <!-- Key Point Flashcard -->
+            <div class="keypoint-flashcard">
+              <div class="keypoint-title-bar">
+                <span>⚡ 試験に出る！最重要暗記ポイント</span>
+              </div>
+              <p class="keypoint-body" id="keypointBody">ポイント要約</p>
+            </div>
+
+            <!-- Detailed breakdown per choice (ア〜エ) -->
+            <div class="options-breakdown-box">
+              <h4 class="breakdown-title">各選択肢の徹底解説</h4>
+              <div class="breakdown-list" id="optionsBreakdownList">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- General Explanation -->
+            <div class="general-explanation-box">
+              <h4 class="gen-title">総合背景解説</h4>
+              <div class="gen-body" id="generalExplanationBody">解説本文...</div>
+            </div>
+
+            <!-- Anki Spaced Repetition Buttons -->
+            <div class="anki-spaced-box" id="ankiSpacedBox">
+              <span class="anki-intro-label">🧠 あなたの記憶定着度を選択（次の出題タイミングを自動調整）:</span>
+              <div class="anki-ratings-row">
+                <button class="anki-pill anki-again" data-rating="again">
+                  <span class="interval-text">10分後</span>
+                  <span class="rate-name">もう一度 (復習)</span>
+                </button>
+                <button class="anki-pill anki-hard" data-rating="hard">
+                  <span class="interval-text">1日後</span>
+                  <span class="rate-name">難しい</span>
+                </button>
+                <button class="anki-pill anki-good" data-rating="good">
+                  <span class="interval-text">3日後</span>
+                  <span class="rate-name">普通</span>
+                </button>
+                <button class="anki-pill anki-easy" data-rating="easy">
+                  <span class="interval-text">7日後</span>
+                  <span class="rate-name">簡単！</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Next Button -->
+            <button id="btnQuizNext" class="btn btn-primary btn-lg btn-block next-action-btn">
+              <span>次の問題へ進む ➔</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================================
+           VIEW 5: RESULTS & SCORE REPORT (合否判定・分析レポート)
+           =================================================================== -->
+      <section id="viewResult" class="stage-view">
+        <div class="result-report-card">
+          
+          <div class="result-banner" id="resultVerdictBanner">
+            <span class="result-badge-verdict" id="resultBadgeVerdict">合格基準 達成！</span>
+            <h2 class="result-headline" id="resultHeadline">第1次試験 合格判定: A判定</h2>
+            <p class="result-sub-desc" id="resultSubDesc">
+              総得点60%以上をクリアし、かつ全科目で40%以上の足切りを回避しました。
+            </p>
+          </div>
+
+          <!-- Overall Score Numbers -->
+          <div class="score-summary-cluster">
+            <div class="score-stat-cell">
+              <span class="cell-label">総合正答率</span>
+              <span class="cell-num highlight-color" id="resultTotalScorePct">75%</span>
+            </div>
+            <div class="score-stat-cell">
+              <span class="cell-label">正解数 / 総問題数</span>
+              <span class="cell-num" id="resultCorrectFraction">12 / 16問</span>
+            </div>
+            <div class="score-stat-cell">
+              <span class="cell-label">足切り判定 (40%未満)</span>
+              <span class="cell-num" id="resultCutoffStatus">なし (クリア)</span>
+            </div>
+          </div>
+
+          <!-- Subject by Subject Breakdown Table -->
+          <div class="subject-breakdown-section">
+            <h3 class="breakdown-headline">科目別 成績 ＆ 足切りチェック</h3>
+            <div class="subject-scores-list" id="resultSubjectScoresList">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <div class="result-button-row">
+            <button class="btn btn-secondary" id="btnResultRetrySame">
+              もう一度解き直す
+            </button>
+            <button class="btn btn-primary" id="btnResultBackHome">
+              科目一覧へ戻る
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 6: ANALYTICS & PASS DIAGNOSTIC (合格診断・分析)
+           =================================================================== -->
+      <section id="viewAnalytics" class="stage-view">
+        <div class="analytics-dashboard">
+          
+          <div class="analytics-header">
+            <div>
+              <h2 class="analytics-title">学習データ分析 ＆ 合格シミュレーション</h2>
+              <p class="analytics-desc">これまでの全解答履歴に基づき、最新の合格確率と苦手科目を可視化します。</p>
+            </div>
+            <button class="btn btn-outline btn-xs" id="btnResetHistory">データ初期化</button>
+          </div>
+
+          <!-- Diagnostic Cards Grid -->
+          <div class="diagnostic-grid">
+            
+            <div class="diag-card">
+              <h3 class="diag-title">総合合格確率</h3>
+              <div class="diag-metric-box">
+                <span class="diag-big-number" id="diagPassProbBig">68%</span>
+                <span class="diag-grade-tag grade-b" id="diagGradeBig">B判定</span>
+              </div>
+              <p class="diag-advice" id="diagAdviceText">
+                現在、全体平均は合格圏内（60%超）です。弱点科目の底上げでA判定を目指しましょう。
+              </p>
+            </div>
+
+            <div class="diag-card">
+              <h3 class="diag-title">総解答統計</h3>
+              <div class="diag-stat-rows">
+                <div class="d-row">
+                  <span>累計解答数:</span>
+                  <strong id="diagTotalAnswered">0 問</strong>
+                </div>
+                <div class="d-row">
+                  <span>累計正解数:</span>
+                  <strong id="diagTotalCorrect">0 問</strong>
+                </div>
+                <div class="d-row">
+                  <span>総合正答率:</span>
+                  <strong id="diagTotalAccuracy">0%</strong>
+                </div>
+                <div class="d-row">
+                  <span>要復習問題 (Anki):</span>
+                  <strong id="diagDueCount">0 問</strong>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Subject Mastery Levels -->
+          <div class="mastery-section">
+            <h3 class="mastery-title">科目別 習熟度 & 足切り（40%）危険度メーター</h3>
+            <div class="mastery-bars-container" id="masteryBarsContainer">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Mobile Bottom App Bar (Optimized for Thumb Flow) -->
+    <nav class="mobile-bottom-tabs" id="mobileBottomTabs">
+      <button class="m-tab active" data-view="viewHome">
+        <span class="m-icon">📚</span>
+        <span class="m-label">科目</span>
+      </button>
+      <button class="m-tab" data-view="viewMockExam">
+        <span class="m-icon">⏱</span>
+        <span class="m-label">模試</span>
+      </button>
+      <button class="m-tab" data-view="viewWeakness">
+        <span class="m-icon">⚠️</span>
+        <span class="m-label">弱点</span>
+      </button>
+      <button class="m-tab" data-view="viewAnalytics">
+        <span class="m-icon">📊</span>
+        <span class="m-label">分析</span>
+      </button>
+    </nav>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="toast-popup"></div>
+
+  </div>
+
+  <!-- Subject Question Modules -->
+  <script src="data/management.js"></script>
+  <script src="data/finance.js"></script>
+  <script src="data/operations.js"></script>
+  <script src="data/economics.js"></script>
+  <script src="data/law.js"></script>
+  <script src="data/it.js"></script>
+  <script src="data/policy.js"></script>
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+
+  <!-- Service Worker for Offline / PWA Support -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+          .catch(err => console.log('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
