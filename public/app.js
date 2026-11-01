@@ -12,6 +12,8 @@ let state = {
   practiceMode: 'exam', // 'exam' (実戦過去問700問) | 'vocab' (スピード用語マスター515問)
   fontScale: 1.0,
   selectedYear: 'all',
+  quizOrderMode: 'smart_random', // 'smart_random' (未演習・均等優先) | 'sequential' (順番に解く)
+  selectedSubCategory: 'all',
   history: loadHistoryData(),
   player: {
     combo: 0
@@ -19,6 +21,7 @@ let state = {
   session: {
     mode: 'subject', // 'subject' | 'vocab' | 'mock' | 'weakness' | 'anki'
     subjectId: null,
+    subCategoryId: 'all',
     questions: [],
     currentIndex: 0,
     score: 0,
@@ -204,6 +207,10 @@ const ui = {
   weaknessCountPill: document.getElementById('weaknessCountPill'),
   yearPillsRow: document.getElementById('yearPillsRow'),
   examYearSelectorCard: document.getElementById('examYearSelectorCard'),
+  orderModeSelectorCard: document.getElementById('orderModeSelectorCard'),
+  btnOrderSmartRandom: document.getElementById('btnOrderSmartRandom'),
+  btnOrderSequential: document.getElementById('btnOrderSequential'),
+  orderModeDescText: document.getElementById('orderModeDescText'),
   practiceModeSwitcher: document.getElementById('practiceModeSwitcher'),
   tabModeExam: document.getElementById('tabModeExam'),
   tabModeVocab: document.getElementById('tabModeVocab'),
@@ -741,6 +748,35 @@ function renderHomeScreen() {
         gradeBadge = `<span class="tile-grade-badge grade-e">足切り警戒 (${stat.accuracy}%)</span>`;
       }
 
+      let subCatsHtml = '';
+      if (!isVocab && typeof SUBJECT_SUBCATEGORIES !== 'undefined' && SUBJECT_SUBCATEGORIES[subKey]) {
+        const subCats = SUBJECT_SUBCATEGORIES[subKey].filter(sc => sc.id !== 'all');
+        const chipsHtml = subCats.map(sc => {
+          const count = questionsInSub.filter(q => typeof getQuestionSubCategory === 'function' && getQuestionSubCategory(q) === sc.id).length;
+          return `
+            <button class="subcat-chip-btn" data-subject-id="${subKey}" data-subcat-id="${sc.id}" title="${escapeHtml(sc.desc || sc.name)}">
+              <span>${sc.icon} ${escapeHtml(sc.name)}</span>
+              <span class="sc-count">${count}問</span>
+            </button>
+          `;
+        }).join('');
+
+        subCatsHtml = `
+          <div class="tile-subcats-box">
+            <div class="subcat-label-row">
+              <span class="subcat-label-text">📌 論点・小カテゴリ限定特訓:</span>
+            </div>
+            <div class="subcat-chips-list">
+              <button class="subcat-chip-btn" data-subject-id="${subKey}" data-subcat-id="all" style="border-color: rgba(255,255,255,0.18);">
+                <span>🌐 全範囲</span>
+                <span class="sc-count">${questionsInSub.length}問</span>
+              </button>
+              ${chipsHtml}
+            </div>
+          </div>
+        `;
+      }
+
       return `
         <article class="subject-tile" data-subject-id="${subKey}">
           <div class="tile-top">
@@ -768,15 +804,27 @@ function renderHomeScreen() {
               <div class="meter-fill" style="width: ${stat.accuracy}%; background: ${stat.accuracy < 40 && stat.answered > 0 ? 'var(--color-rose)' : sub.color};"></div>
             </div>
           </div>
+
+          ${subCatsHtml}
         </article>
       `;
     }).join('');
 
-    // Bind tile clicks
+    // Bind sub-category chip clicks (優先実行)
+    document.querySelectorAll('.subcat-chip-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // タイル全体のクリックを発火させない
+        const subId = btn.getAttribute('data-subject-id');
+        const subCatId = btn.getAttribute('data-subcat-id');
+        startQuizSession('subject', subId, subCatId);
+      });
+    });
+
+    // Bind tile clicks (全体範囲)
     document.querySelectorAll('.subject-tile').forEach(tile => {
       tile.addEventListener('click', () => {
         const subId = tile.getAttribute('data-subject-id');
-        startQuizSession(isVocab ? 'vocab' : 'subject', subId);
+        startQuizSession(isVocab ? 'vocab' : 'subject', subId, 'all');
       });
     });
   }
@@ -840,12 +888,53 @@ function renderAnalyticsScreen() {
 // Quiz Session Management (Start, Options, Elimination, Anki, Finish)
 // ==========================================================================
 
-function startQuizSession(mode, subjectId = null) {
+// 出題順序ソート（均等スマートランダム または 順番に解く）
+function sortQuestionsByOrder(questions, orderMode = 'smart_random') {
+  if (!questions || questions.length <= 1) return questions || [];
+
+  if (orderMode === 'sequential') {
+    // 順番に解く：年度順（最新順）、問題番号順
+    return [...questions].sort((a, b) => {
+      if (a.year !== b.year) return (b.year || '').localeCompare(a.year || '');
+      const numA = parseInt((a.questionNumber || a.id || '').replace(/[^0-9]/g, '')) || 0;
+      const numB = parseInt((b.questionNumber || b.id || '').replace(/[^0-9]/g, '')) || 0;
+      if (numA !== numB) return numA - numB;
+      return (a.id || '').localeCompare(b.id || '');
+    });
+  }
+
+  // スマートランダム（未演習・低演習頻度優先 ＆ 均等出題）
+  const items = state.history.items || {};
+  return [...questions].sort((a, b) => {
+    const recA = items[a.id];
+    const recB = items[b.id];
+    const countA = recA ? (recA.count || 0) : 0;
+    const countB = recB ? (recB.count || 0) : 0;
+
+    // 1. 解いた回数が少ない問題を最優先（未演習を先に）
+    if (countA !== countB) {
+      return countA - countB;
+    }
+
+    // 2. 回数が同じ場合は、最近解いた問題を後回し（昔解いた問題を優先）
+    const lastA = recA && recA.lastTested ? new Date(recA.lastTested).getTime() : 0;
+    const lastB = recB && recB.lastTested ? new Date(recB.lastTested).getTime() : 0;
+    if (lastA !== lastB) {
+      return lastA - lastB;
+    }
+
+    // 3. その他はランダム
+    return Math.random() - 0.5;
+  });
+}
+
+function startQuizSession(mode, subjectId = null, subCategoryId = 'all') {
   // Clear any existing timer
   if (state.session.timerId) clearInterval(state.session.timerId);
 
   state.session.mode = mode;
   state.session.subjectId = subjectId;
+  state.session.subCategoryId = subCategoryId || 'all';
   state.session.currentIndex = 0;
   state.session.score = 0;
   state.session.answered = false;
@@ -858,29 +947,46 @@ function startQuizSession(mode, subjectId = null) {
       const yearFiltered = qList.filter(q => q.year === state.selectedYear);
       if (yearFiltered.length > 0) qList = yearFiltered;
     }
-    state.session.questions = qList;
+
+    // 小カテゴリ絞り込み（全範囲以外の場合）
+    if (subCategoryId && subCategoryId !== 'all' && typeof getQuestionSubCategory === 'function') {
+      qList = qList.filter(q => getQuestionSubCategory(q) === subCategoryId);
+    }
+
+    // 出題順序の適用（スマート均等ランダム または 順番に解く）
+    state.session.questions = sortQuestionsByOrder(qList, state.quizOrderMode);
+
     const yearSuffix = state.selectedYear === 'all' ? '' : ` (${state.selectedYear})`;
-    ui.quizModePill.textContent = `科目別演習${yearSuffix}`;
+    let subCatSuffix = '';
+    if (subCategoryId && subCategoryId !== 'all' && typeof SUBJECT_SUBCATEGORIES !== 'undefined' && SUBJECT_SUBCATEGORIES[subjectId]) {
+      const scObj = SUBJECT_SUBCATEGORIES[subjectId].find(sc => sc.id === subCategoryId);
+      if (scObj) subCatSuffix = ` • ${scObj.name}`;
+    }
+    const orderSuffix = state.quizOrderMode === 'sequential' ? ' [通し番号順]' : ' [均等ランダム]';
+
+    ui.quizModePill.textContent = `科目別演習${yearSuffix}${subCatSuffix}${orderSuffix}`;
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'vocab') {
-    state.session.questions = (typeof VOCAB_QUESTIONS !== 'undefined' ? VOCAB_QUESTIONS : []).filter(q => q.subject === subjectId);
-    ui.quizModePill.textContent = '⚡ スピード用語マスター';
+    let vList = (typeof VOCAB_QUESTIONS !== 'undefined' ? VOCAB_QUESTIONS : []).filter(q => q.subject === subjectId);
+    state.session.questions = sortQuestionsByOrder(vList, state.quizOrderMode);
+    const orderSuffix = state.quizOrderMode === 'sequential' ? ' [通し番号順]' : ' [均等ランダム]';
+    ui.quizModePill.textContent = `⚡ スピード用語マスター${orderSuffix}`;
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'mock') {
-    // Mock Exam: 16 curated representative questions
+    // 予想模擬試験: MOCK_EXAM_CONFIG から厳選出題
     state.session.questions = MOCK_EXAM_CONFIG.questionIds
       .map(id => QUESTIONS.find(q => q.id === id))
       .filter(Boolean);
-    ui.quizModePill.textContent = '⏱ 模擬試験';
+    ui.quizModePill.textContent = '⏱ 2026/2027年 予想模擬試験';
     ui.examTimerBox.style.display = 'flex';
     startMockTimer(MOCK_EXAM_CONFIG.timeLimitMinutes * 60);
   } else if (mode === 'weakness') {
-    state.session.questions = getWeaknessQuestions();
+    state.session.questions = sortQuestionsByOrder(getWeaknessQuestions(), state.quizOrderMode);
     ui.quizModePill.textContent = '⚠️ 弱点克服';
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'anki') {
     const due = getDueReviewQuestions();
-    state.session.questions = due.length > 0 ? due : [...QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 5);
+    state.session.questions = due.length > 0 ? due : sortQuestionsByOrder(QUESTIONS, 'smart_random').slice(0, 10);
     ui.quizModePill.textContent = '🧠 忘却曲線復習';
     ui.examTimerBox.style.display = 'none';
   }
@@ -1295,6 +1401,27 @@ function showToast(msg) {
 // ==========================================================================
 
 function bindEventListeners() {
+  // Order Mode Switcher (スマート均等ランダム vs 順番に解く)
+  ui.btnOrderSmartRandom?.addEventListener('click', () => {
+    state.quizOrderMode = 'smart_random';
+    ui.btnOrderSmartRandom.classList.add('active');
+    ui.btnOrderSequential?.classList.remove('active');
+    if (ui.orderModeDescText) {
+      ui.orderModeDescText.textContent = '💡 現在【ランダム（均等出題）】に設定中：未演習の問題や解いた回数の少ない問題が優先して出題され、同じ問題ばかりが偏りません。';
+    }
+    showToast('🎲 出題順: 未演習・均等優先ランダム');
+  });
+
+  ui.btnOrderSequential?.addEventListener('click', () => {
+    state.quizOrderMode = 'sequential';
+    ui.btnOrderSequential.classList.add('active');
+    ui.btnOrderSmartRandom?.classList.remove('active');
+    if (ui.orderModeDescText) {
+      ui.orderModeDescText.textContent = '📋 現在【順番に解く】に設定中：本試験の出題年度順・第1問〜第40問の通し番号順に体系的に演習します。';
+    }
+    showToast('📋 出題順: 通し番号順（第1問〜）');
+  });
+
   // Practice Mode Switcher (実戦過去問 vs スピード用語マスター)
   ui.tabModeExam?.addEventListener('click', () => {
     state.practiceMode = 'exam';

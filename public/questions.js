@@ -87,6 +87,90 @@ const SUBJECTS = {
   }
 };
 
+// 7科目小カテゴリ（論点・サブジャンル）定義
+const SUBJECT_SUBCATEGORIES = {
+  management: [
+    { id: "all", name: "全範囲", icon: "🌐" },
+    { id: "strategy", name: "経営戦略論", icon: "♟️", desc: "競争戦略・ドメイン・全社戦略・M&A・イノベーション" },
+    { id: "organization", name: "組織論・人事", icon: "🤝", desc: "組織構造・動機づけ・リーダーシップ・人的資本・労働法規" },
+    { id: "marketing", name: "マーケティング論", icon: "🎯", desc: "STP・4P/4C・消費者行動・ブランド・デジタルマーケ" }
+  ],
+  finance: [
+    { id: "all", name: "全範囲", icon: "🌐" },
+    { id: "statements_bookkeeping", name: "財務諸表・簿記", icon: "📑", desc: "BS/PL/CF計算書・会計基準・リース・新収益認識" },
+    { id: "analysis_cvp", name: "経営分析・CVP原価計算", icon: "📊", desc: "財務比率分析・損益分岐点分析・安全余裕率・限界利益" },
+    { id: "corporate_finance", name: "ファイナンス・投資決定", icon: "💰", desc: "DCF法・NPV・IRR・WACC・CAPM・資本政策" }
+  ],
+  operations: [
+    { id: "all", name: "全範囲", icon: "🌐" },
+    { id: "production", name: "生産管理（工場）", icon: "🏭", desc: "IE・工程管理・JIT・かんばん・TQM・設備管理" },
+    { id: "store_retail", name: "店舗・販売・物流", icon: "🛒", desc: "まちづくり法・店舗施設・マーチャンダイジング・SCM" }
+  ],
+  economics: [
+    { id: "all", name: "全範囲", icon: "🌐" },
+    { id: "micro", name: "ミクロ経済学", icon: "🔬", desc: "消費者余剰・生産者行動・完全/不完全競争・ゲーム理論・市場の失敗" },
+    { id: "macro", name: "マクロ経済学・政策", icon: "🔭", desc: "国民経済計算(GDP)・IS-LM分析・AD-AS分析・金融財政政策" }
+  ],
+  law: [
+    { id: "all", name: "全範囲", icon: "🌐" },
+    { id: "corp_law", name: "会社法・企業再編", icon: "🏢", desc: "株式会社の機関設計・株式・組織再編(M&A)・取締役の責任" },
+    { id: "ip_law", name: "知的財産権法", icon: "💡", desc: "特許法・意匠法・商標法・著作権法・不正競争防止法" },
+    { id: "civil_other_law", name: "民法・その他法務", icon: "⚖️", desc: "民法（債権・契約・担保）・倒産法・個人情報保護法" }
+  ],
+  it: [
+    { id: "all", name: "全範囲", icon: "🌐" },
+    { id: "it_foundation", name: "IT基礎・NW", icon: "💻", desc: "コンピュータ構成・通信ネットワーク・データベース・SQL" },
+    { id: "software_security", name: "セキュリティ・クラウド", icon: "🛡️", desc: "暗号化・認証・ゼロトラスト・サイバー攻撃・SaaS/PaaS" },
+    { id: "management_dx", name: "経営情報管理・DX", icon: "🚀", desc: "IT戦略・アジャイル開発・ERP・AI/ビッグデータ活用" }
+  ],
+  policy: [
+    { id: "all", name: "全範囲", icon: "🌐" },
+    { id: "whitepaper", name: "中小企業白書・実態", icon: "📊", desc: "中小企業の動向・人手不足・事業承継・開廃業率・DX投資" },
+    { id: "policy_support", name: "中小企業政策・支援施策", icon: "🏛️", desc: "中小企業基本法・信用保証・各種補助金・税制・共済" }
+  ]
+};
+
+// 各問題の小カテゴリ判定関数
+function getQuestionSubCategory(q) {
+  if (!q) return "all";
+  const sub = q.subject;
+  const cat = (q.category || "") + " " + (q.question || "") + " " + (q.explanation || "");
+
+  if (sub === "management") {
+    if (/マーケティング|ブランド|チャネル|価格|プロモーション|STP|4P|顧客行動|広告|消費者|セグメンテーション|リサーチ|D2C|LTV|EC|コトラー|製品ライフサイクル/i.test(cat)) return "marketing";
+    if (/戦略|ドメイン|イノベーション|事業展開|ケイパビリティ|全社|M&A|シナジー|競争優位|ポジショニング|成長マトリクス|多角化|コア・コンピタンス|VRIO|3C|5F|バリューチェーン|PPM|知の探索/i.test(cat)) return "strategy";
+    return "organization";
+  }
+  if (sub === "finance") {
+    if (/ファイナンス|投資意思決定|DCF|NPV|IRR|WACC|CAPM|資本コスト|企業価値|配当政策|MM理論|オプション|株式価値|レバレッジ効果|ポートフォリオ/i.test(cat)) return "corporate_finance";
+    if (/CVP|損益分岐点|安全余裕率|限界利益|比率分析|財務分析|ROE|ROA|回転期間|原価計算|操業度/i.test(cat)) return "analysis_cvp";
+    return "statements_bookkeeping";
+  }
+  if (sub === "operations") {
+    if (/店舗|商業|まちづくり|立地|売場|レイアウト|ディスプレイ|POS|バーコード|マーチャンダイジング|買回り|最寄り|SCM|物流|包装|配送/i.test(cat)) return "store_retail";
+    return "production";
+  }
+  if (sub === "economics") {
+    if (/マクロ|GDP|国民経済|IS-LM|IS曲線|LM曲線|AD-AS|総需要|総供給|ケインズ|古典派|インフレ|デフレ|中央銀行|金融政策|財政政策|乗数効果|マンデル・フレミング/i.test(cat)) return "macro";
+    return "micro";
+  }
+  if (sub === "law") {
+    if (/特許|意匠|商標|著作権|不正競争|実用新案|パリ条約|知財|工業所有権/i.test(cat)) return "ip_law";
+    if (/民法|契約|債権|担保|不法行為|破産|民事再生|個人情報|消費者契約/i.test(cat)) return "civil_other_law";
+    return "corp_law";
+  }
+  if (sub === "it") {
+    if (/セキュリティ|暗号|認証|攻撃|ウイルス|マルウェア|ゼロトラスト|SSL|TLS|ファイアウォール|クラウド|SaaS|PaaS|IaaS/i.test(cat)) return "software_security";
+    if (/DX|戦略|開発|アジャイル|スクラム|ERP|ウォーターフォール|EA|ITガバナンス|データ分析|AI|機械学習|IoT/i.test(cat)) return "management_dx";
+    return "it_foundation";
+  }
+  if (sub === "policy") {
+    if (/法律|政策|支援|施策|補助金|保証|基本法|公庫|信用保証協会|税制|計画|共済|診断士|産業競争力|下請/i.test(cat)) return "policy_support";
+    return "whitepaper";
+  }
+  return "all";
+}
+
 // 本番基準パラメータ
 const REAL_EXAM_BENCHMARK = {
   totalQuestions: 225, // 診断士1次試験の合計本番問題数
@@ -473,16 +557,40 @@ const VOCAB_QUESTIONS = (() => {
   return merged;
 })();
 
-// 模擬試験（全国統一プレ模試：全7科目からバランスよく計21問＝各科目3問を厳選）
+// 模擬試験（2026/2027年度 最新本試験完全予想模擬試験：全7科目×4問＝計28問）
+// 来年度の診断士試験で確実に出題が予想される最重要テーマ・最新トレンド論点を厳選
 const MOCK_EXAM_CONFIG = {
-  title: "中小企業診断士 1次試験 全国統一プレ模擬試験",
-  timeLimitMinutes: 40,
+  title: "2026/2027年度 中小企業診断士1次試験 最新予想模擬試験",
+  description: "来年の本試験を想定した超頻出・最新改正トレンド論点（両利きの経営、新リース会計、東証PBR改革、生成AI、意匠法・商標法最新改正等）を全7科目から4問ずつ厳選出題。",
+  timeLimitMinutes: 60,
   passingScorePct: 60,
   cutOffScorePct: 40,
   questionIds: (() => {
+    const TARGET_IDS = [
+      // 企業経営理論（両利きの経営・人的資本経営・雇用システム・デジタルマーケ）
+      'mgt-r08-01', 'mgt-r08-02', 'mgt-r08-03', 'mgt-r08-05',
+      // 財務・会計（新リース会計・東証資本コスト経営要請・インパクト投資・新収益認識基準）
+      'fin-r08-01', 'fin-r08-02', 'fin-r08-03', 'fin-r08-04',
+      // 運営管理（スマートファクトリー・サプライチェーンレジリエンス・物流2024年問題・セル生産）
+      'ops-r08-01', 'ops-r08-02', 'ops-r08-04', 'ops-r08-05',
+      // 経済学・経済政策（二面市場・現代金融政策利上げ影響・インフレ好循環・行動経済学ナッジ）
+      'eco-r08-01', 'eco-r08-02', 'eco-r08-03', 'eco-r08-04',
+      // 経営法務（メタバース意匠商標改正・会社法改正サステナ開示・生成AI著作権・フリーランス新法）
+      'law-r08-01', 'law-r08-02', 'law-r08-03', 'law-r08-04',
+      // 経営情報システム（LLM/RAG業務活用・ゼロトラストセキュリティ・量子暗号・クラウドネイティブ）
+      'it-r08-01', 'it-r08-02', 'it-r08-03', 'it-r08-04',
+      // 中小企業経営・政策（賃上げ促進税制拡充・労務費価格転嫁指針・経営者保証改革・白書DX人手不足）
+      'pol-r08-01', 'pol-r08-02', 'pol-r08-03', 'pol-r08-04'
+    ];
+    // 存在チェックとフォールバック
+    const validIds = TARGET_IDS.filter(id => QUESTIONS.some(q => q.id === id));
+    if (validIds.length >= 21) {
+      return validIds;
+    }
+    // フォールバック: 各科目から4問ずつ
     const picked = [];
     Object.keys(SUBJECTS).forEach(subKey => {
-      const subQs = QUESTIONS.filter(q => q.subject === subKey).slice(0, 3);
+      const subQs = QUESTIONS.filter(q => q.subject === subKey).slice(0, 4);
       subQs.forEach(q => picked.push(q.id));
     });
     return picked;

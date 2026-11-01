@@ -25,7 +25,7 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
-  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="index.css?v=7">
 </head>
 <body class="theme-dark">
   <!-- Dynamic Glow Backgrounds -->
@@ -410,11 +410,32 @@
           </div>
         </div>
 
+        <!-- Section: 出題順序設定 (NEW: 均等スマートランダム vs 順番に解く) -->
+        <div class="order-mode-selector-card" id="orderModeSelectorCard">
+          <div class="order-mode-header">
+            <div>
+              <span class="order-tag">🔀 出題モード設定</span>
+              <h4 class="order-title">出題順序と問題ローテーション</h4>
+            </div>
+            <div class="order-pills-row">
+              <button class="order-pill-btn active" id="btnOrderSmartRandom" data-order="smart_random" title="未演習の問題を優先し、解いた問題が平均的に万遍なく出題されます">
+                🎲 ランダム (未演習・均等優先)
+              </button>
+              <button class="order-pill-btn" id="btnOrderSequential" data-order="sequential" title="本試験の年度順・第1問からの通し番号順に体系的に演習します">
+                📋 順番に解く (通し番号順)
+              </button>
+            </div>
+          </div>
+          <p class="order-mode-desc" id="orderModeDescText">
+            💡 現在【ランダム（均等出題）】に設定中：同じ問題ばかりが連続せず、未演習の問題や解いた回数の少ない問題が優先して出題されます。
+          </p>
+        </div>
+
         <!-- Section: 7 Subjects Grid -->
         <div class="section-title-bar">
           <div>
             <h3 class="title-text">第1次試験 全7科目トレーニング</h3>
-            <p class="title-sub">合格基準: 全科目平均60点以上 ＆ 各科目40点以上（足切りなし）</p>
+            <p class="title-sub">合格基準: 全科目平均60点以上 ＆ 各科目40点以上（足切りなし）• 小カテゴリ選択で範囲限定演習が可能</p>
           </div>
           <span class="compliance-badge">⚖️ 法改正安全確認済</span>
         </div>
@@ -430,21 +451,21 @@
            =================================================================== -->
       <section id="viewMockExam" class="stage-view">
         <div class="mock-intro-card">
-          <div class="mock-badge">⏱ 本番直結 演習セッション</div>
-          <h2 class="mock-title">中小企業診断士 1次試験 全国統一プレ模擬試験</h2>
+          <div class="mock-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">🌟 2026/2027年度 最新本試験完全予想</div>
+          <h2 class="mock-title">2026/2027年度 中小企業診断士1次試験 最新予想模擬試験</h2>
           <p class="mock-desc">
-            過去の出題傾向分析に基づき、全7科目から合否を分ける超頻出・重要論点をバランスよく厳選。
+            来年の診断士本試験の出題傾向を徹底分析。全7科目から合否を分ける超頻出テーマ（両利きの経営・人的資本経営・新リース会計・東証PBR改革・スマートファクトリー・ゼロトラストセキュリティ・意匠商標法改正・生成AI等）を各科目4問、計28問厳選。
             本番同様の緊張感で、全体得点と各科目の「足切りリスク（40%未満）」を精密に測定します。
           </p>
 
           <div class="mock-params-grid">
             <div class="param-card">
               <span class="param-label">出題数</span>
-              <span class="param-val" id="mockQuestionCountText">21 問</span>
+              <span class="param-val" id="mockQuestionCountText">28 問</span>
             </div>
             <div class="param-card">
               <span class="param-label">制限時間</span>
-              <span class="param-val">40 分</span>
+              <span class="param-val">60 分</span>
             </div>
             <div class="param-card">
               <span class="param-label">合格基準</span>
@@ -1091,7 +1112,7 @@
   </div>
 
   <!-- MBA Vocab Master Modules (初級編: MBA専門用語 451問) -->
-  <script src="data/mba_vocab.js?v=6"></script>
+  <script src="data/mba_vocab.js?v=7"></script>
 
   <!-- Subject Question Modules (実戦過去問 700問) -->
   <script src="data/management.js"></script>
@@ -1114,8 +1135,8 @@
   <!-- Case Exam Modules (第2次筆記試験 事例 I〜IV 全8事例) -->
   <script src="data/cases_data.js"></script>
 
-  <script src="questions.js"></script>
-  <script src="app.js?v=6"></script>
+  <script src="questions.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 
   <!-- Service Worker for Offline / PWA Support -->
   <script>
