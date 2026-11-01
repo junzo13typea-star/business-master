@@ -13,6 +13,9 @@ let state = {
   fontScale: 1.0,
   selectedYear: 'all',
   history: loadHistoryData(),
+  player: {
+    combo: 0
+  },
   session: {
     mode: 'subject', // 'subject' | 'vocab' | 'mock' | 'weakness' | 'anki'
     subjectId: null,
@@ -33,6 +36,15 @@ let state = {
     timerRunning: false,
     timerInterval: null,
     drafts: {}
+  },
+  mbaSession: {
+    activeCategory: null,
+    questions: [],
+    currentIndex: 0,
+    score: 0,
+    answered: false,
+    earnedExp: 0,
+    combo: 0
   }
 };
 
@@ -44,6 +56,12 @@ const ui = {
   mobileBottomTabs: document.getElementById('mobileBottomTabs'),
   toastNotification: document.getElementById('toastNotification'),
   
+  // Player Level & EXP Dashboard Elements (NEW)
+  playerLevelBadge: document.getElementById('playerLevelBadge'),
+  headerLvlNum: document.getElementById('headerLvlNum'),
+  headerRankTitle: document.getElementById('headerRankTitle'),
+  headerExpBar: document.getElementById('headerExpBar'),
+
   // Header Meters
   topPassGrade: document.getElementById('topPassGrade'),
   topPassRate: document.getElementById('topPassRate'),
@@ -57,6 +75,50 @@ const ui = {
   viewResult: document.getElementById('viewResult'),
   viewAnalytics: document.getElementById('viewAnalytics'),
   viewCaseExam: document.getElementById('viewCaseExam'),
+  viewMba: document.getElementById('viewMba'),
+
+  // MBA Vocab Elements (初級編)
+  mbaCategoryView: document.getElementById('mbaCategoryView'),
+  mbaQuizView: document.getElementById('mbaQuizView'),
+  mbaResultView: document.getElementById('mbaResultView'),
+  btnMbaRandomQuiz: document.getElementById('btnMbaRandomQuiz'),
+  btnMbaWeakQuiz: document.getElementById('btnMbaWeakQuiz'),
+  mbaCategoriesGrid: document.getElementById('mbaCategoriesGrid'),
+  mbaStatusRankIcon: document.getElementById('mbaStatusRankIcon'),
+  mbaStatusRankTitle: document.getElementById('mbaStatusRankTitle'),
+  mbaStatusLevelNum: document.getElementById('mbaStatusLevelNum'),
+  mbaStatusExpText: document.getElementById('mbaStatusExpText'),
+  mbaStatusExpFill: document.getElementById('mbaStatusExpFill'),
+  mbaStatusMasteredCount: document.getElementById('mbaStatusMasteredCount'),
+  mbaStatusAccuracyPct: document.getElementById('mbaStatusAccuracyPct'),
+  mbaStatusStreakCount: document.getElementById('mbaStatusStreakCount'),
+  btnMbaBackToList: document.getElementById('btnMbaBackToList'),
+  mbaQuizCategoryTag: document.getElementById('mbaQuizCategoryTag'),
+  mbaQuizCounterText: document.getElementById('mbaQuizCounterText'),
+  mbaQuizComboPill: document.getElementById('mbaQuizComboPill'),
+  mbaQuizComboNum: document.getElementById('mbaQuizComboNum'),
+  mbaQuizFillBar: document.getElementById('mbaQuizFillBar'),
+  mbaQuizTermPill: document.getElementById('mbaQuizTermPill'),
+  mbaQuizQuestionText: document.getElementById('mbaQuizQuestionText'),
+  mbaQuizOptionsGrid: document.getElementById('mbaQuizOptionsGrid'),
+  mbaQuizFeedbackBox: document.getElementById('mbaQuizFeedbackBox'),
+  mbaQuizResultBadge: document.getElementById('mbaQuizResultBadge'),
+  mbaQuizExpGain: document.getElementById('mbaQuizExpGain'),
+  mbaQuizExplanationText: document.getElementById('mbaQuizExplanationText'),
+  btnMbaNextQuestion: document.getElementById('btnMbaNextQuestion'),
+  mbaResultTitle: document.getElementById('mbaResultTitle'),
+  mbaResultScorePct: document.getElementById('mbaResultScorePct'),
+  mbaResultFraction: document.getElementById('mbaResultFraction'),
+  mbaResultExpEarned: document.getElementById('mbaResultExpEarned'),
+  btnMbaResultRetry: document.getElementById('btnMbaResultRetry'),
+  btnMbaResultBackTop: document.getElementById('btnMbaResultBackTop'),
+
+  // Level Up Modal
+  levelUpModal: document.getElementById('levelUpModal'),
+  lvlUpModalIcon: document.getElementById('lvlUpModalIcon'),
+  lvlUpModalLevel: document.getElementById('lvlUpModalLevel'),
+  lvlUpModalRankTitle: document.getElementById('lvlUpModalRankTitle'),
+  btnLevelUpClose: document.getElementById('btnLevelUpClose'),
 
   // Case Exam Workspace Elements
   caseListView: document.getElementById('caseListView'),
@@ -188,21 +250,28 @@ function init() {
     ui.mockQuestionCountText.textContent = `${MOCK_EXAM_CONFIG.questionIds.length} 問`;
   }
   updatePassMetricsUI();
+  updatePlayerLevelUI();
   renderHomeScreen();
   initCaseExam();
+  initMbaVocab();
 }
 
 function loadHistoryData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.playerExp !== 'number') parsed.playerExp = 0;
+      return parsed;
+    }
   } catch (err) {
     console.error('History load error', err);
   }
   return {
     items: {}, // qId -> { count, correctCount, wrongCount, lastResult, intervalDays, easeFactor, nextDueDate, bookmarked }
     streak: 1,
-    lastActiveDate: null
+    lastActiveDate: null,
+    playerExp: 0
   };
 }
 
@@ -772,6 +841,7 @@ function handleOptionChoice(chosenIndex) {
     if (state.session.subjectResults[q.subject]) {
       state.session.subjectResults[q.subject].correct++;
     }
+    awardPlayerExp(20, '正解');
   }
 
   // Save to persistent user history
@@ -971,7 +1041,7 @@ function finalizeQuizSession() {
 
 function switchView(viewId) {
   state.currentView = viewId;
-  const allViews = [ui.viewHome, ui.viewMockExam, ui.viewWeakness, ui.viewQuiz, ui.viewResult, ui.viewAnalytics, ui.viewCaseExam];
+  const allViews = [ui.viewHome, ui.viewMockExam, ui.viewWeakness, ui.viewQuiz, ui.viewResult, ui.viewAnalytics, ui.viewCaseExam, ui.viewMba];
   allViews.forEach(v => {
     if (v) v.classList.remove('active');
   });
@@ -989,6 +1059,13 @@ function switchView(viewId) {
 
   if (viewId === 'viewHome') renderHomeScreen();
   if (viewId === 'viewAnalytics') renderAnalyticsScreen();
+  if (viewId === 'viewMba') {
+    if (ui.mbaQuizView.style.display !== 'none') {
+      // Keep quiz in progress
+    } else {
+      renderMbaTopScreen();
+    }
+  }
   if (viewId === 'viewCaseExam') {
     // ワークスペースを開いている場合は一覧に戻すか確認
     if (ui.caseWorkspaceView.style.display === 'flex') {
@@ -1047,6 +1124,12 @@ function bindEventListeners() {
     if (state.currentView === 'viewQuiz') {
       if (confirm('演習を中断してホームに戻りますか？')) {
         if (state.session.timerId) clearInterval(state.session.timerId);
+        switchView('viewHome');
+      }
+    } else if (state.currentView === 'viewMba') {
+      if (ui.mbaQuizView.style.display !== 'none' || ui.mbaResultView.style.display !== 'none') {
+        closeMbaQuiz();
+      } else {
         switchView('viewHome');
       }
     } else if (state.currentView === 'viewCaseExam') {
@@ -1723,11 +1806,395 @@ function closeCaseResultModal() {
   }
 }
 
+// ==========================================================================
+// ゲーム性 (Lv・EXP・称号) コアエンジン
+// ==========================================================================
+
+const RANK_TITLES = [
+  { minLvl: 90, title: "🌟 伝説のビジネスエキスパート", icon: "👑" },
+  { minLvl: 70, title: "👑 取締役・CxO", icon: "💎" },
+  { minLvl: 50, title: "🏛️ 執行役員 / VP", icon: "🏛️" },
+  { minLvl: 30, title: "👔 事業戦略マネージャー", icon: "👔" },
+  { minLvl: 20, title: "🎖️ シニアコンサルタント", icon: "🎖️" },
+  { minLvl: 10, title: "🚀 プロジェクトリーダー", icon: "🚀" },
+  { minLvl: 5,  title: "💼 自立型プレイヤー", icon: "💼" },
+  { minLvl: 1,  title: "🌱 新人アソシエイト", icon: "🌱" }
+];
+
+function getExpForLevel(lvl) {
+  if (lvl <= 1) return 0;
+  // レベルが上がるにつれて緩やかに増加するEXPカーブ (Lv.2: 50, Lv.5: 350, Lv.10: 1100...)
+  return Math.floor(35 * Math.pow(lvl - 1, 1.55) + 15 * (lvl - 1));
+}
+
+function calcPlayerLevel(totalExp) {
+  let lvl = 1;
+  while (lvl < 99 && totalExp >= getExpForLevel(lvl + 1)) {
+    lvl++;
+  }
+  const curLvlBase = getExpForLevel(lvl);
+  const nextLvlBase = getExpForLevel(lvl + 1);
+  const progressInLvl = totalExp - curLvlBase;
+  const neededInLvl = nextLvlBase - curLvlBase;
+  const pct = Math.min(100, Math.max(0, Math.floor((progressInLvl / neededInLvl) * 100)));
+
+  const rank = RANK_TITLES.find(r => lvl >= r.minLvl) || RANK_TITLES[RANK_TITLES.length - 1];
+
+  return {
+    level: lvl,
+    totalExp,
+    progressInLvl,
+    neededInLvl,
+    pct,
+    rankTitle: rank.title,
+    rankIcon: rank.icon
+  };
+}
+
+function updatePlayerLevelUI() {
+  const info = calcPlayerLevel(state.history.playerExp || 0);
+
+  // Top App Bar
+  if (ui.headerLvlNum) ui.headerLvlNum.textContent = info.level;
+  if (ui.headerRankTitle) ui.headerRankTitle.textContent = info.rankTitle;
+  if (ui.headerExpBar) ui.headerExpBar.style.width = `${info.pct}%`;
+
+  // MBA Dashboard Card
+  if (ui.mbaStatusLevelNum) ui.mbaStatusLevelNum.textContent = info.level;
+  if (ui.mbaStatusRankTitle) ui.mbaStatusRankTitle.textContent = info.rankTitle.replace(/^[^\s]+\s*/, '');
+  if (ui.mbaStatusRankIcon) ui.mbaStatusRankIcon.textContent = info.rankIcon;
+  if (ui.mbaStatusExpText) ui.mbaStatusExpText.textContent = `${info.progressInLvl} / ${info.neededInLvl} EXP (累計: ${info.totalExp})`;
+  if (ui.mbaStatusExpFill) ui.mbaStatusExpFill.style.width = `${info.pct}%`;
+}
+
+function awardPlayerExp(amount, reason = '') {
+  const oldLvlInfo = calcPlayerLevel(state.history.playerExp || 0);
+  state.history.playerExp = (state.history.playerExp || 0) + amount;
+  saveHistoryData();
+  const newLvlInfo = calcPlayerLevel(state.history.playerExp);
+
+  updatePlayerLevelUI();
+
+  if (newLvlInfo.level > oldLvlInfo.level) {
+    triggerLevelUpModal(newLvlInfo);
+  } else if (reason) {
+    showToast(`✨ +${amount} EXP 獲得！ (${reason})`);
+  }
+}
+
+function triggerLevelUpModal(lvlInfo) {
+  if (!ui.levelUpModal) return;
+  if (ui.lvlUpModalLevel) ui.lvlUpModalLevel.textContent = lvlInfo.level;
+  if (ui.lvlUpModalRankTitle) ui.lvlUpModalRankTitle.textContent = lvlInfo.rankTitle;
+  if (ui.lvlUpModalIcon) ui.lvlUpModalIcon.textContent = lvlInfo.rankIcon;
+  ui.levelUpModal.style.display = 'flex';
+}
+
+function closeLevelUpModal() {
+  if (ui.levelUpModal) {
+    ui.levelUpModal.style.display = 'none';
+  }
+}
+
+// ==========================================================================
+// 🔰 初級編: MBA専門用語マスター モジュール (全7カテゴリ・計150問)
+// ==========================================================================
+
+function initMbaVocab() {
+  ui.btnMbaRandomQuiz?.addEventListener('click', () => startMbaQuiz(null, 10));
+  ui.btnMbaWeakQuiz?.addEventListener('click', () => startMbaWeakQuiz(10));
+  ui.btnMbaBackToList?.addEventListener('click', closeMbaQuiz);
+  ui.btnMbaNextQuestion?.addEventListener('click', nextMbaQuestion);
+  ui.btnMbaResultRetry?.addEventListener('click', () => {
+    startMbaQuiz(state.mbaSession.activeCategory, 10);
+  });
+  ui.btnMbaResultBackTop?.addEventListener('click', closeMbaQuiz);
+  ui.btnLevelUpClose?.addEventListener('click', closeLevelUpModal);
+  ui.playerLevelBadge?.addEventListener('click', () => {
+    switchView('viewMba');
+  });
+}
+
+function renderMbaTopScreen() {
+  updatePlayerLevelUI();
+
+  const allMbaQuestions = window.MBA_VOCAB_QUESTIONS || [];
+  const categories = window.MBA_CATEGORIES || [];
+  const historyItems = state.history.items || {};
+
+  // Calculate MBA overall stats
+  let answeredCount = 0;
+  let correctTotal = 0;
+  allMbaQuestions.forEach(q => {
+    const rec = historyItems[q.id];
+    if (rec && rec.count > 0) {
+      answeredCount++;
+      if (rec.lastResult === true) correctTotal++;
+    }
+  });
+
+  const accuracyPct = answeredCount > 0 ? Math.round((correctTotal / answeredCount) * 100) : 0;
+  if (ui.mbaStatusMasteredCount) ui.mbaStatusMasteredCount.textContent = `${correctTotal} / ${allMbaQuestions.length}`;
+  if (ui.mbaStatusAccuracyPct) ui.mbaStatusAccuracyPct.textContent = answeredCount > 0 ? `${accuracyPct}%` : '--%';
+  if (ui.mbaStatusStreakCount) ui.mbaStatusStreakCount.textContent = state.player.combo || 0;
+
+  // Render 7 Categories Cards
+  if (!ui.mbaCategoriesGrid) return;
+  ui.mbaCategoriesGrid.innerHTML = categories.map(cat => {
+    const catQs = allMbaQuestions.filter(q => q.category === cat.id);
+    let catAnswered = 0;
+    let catCorrect = 0;
+
+    catQs.forEach(q => {
+      const rec = historyItems[q.id];
+      if (rec && rec.count > 0) {
+        catAnswered++;
+        if (rec.lastResult === true) catCorrect++;
+      }
+    });
+
+    const isMastered = catQs.length > 0 && catCorrect === catQs.length;
+    const masteryStar = isMastered ? '⭐ 制覇！' : (catCorrect > 0 ? `★ ${catCorrect}/${catQs.length}` : '未着手');
+
+    return `
+      <div class="mba-cat-card" onclick="startMbaQuiz('${cat.id}', 10)">
+        <div class="cat-card-top">
+          <div class="cat-card-icon" style="background: ${cat.color}22; color: ${cat.color};">${cat.icon}</div>
+          <div>
+            <h4 class="cat-card-title">${escapeHtml(cat.name)}</h4>
+            <p class="cat-card-desc">${escapeHtml(cat.desc)}</p>
+          </div>
+        </div>
+
+        <div class="cat-card-bottom">
+          <div class="cat-stat-info">
+            <span>📝 全${catQs.length}問</span>
+            &nbsp;•&nbsp;
+            <span style="color: ${isMastered ? '#fbbf24' : 'var(--text-muted)'}; font-weight: 700;">${masteryStar}</span>
+          </div>
+          <button class="cat-btn-train" style="background: ${cat.color};">
+            ▶️ 特訓開始
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function startMbaQuiz(categoryId = null, count = 10) {
+  const allQs = window.MBA_VOCAB_QUESTIONS || [];
+  let pool = categoryId ? allQs.filter(q => q.category === categoryId) : [...allQs];
+
+  if (pool.length === 0) {
+    showToast('出題可能な問題がありません');
+    return;
+  }
+
+  // Shuffle pool
+  pool.sort(() => Math.random() - 0.5);
+  const selected = pool.slice(0, Math.min(count, pool.length));
+
+  state.mbaSession = {
+    activeCategory: categoryId,
+    questions: selected,
+    currentIndex: 0,
+    score: 0,
+    answered: false,
+    earnedExp: 0,
+    combo: 0
+  };
+
+  ui.mbaCategoryView.style.display = 'none';
+  ui.mbaResultView.style.display = 'none';
+  ui.mbaQuizView.style.display = 'flex';
+  ui.btnHeaderBack.style.display = 'flex';
+
+  renderMbaQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function startMbaWeakQuiz(count = 10) {
+  const allQs = window.MBA_VOCAB_QUESTIONS || [];
+  const historyItems = state.history.items || {};
+
+  // 未マスターまたは間違えた問題を優先
+  let pool = allQs.filter(q => {
+    const rec = historyItems[q.id];
+    return !rec || rec.lastResult !== true;
+  });
+
+  if (pool.length === 0) {
+    showToast('🎉 すべてのMBA用語をマスターしています！ランダム特訓を開始します。');
+    pool = [...allQs];
+  }
+
+  pool.sort(() => Math.random() - 0.5);
+  const selected = pool.slice(0, Math.min(count, pool.length));
+
+  state.mbaSession = {
+    activeCategory: null,
+    questions: selected,
+    currentIndex: 0,
+    score: 0,
+    answered: false,
+    earnedExp: 0,
+    combo: 0
+  };
+
+  ui.mbaCategoryView.style.display = 'none';
+  ui.mbaResultView.style.display = 'none';
+  ui.mbaQuizView.style.display = 'flex';
+  ui.btnHeaderBack.style.display = 'flex';
+
+  renderMbaQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderMbaQuestion() {
+  const s = state.mbaSession;
+  const q = s.questions[s.currentIndex];
+  if (!q) return;
+
+  s.answered = false;
+
+  // Header progress
+  if (ui.mbaQuizCategoryTag) ui.mbaQuizCategoryTag.textContent = q.categoryName || 'MBA用語';
+  if (ui.mbaQuizCounterText) ui.mbaQuizCounterText.textContent = `第 ${s.currentIndex + 1} / ${s.questions.length} 問`;
+  if (ui.mbaQuizComboNum) ui.mbaQuizComboNum.textContent = s.combo;
+  if (ui.mbaQuizFillBar) {
+    const pct = ((s.currentIndex + 1) / s.questions.length) * 100;
+    ui.mbaQuizFillBar.style.width = `${pct}%`;
+  }
+
+  // Question Content
+  if (ui.mbaQuizTermPill) ui.mbaQuizTermPill.textContent = q.term;
+  if (ui.mbaQuizQuestionText) ui.mbaQuizQuestionText.textContent = q.question;
+
+  // Hide feedback box
+  if (ui.mbaQuizFeedbackBox) ui.mbaQuizFeedbackBox.style.display = 'none';
+
+  // 4 Options
+  if (ui.mbaQuizOptionsGrid) {
+    ui.mbaQuizOptionsGrid.innerHTML = q.options.map((opt, idx) => {
+      const labels = ['ア', 'イ', 'ウ', 'エ'];
+      return `
+        <button class="mba-opt-btn" onclick="handleMbaOptionChoice(${idx})">
+          <span style="font-weight: 700; color: #fbbf24; min-width: 1.5rem;">${labels[idx]}</span>
+          <span>${escapeHtml(opt)}</span>
+        </button>
+      `;
+    }).join('');
+  }
+}
+
+function handleMbaOptionChoice(chosenIndex) {
+  const s = state.mbaSession;
+  if (s.answered) return;
+  s.answered = true;
+
+  const q = s.questions[s.currentIndex];
+  const isCorrect = (chosenIndex === q.answerIndex);
+
+  // Disable option buttons & mark colors
+  const btns = ui.mbaQuizOptionsGrid.querySelectorAll('.mba-opt-btn');
+  btns.forEach((btn, idx) => {
+    btn.disabled = true;
+    if (idx === q.answerIndex) {
+      btn.classList.add('correct');
+    } else if (idx === chosenIndex && !isCorrect) {
+      btn.classList.add('wrong');
+    }
+  });
+
+  // Calculate EXP
+  let expGain = 0;
+  if (isCorrect) {
+    s.score++;
+    s.combo++;
+    state.player.combo = Math.max(state.player.combo || 0, s.combo);
+
+    // EXP formula: Base 20 + combo bonus (up to +10)
+    const comboBonus = s.combo >= 5 ? 10 : (s.combo >= 3 ? 5 : 0);
+    expGain = 20 + comboBonus;
+    s.earnedExp += expGain;
+    awardPlayerExp(expGain, comboBonus > 0 ? `正解! 連続ボーナス+${comboBonus}` : '正解');
+
+    if (ui.mbaQuizResultBadge) {
+      ui.mbaQuizResultBadge.className = 'fb-badge correct';
+      ui.mbaQuizResultBadge.textContent = s.combo >= 3 ? `🔥 ${s.combo}問連続正解！ (+${expGain} EXP)` : `⭕️ 正解！ (+${expGain} EXP)`;
+    }
+  } else {
+    s.combo = 0;
+    if (ui.mbaQuizResultBadge) {
+      ui.mbaQuizResultBadge.className = 'fb-badge wrong';
+      ui.mbaQuizResultBadge.textContent = '❌ 不正解... 次回確実にマスターしよう！';
+    }
+  }
+
+  if (ui.mbaQuizComboNum) ui.mbaQuizComboNum.textContent = s.combo;
+  if (ui.mbaQuizExpGain) ui.mbaQuizExpGain.textContent = isCorrect ? `+${expGain} EXP` : '+0 EXP';
+  if (ui.mbaQuizExplanationText) ui.mbaQuizExplanationText.textContent = q.explanation;
+
+  // Save history
+  let rec = state.history.items[q.id];
+  if (!rec) {
+    rec = { count: 0, correctCount: 0, wrongCount: 0, lastResult: null, intervalDays: 1, easeFactor: 2.5, nextDueDate: Date.now() };
+    state.history.items[q.id] = rec;
+  }
+  rec.count++;
+  if (isCorrect) rec.correctCount++; else rec.wrongCount++;
+  rec.lastResult = isCorrect;
+  saveHistoryData();
+
+  if (ui.mbaQuizFeedbackBox) ui.mbaQuizFeedbackBox.style.display = 'flex';
+}
+
+function nextMbaQuestion() {
+  const s = state.mbaSession;
+  s.currentIndex++;
+  if (s.currentIndex < s.questions.length) {
+    renderMbaQuestion();
+  } else {
+    renderMbaResultScreen();
+  }
+}
+
+function renderMbaResultScreen() {
+  const s = state.mbaSession;
+  ui.mbaQuizView.style.display = 'none';
+  ui.mbaResultView.style.display = 'flex';
+
+  const total = s.questions.length;
+  const score = s.score;
+  const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+
+  if (ui.mbaResultScorePct) ui.mbaResultScorePct.textContent = `${pct}%`;
+  if (ui.mbaResultFraction) ui.mbaResultFraction.textContent = `${score} / ${total}問 正解`;
+  if (ui.mbaResultExpEarned) ui.mbaResultExpEarned.textContent = `+${s.earnedExp} EXP`;
+
+  if (pct >= 80) {
+    if (ui.mbaResultTitle) ui.mbaResultTitle.textContent = '🎉 素晴らしい！MBA専門用語をマスター！';
+  } else if (pct >= 60) {
+    if (ui.mbaResultTitle) ui.mbaResultTitle.textContent = '👍 合格水準！あと一歩で完璧です！';
+  } else {
+    if (ui.mbaResultTitle) ui.mbaResultTitle.textContent = '💪 復習を重ねてビジネス戦闘力を磨こう！';
+  }
+}
+
+function closeMbaQuiz() {
+  ui.mbaQuizView.style.display = 'none';
+  ui.mbaResultView.style.display = 'none';
+  ui.mbaCategoryView.style.display = 'flex';
+  renderMbaTopScreen();
+}
+
 // Global scope bindings for inline HTML handlers
 window.startCaseWorkspace = startCaseWorkspace;
 window.renderCaseQuestion = renderCaseQuestion;
 window.scoreCaseQuestion = scoreCaseQuestion;
 window.onCaseAnswerInput = onCaseAnswerInput;
+window.startMbaQuiz = startMbaQuiz;
+window.handleMbaOptionChoice = handleMbaOptionChoice;
 
 // Start Application on Load
 document.addEventListener('DOMContentLoaded', init);

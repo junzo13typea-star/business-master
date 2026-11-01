@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="診断士PassPro">
+  <meta name="apple-mobile-web-app-title" content="ビジネスエキスパートの道">
   <meta name="theme-color" content="#070a13">
-  <meta name="description" content="中小企業診断士 1次試験 攻略Study OS - 忘却曲線復習・出題傾向模擬試験・法改正完全準拠">
-  <title>診断士 PassPro | 1次試験 合格特化 Study OS</title>
+  <meta name="description" content="ビジネスエキスパートの道 - 初級編MBA専門用語から中級編診断士1次試験、上級編2次筆記実戦ケーススタディまでビジネス戦闘力を極める総合学習OS">
+  <title>ビジネスエキスパートの道 | MBA用語・中小企業診断士 総合学習OS</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,17 +36,30 @@
           ←
         </button>
         <div class="brand-container">
-          <div class="brand-logo-mark">
-            <span>Pass</span>
+          <div class="brand-logo-mark" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <span>EXP</span>
           </div>
           <div>
-            <h1 class="brand-title">診断士 <span class="gradient-text">PassPro</span></h1>
-            <span class="compliance-tag" title="最新の会社法・意匠法・中小企業定義に完全準拠">🛡️ 最新法改正対応版</span>
+            <h1 class="brand-title">ビジネスエキスパートの<span class="gradient-text">道</span></h1>
+            <span class="compliance-tag" title="初級MBA用語・中級1次・上級2次筆記まで完全網羅">🎓 MBA実務用語 ＆ 診断士 総合OS</span>
           </div>
         </div>
       </div>
 
       <div class="bar-right">
+        <!-- Live Player Level & EXP Badge (NEW: ゲームシステム) -->
+        <div class="player-level-badge" id="playerLevelBadge" title="あなたのビジネス戦闘力レベル">
+          <div class="lvl-circle">
+            <span class="lvl-prefix">Lv.</span><span id="headerLvlNum">1</span>
+          </div>
+          <div class="lvl-info">
+            <span class="lvl-title" id="headerRankTitle">🌱 新人アソシエイト</span>
+            <div class="lvl-bar-track">
+              <div class="lvl-bar-fill" id="headerExpBar" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Live Pass Probability Gauge -->
         <div class="pass-prob-meter" id="passProbMeter" title="総合正答率に基づく合格判定">
           <span class="prob-label">合格判定</span>
@@ -68,13 +81,18 @@
 
     <!-- Top Navigation Tabs (Desktop & Tablet) -->
     <nav class="app-nav-tabs" id="appNavTabs">
+      <button class="nav-tab" data-view="viewMba" id="tabMba">
+        <span class="tab-emoji">🔰</span>
+        <span>初級編: MBA用語</span>
+        <span class="counter-pill" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff;">150問</span>
+      </button>
       <button class="nav-tab active" data-view="viewHome" id="tabSubjects">
-        <span class="tab-emoji">📚</span>
-        <span>科目別トレーニング</span>
+        <span class="tab-emoji">📘</span>
+        <span>中級編: 1次科目</span>
       </button>
       <button class="nav-tab" data-view="viewCaseExam" id="tabCaseExam">
         <span class="tab-emoji">✍️</span>
-        <span>2次筆記演習</span>
+        <span>上級編: 2次筆記</span>
         <span class="counter-pill" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">8事例</span>
       </button>
       <button class="nav-tab" data-view="viewMockExam" id="tabMock">
@@ -88,12 +106,162 @@
       </button>
       <button class="nav-tab" data-view="viewAnalytics" id="tabAnalytics">
         <span class="tab-emoji">📊</span>
-        <span>合格診断・分析</span>
+        <span>成長・合格診断</span>
       </button>
     </nav>
 
     <!-- Main Content Area -->
     <main class="main-stage" id="mainStage">
+
+      <!-- ===================================================================
+           VIEW 0: 🔰 初級編: MBA専門用語マスター (全7カテゴリ・計150問)
+           =================================================================== -->
+      <section id="viewMba" class="stage-view">
+        
+        <!-- MBA Top Screen (カテゴリ選択 & 戦闘力ステータス) -->
+        <div id="mbaCategoryView" class="mba-top-container">
+          
+          <!-- Hero Banner -->
+          <div class="mba-hero-card">
+            <div class="mba-hero-left">
+              <span class="mba-badge-pill">🔰 初級編：ビジネスエキスパートへの第一歩</span>
+              <h2 class="mba-hero-title">MBA専門用語マスター 150</h2>
+              <p class="mba-hero-desc">
+                世界基準のビジネススクールで学ぶ7大コア領域の必須概念を選択式で攻略。問題を解くごとにEXPを獲得し、ビジネス戦闘力（Level）をランクアップさせよう！
+              </p>
+              <div class="mba-hero-actions">
+                <button class="btn btn-primary" id="btnMbaRandomQuiz">
+                  <span>🎲 全分野からランダム10問特訓</span>
+                  <span class="badge-bubble">+EXP</span>
+                </button>
+                <button class="btn btn-outline" id="btnMbaWeakQuiz">
+                  <span>⚠️ 未マスター用語を集中攻略</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Player Status Dashboard Card -->
+            <div class="mba-player-card">
+              <div class="player-rank-header">
+                <span class="p-eyebrow">現在のビジネス階級</span>
+                <div class="p-title-row">
+                  <span class="p-rank-icon" id="mbaStatusRankIcon">🌱</span>
+                  <h3 class="p-rank-title" id="mbaStatusRankTitle">新人アソシエイト</h3>
+                </div>
+              </div>
+              
+              <div class="p-level-row">
+                <span class="p-level-val">Lv. <span id="mbaStatusLevelNum">1</span></span>
+                <span class="p-exp-val" id="mbaStatusExpText">0 / 50 EXP</span>
+              </div>
+              <div class="p-exp-track">
+                <div class="p-exp-fill" id="mbaStatusExpFill" style="width: 0%;"></div>
+              </div>
+
+              <div class="p-stats-grid">
+                <div class="p-stat-item">
+                  <span class="p-stat-num" id="mbaStatusMasteredCount">0</span>
+                  <span class="p-stat-label">習得用語数</span>
+                </div>
+                <div class="p-stat-item">
+                  <span class="p-stat-num" id="mbaStatusAccuracyPct">--%</span>
+                  <span class="p-stat-label">正答率</span>
+                </div>
+                <div class="p-stat-item">
+                  <span class="p-stat-num" id="mbaStatusStreakCount">0</span>
+                  <span class="p-stat-label">連続正解</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7 Categories Grid -->
+          <div class="mba-categories-section">
+            <div class="section-title-bar">
+              <div>
+                <h3 class="title-text">MBA 7大コア領域から選んで特訓</h3>
+                <p class="title-sub">各分野の専門用語と実務ケースを4択問題でマスターしよう</p>
+              </div>
+            </div>
+
+            <div class="mba-categories-grid" id="mbaCategoriesGrid">
+              <!-- Dynamically populated via app.js -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- MBA Active Quiz Container (演習中) -->
+        <div id="mbaQuizView" class="mba-quiz-container" style="display: none;">
+          <div class="mba-quiz-header">
+            <button class="btn btn-sm btn-ghost" id="btnMbaBackToList">← 分野一覧に戻る</button>
+            <div class="mba-quiz-progress-box">
+              <span class="mba-q-category-tag" id="mbaQuizCategoryTag">経営戦略</span>
+              <span class="mba-q-counter" id="mbaQuizCounterText">第 1 / 10 問</span>
+            </div>
+            <div class="mba-quiz-streak-pill" id="mbaQuizComboPill">
+              🔥 <span id="mbaQuizComboNum">0</span> 連続正解中
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="quiz-track-bar">
+            <div class="quiz-fill-bar" id="mbaQuizFillBar" style="width: 10%;"></div>
+          </div>
+
+          <!-- Question Card -->
+          <div class="mba-question-card">
+            <div class="mba-term-pill" id="mbaQuizTermPill">3C分析</div>
+            <h3 class="mba-q-text" id="mbaQuizQuestionText">
+              事業の外部環境および内部環境を整理し、成功要因（KSF）を導き出すフレームワーク「3C分析」の3つの要素として正しい組み合わせはどれか。
+            </h3>
+
+            <!-- 4 Options -->
+            <div class="mba-options-grid" id="mbaQuizOptionsGrid">
+              <!-- Dynamic Options -->
+            </div>
+
+            <!-- Instant Explanation & Feedback Box -->
+            <div class="mba-feedback-box" id="mbaQuizFeedbackBox" style="display: none;">
+              <div class="fb-header">
+                <span class="fb-badge" id="mbaQuizResultBadge">⭕️ 正解！ (+20 EXP)</span>
+                <span class="fb-exp-gain" id="mbaQuizExpGain">+20 EXP</span>
+              </div>
+              <div class="fb-explanation" id="mbaQuizExplanationText">
+                3C分析はマッキンゼーの大前研一氏が提唱したフレームワークで...
+              </div>
+              <div class="fb-actions">
+                <button class="btn btn-primary" id="btnMbaNextQuestion">次の問題へ進む →</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- MBA Session Result Screen -->
+        <div id="mbaResultView" class="mba-result-container" style="display: none;">
+          <div class="mba-result-card">
+            <span class="res-eyebrow">🎉 特訓セッション完了！</span>
+            <h2 class="res-title" id="mbaResultTitle">素晴らしい成果です！</h2>
+            
+            <div class="res-score-circle">
+              <span class="res-score-pct" id="mbaResultScorePct">90%</span>
+              <span class="res-score-sub" id="mbaResultFraction">9 / 10問 正解</span>
+            </div>
+
+            <div class="res-exp-summary">
+              <span class="res-exp-label">獲得ビジネスEXP</span>
+              <span class="res-exp-num" id="mbaResultExpEarned">+220 EXP</span>
+            </div>
+
+            <div class="res-action-buttons">
+              <button class="btn btn-secondary" id="btnMbaResultRetry">もう一度解く</button>
+              <button class="btn btn-primary" id="btnMbaResultBackTop">分野一覧に戻る</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
 
       <!-- ===================================================================
            VIEW 1: HOME / 科目一覧 & 忘却曲線
@@ -676,13 +844,35 @@
         </div>
       </div>
 
+      <!-- Level Up Celebration Modal (NEW: ゲームシステム) -->
+      <div id="levelUpModal" class="case-modal-overlay" style="display: none;">
+        <div class="level-up-modal-card">
+          <div class="lvl-up-sparkle">✨ ランクアップ！ ✨</div>
+          <div class="lvl-up-icon-wrap" id="lvlUpModalIcon">🚀</div>
+          <h2 class="lvl-up-headline">LEVEL UP!</h2>
+          <div class="lvl-up-number-badge">Lv. <span id="lvlUpModalLevel">5</span></div>
+          <p class="lvl-up-sub">ビジネス戦闘力が高まり、新たな称号を獲得しました！</p>
+          <div class="lvl-up-new-title-box">
+            <span class="new-title-label">新称号獲得</span>
+            <div class="new-title-text" id="lvlUpModalRankTitle">💼 自立型プレイヤー</div>
+          </div>
+          <button class="btn btn-primary btn-block" id="btnLevelUpClose">
+            さらなる高みを目指す 🔥
+          </button>
+        </div>
+      </div>
+
     </main>
 
     <!-- Mobile Bottom App Bar (Optimized for Thumb Flow) -->
     <nav class="mobile-bottom-tabs" id="mobileBottomTabs">
+      <button class="m-tab" data-view="viewMba">
+        <span class="m-icon">🔰</span>
+        <span class="m-label">MBA</span>
+      </button>
       <button class="m-tab active" data-view="viewHome">
         <span class="m-icon">📚</span>
-        <span class="m-label">科目</span>
+        <span class="m-label">1次科目</span>
       </button>
       <button class="m-tab" data-view="viewCaseExam">
         <span class="m-icon">✍️</span>
@@ -706,6 +896,9 @@
     <div id="toastNotification" class="toast-popup"></div>
 
   </div>
+
+  <!-- MBA Vocab Master Modules (初級編: MBA専門用語 150問) -->
+  <script src="data/mba_vocab.js"></script>
 
   <!-- Subject Question Modules (実戦過去問 700問) -->
   <script src="data/management.js"></script>
