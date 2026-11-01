@@ -1090,8 +1090,8 @@
 
   </div>
 
-  <!-- MBA Vocab Master Modules (初級編: MBA専門用語 150問) -->
-  <script src="data/mba_vocab.js"></script>
+  <!-- MBA Vocab Master Modules (初級編: MBA専門用語 451問) -->
+  <script src="data/mba_vocab.js?v=6"></script>
 
   <!-- Subject Question Modules (実戦過去問 700問) -->
   <script src="data/management.js"></script>
@@ -1115,14 +1115,17 @@
   <script src="data/cases_data.js"></script>
 
   <script src="questions.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=6"></script>
 
   <!-- Service Worker for Offline / PWA Support -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+          .then(reg => {
+            console.log('PWA Service Worker registered:', reg.scope);
+            reg.update();
+          })
           .catch(err => console.log('Service Worker registration failed:', err));
       });
     }
