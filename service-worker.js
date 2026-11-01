@@ -1,5 +1,5 @@
 // Service Worker for ビジネスエキスパートの道 (PWA / オフライン動作対応)
-const CACHE_NAME = 'shindanshi-master-v8';
+const CACHE_NAME = 'shindanshi-master-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -26,16 +26,17 @@ const ASSETS_TO_CACHE = [
   './data/cases_data.js'
 ];
 
-// Install: すべての主要ファイルを事前キャッシュ
+// Install: すべての主要ファイルを事前キャッシュし、即時アクティベート
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // 古いSWの待機をスキップして即座に有効化
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Activate: 古いキャッシュの削除
+// Activate: 古いキャッシュの完全削除
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -46,23 +47,18 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: キャッシュ優先 (Cache-First) でオフラインでも爆速起動
+// Fetch: Network-First（オンライン時は常に最新を取得し、オフライン時のみキャッシュを利用）
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // キャッシュがあればキャッシュを返しつつ、バックグラウンドで最新を取得して更新
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse);
-            });
-          }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-      return fetch(event.request);
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const resClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
 

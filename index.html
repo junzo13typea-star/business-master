@@ -25,7 +25,18 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
-  <link rel="stylesheet" href="index.css?v=8">
+  <!-- Immediate Cache Purge for PWA Updates -->
+  <script>
+    if ('caches' in window) {
+      caches.keys().then(function(keys) {
+        keys.forEach(function(k) {
+          if (k !== 'shindanshi-master-v9') caches.delete(k);
+        });
+      });
+    }
+  </script>
+
+  <link rel="stylesheet" href="index.css?v=9">
 </head>
 <body class="theme-dark">
   <!-- Dynamic Glow Backgrounds -->
@@ -429,6 +440,33 @@
           <p class="order-mode-desc" id="orderModeDescText">
             💡 現在【ランダム（均等出題）】に設定中：同じ問題ばかりが連続せず、未演習の問題や解いた回数の少ない問題が優先して出題されます。
           </p>
+        </div>
+
+        <!-- Section: 常時表示 論点・小カテゴリ限定特訓セレクター (NEW: 一目で選べる特訓パネル) -->
+        <div class="subcat-fast-panel" id="subcatFastPanel">
+          <div class="subcat-fast-header">
+            <div>
+              <span class="subcat-fast-tag">🎯 論点・小カテゴリ限定特訓セレクター</span>
+              <h3 class="subcat-fast-title">苦手論点や特定分野（知財・会社法・マクロ・ミクロ等）に範囲を絞って特訓</h3>
+              <p class="subcat-fast-sub">下の科目タブを切り替えると、対応する小カテゴリボタンが瞬時に切り替わります。ボタンを押すとすぐにその範囲限定で問題がスタートします。</p>
+            </div>
+          </div>
+
+          <!-- 7科目選択タブ -->
+          <div class="subcat-fast-subject-tabs" id="subcatFastSubjectTabs">
+            <button class="sf-tab active" data-subject="management">📈 企業経営</button>
+            <button class="sf-tab" data-subject="finance">💰 財務会計</button>
+            <button class="sf-tab" data-subject="operations">🏭 運営管理</button>
+            <button class="sf-tab" data-subject="economics">📊 経済学</button>
+            <button class="sf-tab" data-subject="law">⚖️ 経営法務</button>
+            <button class="sf-tab" data-subject="it">💻 情報システム</button>
+            <button class="sf-tab" data-subject="policy">🏢 中小企業政策</button>
+          </div>
+
+          <!-- 小カテゴリボタン一覧（動的生成） -->
+          <div class="subcat-fast-chips-row" id="subcatFastChipsRow">
+            <!-- Populated by JS -->
+          </div>
         </div>
 
         <!-- Section: 7 Subjects Grid -->
@@ -1142,7 +1180,7 @@
   </div>
 
   <!-- MBA Vocab Master Modules (初級編: MBA専門用語 451問) -->
-  <script src="data/mba_vocab.js?v=8"></script>
+  <script src="data/mba_vocab.js?v=9"></script>
 
   <!-- Subject Question Modules (実戦過去問 700問) -->
   <script src="data/management.js"></script>
@@ -1165,8 +1203,8 @@
   <!-- Case Exam Modules (第2次筆記試験 事例 I〜IV 全8事例) -->
   <script src="data/cases_data.js"></script>
 
-  <script src="questions.js?v=8"></script>
-  <script src="app.js?v=8"></script>
+  <script src="questions.js?v=9"></script>
+  <script src="app.js?v=9"></script>
 
   <!-- Service Worker for Offline / PWA Support -->
   <script>

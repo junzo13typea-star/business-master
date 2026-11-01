@@ -211,6 +211,9 @@ const ui = {
   btnOrderSmartRandom: document.getElementById('btnOrderSmartRandom'),
   btnOrderSequential: document.getElementById('btnOrderSequential'),
   orderModeDescText: document.getElementById('orderModeDescText'),
+  subcatFastPanel: document.getElementById('subcatFastPanel'),
+  subcatFastSubjectTabs: document.getElementById('subcatFastSubjectTabs'),
+  subcatFastChipsRow: document.getElementById('subcatFastChipsRow'),
   practiceModeSwitcher: document.getElementById('practiceModeSwitcher'),
   tabModeExam: document.getElementById('tabModeExam'),
   tabModeVocab: document.getElementById('tabModeVocab'),
@@ -842,6 +845,9 @@ function renderHomeScreen() {
       });
     });
   }
+
+  // 常時表示 小カテゴリセレクターの描画
+  renderSubcatFastPanel();
 }
 
 // ==========================================================================
@@ -913,6 +919,59 @@ function closeSubCategoryModal() {
 function selectSubCategoryAndStart(subjectId, subCategoryId) {
   closeSubCategoryModal();
   startQuizSession('subject', subjectId, subCategoryId);
+}
+
+// ==========================================================================
+// 常時表示 論点・小カテゴリ限定特訓セレクター (Fast Panel)
+// ==========================================================================
+
+function renderSubcatFastPanel(subjectId = null) {
+  if (!ui.subcatFastPanel) return;
+
+  if (state.practiceMode === 'vocab') {
+    ui.subcatFastPanel.style.display = 'none';
+    return;
+  }
+  ui.subcatFastPanel.style.display = 'block';
+
+  const currentSub = subjectId || state.fastPanelSubject || 'management';
+  state.fastPanelSubject = currentSub;
+
+  // Update tabs active state
+  if (ui.subcatFastSubjectTabs) {
+    ui.subcatFastSubjectTabs.querySelectorAll('.sf-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.getAttribute('data-subject') === currentSub);
+    });
+  }
+
+  // Populate chips
+  if (ui.subcatFastChipsRow && typeof SUBJECT_SUBCATEGORIES !== 'undefined') {
+    const subCats = SUBJECT_SUBCATEGORIES[currentSub] || [];
+    let qList = QUESTIONS.filter(q => q.subject === currentSub);
+    if (state.selectedYear !== 'all') {
+      const yearFiltered = qList.filter(q => q.year === state.selectedYear);
+      if (yearFiltered.length > 0) qList = yearFiltered;
+    }
+
+    ui.subcatFastChipsRow.innerHTML = subCats.map(sc => {
+      const filtered = sc.id === 'all'
+        ? qList
+        : qList.filter(q => typeof getQuestionSubCategory === 'function' && getQuestionSubCategory(q) === sc.id);
+
+      return `
+        <div class="sf-chip-card" onclick="selectSubCategoryAndStart('${currentSub}', '${sc.id}')">
+          <div class="sf-chip-card-left">
+            <span class="sf-chip-icon">${sc.icon}</span>
+            <div>
+              <h5 class="sf-chip-name">${escapeHtml(sc.name)}</h5>
+              <p class="sf-chip-desc">${escapeHtml(sc.desc || '科目の全範囲からバランスよく出題')}</p>
+            </div>
+          </div>
+          <span class="sf-chip-badge">${filtered.length}問 ▶️</span>
+        </div>
+      `;
+    }).join('');
+  }
 }
 
 function renderAnalyticsScreen() {
@@ -1528,6 +1587,14 @@ function bindEventListeners() {
 
   // Modal Close Button
   ui.btnCloseSubcatModal?.addEventListener('click', closeSubCategoryModal);
+
+  // Sub-Category Fast Panel Subject Tabs
+  ui.subcatFastSubjectTabs?.querySelectorAll('.sf-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const subId = tab.getAttribute('data-subject');
+      if (subId) renderSubcatFastPanel(subId);
+    });
+  });
 
   // Practice Mode Switcher (実戦過去問 vs スピード用語マスター)
   ui.tabModeExam?.addEventListener('click', () => {
