@@ -775,35 +775,6 @@ function renderHomeScreen() {
         gradeBadge = `<span class="tile-grade-badge grade-e">足切り警戒 (${stat.accuracy}%)</span>`;
       }
 
-      let subCatsHtml = '';
-      if (!isVocab && typeof SUBJECT_SUBCATEGORIES !== 'undefined' && SUBJECT_SUBCATEGORIES[subKey]) {
-        const subCats = SUBJECT_SUBCATEGORIES[subKey].filter(sc => sc.id !== 'all');
-        const chipsHtml = subCats.map(sc => {
-          const count = questionsInSub.filter(q => typeof getQuestionSubCategory === 'function' && getQuestionSubCategory(q) === sc.id).length;
-          return `
-            <button class="subcat-chip-btn" data-subject-id="${subKey}" data-subcat-id="${sc.id}" title="${escapeHtml(sc.desc || sc.name)}">
-              <span>${sc.icon} ${escapeHtml(sc.name)}</span>
-              <span class="sc-count">${count}問</span>
-            </button>
-          `;
-        }).join('');
-
-        subCatsHtml = `
-          <div class="tile-subcats-box">
-            <div class="subcat-label-row">
-              <span class="subcat-label-text">📌 論点・小カテゴリ限定特訓:</span>
-            </div>
-            <div class="subcat-chips-list">
-              <button class="subcat-chip-btn" data-subject-id="${subKey}" data-subcat-id="all" style="border-color: rgba(255,255,255,0.18);">
-                <span>🌐 全範囲</span>
-                <span class="sc-count">${questionsInSub.length}問</span>
-              </button>
-              ${chipsHtml}
-            </div>
-          </div>
-        `;
-      }
-
       return `
         <article class="subject-tile" data-subject-id="${subKey}">
           <div class="tile-top">
@@ -832,22 +803,14 @@ function renderHomeScreen() {
             </div>
           </div>
 
-          ${subCatsHtml}
+          <div class="tile-bottom-action">
+            <span class="tile-action-hint">📂 クリックして論点・小カテゴリを選択 ▶</span>
+          </div>
         </article>
       `;
     }).join('');
 
-    // Bind sub-category chip clicks (優先実行)
-    document.querySelectorAll('.subcat-chip-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // タイル全体のクリックを発火させない
-        const subId = btn.getAttribute('data-subject-id');
-        const subCatId = btn.getAttribute('data-subcat-id');
-        startQuizSession('subject', subId, subCatId);
-      });
-    });
-
-    // Bind tile clicks (科目タイルをクリックしたら必ず小カテゴリ選択モーダルを開く)
+    // Bind tile clicks (科目タイルをクリックしたら小カテゴリ選択モーダルを開く)
     document.querySelectorAll('.subject-tile').forEach(tile => {
       tile.addEventListener('click', () => {
         const subId = tile.getAttribute('data-subject-id');
@@ -855,9 +818,6 @@ function renderHomeScreen() {
       });
     });
   }
-
-  // 常時表示 小カテゴリセレクターの描画
-  renderSubcatFastPanel();
 }
 
 // ==========================================================================
@@ -1027,59 +987,6 @@ function closeMbaSubCategoryModal() {
 function selectMbaSubCategoryAndStart(categoryId, subCategoryId) {
   closeMbaSubCategoryModal();
   startMbaQuiz(categoryId, state.mbaModalQuestionCount, subCategoryId);
-}
-
-// ==========================================================================
-// 常時表示 論点・小カテゴリ限定特訓セレクター (Fast Panel)
-// ==========================================================================
-
-function renderSubcatFastPanel(subjectId = null) {
-  if (!ui.subcatFastPanel) return;
-
-  if (state.practiceMode === 'vocab') {
-    ui.subcatFastPanel.style.display = 'none';
-    return;
-  }
-  ui.subcatFastPanel.style.display = 'block';
-
-  const currentSub = subjectId || state.fastPanelSubject || 'management';
-  state.fastPanelSubject = currentSub;
-
-  // Update tabs active state
-  if (ui.subcatFastSubjectTabs) {
-    ui.subcatFastSubjectTabs.querySelectorAll('.sf-tab').forEach(tab => {
-      tab.classList.toggle('active', tab.getAttribute('data-subject') === currentSub);
-    });
-  }
-
-  // Populate chips
-  if (ui.subcatFastChipsRow && typeof SUBJECT_SUBCATEGORIES !== 'undefined') {
-    const subCats = SUBJECT_SUBCATEGORIES[currentSub] || [];
-    let qList = QUESTIONS.filter(q => q.subject === currentSub);
-    if (state.selectedYear !== 'all') {
-      const yearFiltered = qList.filter(q => q.year === state.selectedYear);
-      if (yearFiltered.length > 0) qList = yearFiltered;
-    }
-
-    ui.subcatFastChipsRow.innerHTML = subCats.map(sc => {
-      const filtered = sc.id === 'all'
-        ? qList
-        : qList.filter(q => typeof getQuestionSubCategory === 'function' && getQuestionSubCategory(q) === sc.id);
-
-      return `
-        <div class="sf-chip-card" onclick="selectSubCategoryAndStart('${currentSub}', '${sc.id}')">
-          <div class="sf-chip-card-left">
-            <span class="sf-chip-icon">${sc.icon}</span>
-            <div>
-              <h5 class="sf-chip-name">${escapeHtml(sc.name)}</h5>
-              <p class="sf-chip-desc">${escapeHtml(sc.desc || '科目の全範囲からバランスよく出題')}</p>
-            </div>
-          </div>
-          <span class="sf-chip-badge">${filtered.length}問 ▶️</span>
-        </div>
-      `;
-    }).join('');
-  }
 }
 
 function renderAnalyticsScreen() {
@@ -1728,14 +1635,6 @@ function bindEventListeners() {
     ui.mbaBtnOrderSeq.classList.add('active');
     ui.mbaBtnOrderRandom?.classList.remove('active');
     showToast('📋 出題順: 通し番号順（第1問〜）');
-  });
-
-  // Sub-Category Fast Panel Subject Tabs
-  ui.subcatFastSubjectTabs?.querySelectorAll('.sf-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const subId = tab.getAttribute('data-subject');
-      if (subId) renderSubcatFastPanel(subId);
-    });
   });
 
   // Practice Mode Switcher (実戦過去問 vs スピード用語マスター)
@@ -2645,38 +2544,6 @@ function renderMbaTopScreen() {
     const isMastered = catQs.length > 0 && catCorrect === catQs.length;
     const masteryStar = isMastered ? '⭐ 制覇！' : (catCorrect > 0 ? `★ ${catCorrect}/${catQs.length}` : '未着手');
 
-    // Sub-categories chips inside card
-    let subCatsHtml = '';
-    const mbaSubMap = window.MBA_SUBCATEGORIES || (typeof MBA_SUBCATEGORIES !== 'undefined' ? MBA_SUBCATEGORIES : {});
-    const getSubCatFn = window.getMbaQuestionSubCategory || (typeof getMbaQuestionSubCategory === 'function' ? getMbaQuestionSubCategory : null);
-    if (mbaSubMap[cat.id]) {
-      const subCats = mbaSubMap[cat.id].filter(sc => sc.id !== 'all');
-      const chipsHtml = subCats.map(sc => {
-        const count = catQs.filter(q => getSubCatFn && getSubCatFn(q) === sc.id).length;
-        return `
-          <button class="subcat-chip-btn mba-chip-btn" onclick="event.stopPropagation(); startMbaQuiz('${cat.id}', 10, '${sc.id}')" title="${escapeHtml(sc.desc || sc.name)}">
-            <span>${sc.icon} ${escapeHtml(sc.name)}</span>
-            <span class="sc-count">${count}問</span>
-          </button>
-        `;
-      }).join('');
-
-      subCatsHtml = `
-        <div class="tile-subcats-box" style="margin-top: 0.8rem;">
-          <div class="subcat-label-row">
-            <span class="subcat-label-text">📌 論点・小カテゴリ限定特訓:</span>
-          </div>
-          <div class="subcat-chips-list">
-            <button class="subcat-chip-btn mba-chip-btn" onclick="event.stopPropagation(); startMbaQuiz('${cat.id}', 10, 'all')" style="border-color: rgba(255,255,255,0.18);">
-              <span>🌐 全範囲</span>
-              <span class="sc-count">${catQs.length}問</span>
-            </button>
-            ${chipsHtml}
-          </div>
-        </div>
-      `;
-    }
-
     return `
       <div class="mba-cat-card" onclick="openMbaSubCategoryModal('${cat.id}')">
         <div class="cat-card-top">
@@ -2694,11 +2561,9 @@ function renderMbaTopScreen() {
             <span style="color: ${isMastered ? '#fbbf24' : 'var(--text-muted)'}; font-weight: 700;">${masteryStar}</span>
           </div>
           <button class="cat-btn-train" style="background: ${cat.color};" onclick="event.stopPropagation(); openMbaSubCategoryModal('${cat.id}')">
-            📂 論点・小カテゴリ選択
+            📂 論点選択
           </button>
         </div>
-
-        ${subCatsHtml}
       </div>
     `;
   }).join('');

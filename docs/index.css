@@ -4206,12 +4206,27 @@ html, body {
   line-height: 1.35;
 }
 
-.sf-chip-badge {
+.tile-bottom-action {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.tile-action-hint {
   font-size: 0.76rem;
   font-weight: 700;
   color: #38bdf8;
-  background: rgba(56, 189, 248, 0.15);
-  padding: 3px 8px;
-  border-radius: 6px;
-  white-space: nowrap;
+  background: rgba(56, 189, 248, 0.08);
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.subject-tile:hover .tile-action-hint {
+  background: rgba(56, 189, 248, 0.2);
+  color: #7dd3fc;
+  transform: translateX(2px);
 }
