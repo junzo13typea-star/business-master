@@ -3928,6 +3928,12 @@ html, body {
   transform: translateY(-1px);
 }
 
+.subcat-chip-btn.mba-chip-btn:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #a7f3d0;
+}
+
 .subcat-chip-btn .sc-count {
   font-size: 0.7rem;
   color: var(--text-muted);

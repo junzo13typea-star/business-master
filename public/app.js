@@ -14,6 +14,9 @@ let state = {
   selectedYear: 'all',
   quizOrderMode: 'smart_random', // 'smart_random' (未演習・均等優先) | 'sequential' (順番に解く)
   selectedSubCategory: 'all',
+  mbaModalCategoryId: 'strategy',
+  mbaModalQuestionCount: 10,
+  mbaOrderMode: 'smart_random',
   history: loadHistoryData(),
   player: {
     combo: 0
@@ -228,6 +231,17 @@ const ui = {
   mBtnOrderRandom: document.getElementById('mBtnOrderRandom'),
   mBtnOrderSeq: document.getElementById('mBtnOrderSeq'),
   subcatModalList: document.getElementById('subcatModalList'),
+
+  // MBA Sub-Category Selection Modal (初級編: MBA論点選択モーダル)
+  mbaSubCategoryModal: document.getElementById('mbaSubCategoryModal'),
+  mbaSubcatModalIcon: document.getElementById('mbaSubcatModalIcon'),
+  mbaSubcatModalTitle: document.getElementById('mbaSubcatModalTitle'),
+  mbaSubcatModalSub: document.getElementById('mbaSubcatModalSub'),
+  btnCloseMbaSubcatModal: document.getElementById('btnCloseMbaSubcatModal'),
+  mbaModalCountPills: document.getElementById('mbaModalCountPills'),
+  mbaBtnOrderRandom: document.getElementById('mbaBtnOrderRandom'),
+  mbaBtnOrderSeq: document.getElementById('mbaBtnOrderSeq'),
+  mbaSubcatModalList: document.getElementById('mbaSubcatModalList'),
 
   // Mock Exam Intro
   btnStartMockExam: document.getElementById('btnStartMockExam'),
@@ -833,15 +847,11 @@ function renderHomeScreen() {
       });
     });
 
-    // Bind tile clicks (実戦過去問モードは小カテゴリ選択モーダルを開く、一問一答は即開始)
+    // Bind tile clicks (科目タイルをクリックしたら必ず小カテゴリ選択モーダルを開く)
     document.querySelectorAll('.subject-tile').forEach(tile => {
       tile.addEventListener('click', () => {
         const subId = tile.getAttribute('data-subject-id');
-        if (isVocab) {
-          startQuizSession('vocab', subId, 'all');
-        } else {
-          openSubCategoryModal(subId);
-        }
+        openSubCategoryModal(subId);
       });
     });
   }
@@ -851,7 +861,7 @@ function renderHomeScreen() {
 }
 
 // ==========================================================================
-// 小カテゴリ選択モーダル (Sub-Category Selection Modal)
+// 小カテゴリ選択モーダル (Sub-Category Selection Modal - 1次科目)
 // ==========================================================================
 
 function openSubCategoryModal(subjectId) {
@@ -863,8 +873,12 @@ function openSubCategoryModal(subjectId) {
   if (ui.subcatModalIcon) ui.subcatModalIcon.textContent = sub.icon;
   if (ui.subcatModalTitle) ui.subcatModalTitle.textContent = sub.name;
   if (ui.subcatModalSub) {
-    const yearLabel = state.selectedYear === 'all' ? '全年度' : state.selectedYear;
-    ui.subcatModalSub.textContent = `演習する論点・小カテゴリを選択してください (${yearLabel})`;
+    if (state.practiceMode === 'vocab') {
+      ui.subcatModalSub.textContent = `⚡ スピード用語マスター：演習する論点・小カテゴリを選択してください`;
+    } else {
+      const yearLabel = state.selectedYear === 'all' ? '全年度' : state.selectedYear;
+      ui.subcatModalSub.textContent = `演習する論点・小カテゴリを選択してください (${yearLabel})`;
+    }
   }
 
   // Update order mode pills state inside modal
@@ -876,8 +890,11 @@ function openSubCategoryModal(subjectId) {
   // Populate sub-categories list
   if (ui.subcatModalList && typeof SUBJECT_SUBCATEGORIES !== 'undefined') {
     const subCats = SUBJECT_SUBCATEGORIES[subjectId] || [];
-    let qList = QUESTIONS.filter(q => q.subject === subjectId);
-    if (state.selectedYear !== 'all') {
+    let qList = state.practiceMode === 'vocab'
+      ? (typeof VOCAB_QUESTIONS !== 'undefined' ? VOCAB_QUESTIONS : []).filter(q => q.subject === subjectId)
+      : QUESTIONS.filter(q => q.subject === subjectId);
+
+    if (state.practiceMode !== 'vocab' && state.selectedYear !== 'all') {
       const yearFiltered = qList.filter(q => q.year === state.selectedYear);
       if (yearFiltered.length > 0) qList = yearFiltered;
     }
@@ -918,7 +935,98 @@ function closeSubCategoryModal() {
 
 function selectSubCategoryAndStart(subjectId, subCategoryId) {
   closeSubCategoryModal();
-  startQuizSession('subject', subjectId, subCategoryId);
+  const mode = state.practiceMode === 'vocab' ? 'vocab' : 'subject';
+  startQuizSession(mode, subjectId, subCategoryId);
+}
+
+// ==========================================================================
+// MBA 小カテゴリ選択モーダル (MBA Sub-Category Selection Modal - 初級編)
+// ==========================================================================
+
+function openMbaSubCategoryModal(categoryId) {
+  const cat = (window.MBA_CATEGORIES || []).find(c => c.id === categoryId);
+  if (!cat) return;
+
+  state.mbaModalCategoryId = categoryId;
+
+  if (ui.mbaSubcatModalIcon) ui.mbaSubcatModalIcon.textContent = cat.icon;
+  if (ui.mbaSubcatModalTitle) ui.mbaSubcatModalTitle.textContent = cat.name;
+  if (ui.mbaSubcatModalSub) {
+    ui.mbaSubcatModalSub.textContent = `演習する論点・小カテゴリを選択してください`;
+  }
+
+  // Update question count pills state
+  if (ui.mbaModalCountPills) {
+    ui.mbaModalCountPills.querySelectorAll('.order-pill-btn').forEach(btn => {
+      const c = btn.getAttribute('data-count');
+      btn.classList.toggle('active', c === String(state.mbaModalQuestionCount));
+    });
+  }
+
+  // Update order mode pills state inside modal
+  if (ui.mbaBtnOrderRandom && ui.mbaBtnOrderSeq) {
+    ui.mbaBtnOrderRandom.classList.toggle('active', state.mbaOrderMode === 'smart_random');
+    ui.mbaBtnOrderSeq.classList.toggle('active', state.mbaOrderMode === 'sequential');
+  }
+
+  // Populate sub-categories list
+  const mbaSubMap = window.MBA_SUBCATEGORIES || (typeof MBA_SUBCATEGORIES !== 'undefined' ? MBA_SUBCATEGORIES : {});
+  const getSubCatFn = window.getMbaQuestionSubCategory || (typeof getMbaQuestionSubCategory === 'function' ? getMbaQuestionSubCategory : null);
+  if (ui.mbaSubcatModalList && mbaSubMap[categoryId]) {
+    const subCats = mbaSubMap[categoryId] || [];
+    const allMbaQuestions = window.MBA_VOCAB_QUESTIONS || [];
+    const catQs = allMbaQuestions.filter(q => q.category === categoryId);
+    const historyItems = state.history.items || {};
+
+    ui.mbaSubcatModalList.innerHTML = subCats.map(sc => {
+      const filtered = sc.id === 'all'
+        ? catQs
+        : catQs.filter(q => getSubCatFn && getSubCatFn(q) === sc.id);
+
+      let correctCount = 0;
+      filtered.forEach(q => {
+        const rec = historyItems[q.id];
+        if (rec && rec.lastResult === true) correctCount++;
+      });
+
+      const isCompleted = filtered.length > 0 && correctCount === filtered.length;
+      const progressLabel = isCompleted ? '⭐ 制覇！' : (correctCount > 0 ? `★ ${correctCount}/${filtered.length}` : '未着手');
+
+      return `
+        <div class="subcat-card-item" onclick="selectMbaSubCategoryAndStart('${categoryId}', '${sc.id}')">
+          <div class="subcat-card-left">
+            <span class="subcat-item-icon">${sc.icon}</span>
+            <div>
+              <h4 class="subcat-item-name">${escapeHtml(sc.name)}</h4>
+              <p class="subcat-item-desc">${escapeHtml(sc.desc || 'この分野の全論点からバランスよく出題')}</p>
+            </div>
+          </div>
+          <div class="subcat-item-right">
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+              <span class="subcat-item-count-badge">${filtered.length}問</span>
+              <span style="font-size: 0.72rem; color: ${isCompleted ? '#fbbf24' : 'var(--text-muted)'}; font-weight: 700;">${progressLabel}</span>
+            </div>
+            <button class="subcat-item-start-btn">▶️ 特訓開始</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  if (ui.mbaSubCategoryModal) {
+    ui.mbaSubCategoryModal.style.display = 'flex';
+  }
+}
+
+function closeMbaSubCategoryModal() {
+  if (ui.mbaSubCategoryModal) {
+    ui.mbaSubCategoryModal.style.display = 'none';
+  }
+}
+
+function selectMbaSubCategoryAndStart(categoryId, subCategoryId) {
+  closeMbaSubCategoryModal();
+  startMbaQuiz(categoryId, state.mbaModalQuestionCount, subCategoryId);
 }
 
 // ==========================================================================
@@ -1587,6 +1695,40 @@ function bindEventListeners() {
 
   // Modal Close Button
   ui.btnCloseSubcatModal?.addEventListener('click', closeSubCategoryModal);
+  ui.subCategoryModal?.addEventListener('click', (e) => {
+    if (e.target === ui.subCategoryModal) closeSubCategoryModal();
+  });
+
+  // MBA Sub-Category Modal Events (初級編)
+  ui.btnCloseMbaSubcatModal?.addEventListener('click', closeMbaSubCategoryModal);
+  ui.mbaSubCategoryModal?.addEventListener('click', (e) => {
+    if (e.target === ui.mbaSubCategoryModal) closeMbaSubCategoryModal();
+  });
+
+  // MBA Modal Question Count Pills
+  ui.mbaModalCountPills?.querySelectorAll('.order-pill-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = btn.getAttribute('data-count');
+      state.mbaModalQuestionCount = c === 'all' ? 'all' : parseInt(c, 10);
+      ui.mbaModalCountPills.querySelectorAll('.order-pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // MBA Modal Order Mode Pills
+  ui.mbaBtnOrderRandom?.addEventListener('click', () => {
+    state.mbaOrderMode = 'smart_random';
+    ui.mbaBtnOrderRandom.classList.add('active');
+    ui.mbaBtnOrderSeq?.classList.remove('active');
+    showToast('🎲 出題順: 未演習・均等優先ランダム');
+  });
+
+  ui.mbaBtnOrderSeq?.addEventListener('click', () => {
+    state.mbaOrderMode = 'sequential';
+    ui.mbaBtnOrderSeq.classList.add('active');
+    ui.mbaBtnOrderRandom?.classList.remove('active');
+    showToast('📋 出題順: 通し番号順（第1問〜）');
+  });
 
   // Sub-Category Fast Panel Subject Tabs
   ui.subcatFastSubjectTabs?.querySelectorAll('.sf-tab').forEach(tab => {
@@ -2448,12 +2590,12 @@ function closeLevelUpModal() {
 // ==========================================================================
 
 function initMbaVocab() {
-  ui.btnMbaRandomQuiz?.addEventListener('click', () => startMbaQuiz(null, 10));
+  ui.btnMbaRandomQuiz?.addEventListener('click', () => startMbaQuiz(null, 10, 'all'));
   ui.btnMbaWeakQuiz?.addEventListener('click', () => startMbaWeakQuiz(10));
   ui.btnMbaBackToList?.addEventListener('click', closeMbaQuiz);
   ui.btnMbaNextQuestion?.addEventListener('click', nextMbaQuestion);
   ui.btnMbaResultRetry?.addEventListener('click', () => {
-    startMbaQuiz(state.mbaSession.activeCategory, 10);
+    startMbaQuiz(state.mbaSession.activeCategory, state.mbaModalQuestionCount, state.mbaSession.activeSubCategory || 'all');
   });
   ui.btnMbaResultBackTop?.addEventListener('click', closeMbaQuiz);
   ui.btnLevelUpClose?.addEventListener('click', closeLevelUpModal);
@@ -2503,8 +2645,40 @@ function renderMbaTopScreen() {
     const isMastered = catQs.length > 0 && catCorrect === catQs.length;
     const masteryStar = isMastered ? '⭐ 制覇！' : (catCorrect > 0 ? `★ ${catCorrect}/${catQs.length}` : '未着手');
 
+    // Sub-categories chips inside card
+    let subCatsHtml = '';
+    const mbaSubMap = window.MBA_SUBCATEGORIES || (typeof MBA_SUBCATEGORIES !== 'undefined' ? MBA_SUBCATEGORIES : {});
+    const getSubCatFn = window.getMbaQuestionSubCategory || (typeof getMbaQuestionSubCategory === 'function' ? getMbaQuestionSubCategory : null);
+    if (mbaSubMap[cat.id]) {
+      const subCats = mbaSubMap[cat.id].filter(sc => sc.id !== 'all');
+      const chipsHtml = subCats.map(sc => {
+        const count = catQs.filter(q => getSubCatFn && getSubCatFn(q) === sc.id).length;
+        return `
+          <button class="subcat-chip-btn mba-chip-btn" onclick="event.stopPropagation(); startMbaQuiz('${cat.id}', 10, '${sc.id}')" title="${escapeHtml(sc.desc || sc.name)}">
+            <span>${sc.icon} ${escapeHtml(sc.name)}</span>
+            <span class="sc-count">${count}問</span>
+          </button>
+        `;
+      }).join('');
+
+      subCatsHtml = `
+        <div class="tile-subcats-box" style="margin-top: 0.8rem;">
+          <div class="subcat-label-row">
+            <span class="subcat-label-text">📌 論点・小カテゴリ限定特訓:</span>
+          </div>
+          <div class="subcat-chips-list">
+            <button class="subcat-chip-btn mba-chip-btn" onclick="event.stopPropagation(); startMbaQuiz('${cat.id}', 10, 'all')" style="border-color: rgba(255,255,255,0.18);">
+              <span>🌐 全範囲</span>
+              <span class="sc-count">${catQs.length}問</span>
+            </button>
+            ${chipsHtml}
+          </div>
+        </div>
+      `;
+    }
+
     return `
-      <div class="mba-cat-card" onclick="startMbaQuiz('${cat.id}', 10)">
+      <div class="mba-cat-card" onclick="openMbaSubCategoryModal('${cat.id}')">
         <div class="cat-card-top">
           <div class="cat-card-icon" style="background: ${cat.color}22; color: ${cat.color};">${cat.icon}</div>
           <div>
@@ -2519,30 +2693,66 @@ function renderMbaTopScreen() {
             &nbsp;•&nbsp;
             <span style="color: ${isMastered ? '#fbbf24' : 'var(--text-muted)'}; font-weight: 700;">${masteryStar}</span>
           </div>
-          <button class="cat-btn-train" style="background: ${cat.color};">
-            ▶️ 特訓開始
+          <button class="cat-btn-train" style="background: ${cat.color};" onclick="event.stopPropagation(); openMbaSubCategoryModal('${cat.id}')">
+            📂 論点・小カテゴリ選択
           </button>
         </div>
+
+        ${subCatsHtml}
       </div>
     `;
   }).join('');
 }
 
-function startMbaQuiz(categoryId = null, count = 10) {
+function startMbaQuiz(categoryId = null, count = 10, subCategoryId = 'all') {
   const allQs = window.MBA_VOCAB_QUESTIONS || [];
   let pool = categoryId ? allQs.filter(q => q.category === categoryId) : [...allQs];
+
+  const getSubCatFn = window.getMbaQuestionSubCategory || (typeof getMbaQuestionSubCategory === 'function' ? getMbaQuestionSubCategory : null);
+  if (subCategoryId && subCategoryId !== 'all' && getSubCatFn) {
+    pool = pool.filter(q => getSubCatFn(q) === subCategoryId);
+  }
 
   if (pool.length === 0) {
     showToast('出題可能な問題がありません');
     return;
   }
 
-  // Shuffle pool
-  pool.sort(() => Math.random() - 0.5);
-  const selected = pool.slice(0, Math.min(count, pool.length));
+  // 出題順ソート (順番に解く vs スマート均等ランダム)
+  if (state.mbaOrderMode === 'sequential') {
+    pool.sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
+  } else {
+    // 未マスター・誤答優先のスマートランダム
+    const historyItems = state.history.items || {};
+    pool.sort((a, b) => {
+      const recA = historyItems[a.id];
+      const recB = historyItems[b.id];
+      const answeredA = recA ? recA.count : 0;
+      const answeredB = recB ? recB.count : 0;
+      const lastCorrectA = recA && recA.lastResult === true ? 1 : 0;
+      const lastCorrectB = recB && recB.lastResult === true ? 1 : 0;
+
+      // 1. 未演習最優先
+      if (answeredA === 0 && answeredB > 0) return -1;
+      if (answeredB === 0 && answeredA > 0) return 1;
+
+      // 2. 直近誤答優先
+      if (lastCorrectA !== lastCorrectB) return lastCorrectA - lastCorrectB;
+
+      // 3. 演習回数少ない順
+      if (answeredA !== answeredB) return answeredA - answeredB;
+
+      // 4. ランダムシャッフル
+      return Math.random() - 0.5;
+    });
+  }
+
+  const numCount = count === 'all' ? pool.length : (parseInt(count, 10) || 10);
+  const selected = pool.slice(0, Math.min(numCount, pool.length));
 
   state.mbaSession = {
     activeCategory: categoryId,
+    activeSubCategory: subCategoryId,
     questions: selected,
     currentIndex: 0,
     score: 0,
@@ -2605,7 +2815,21 @@ function renderMbaQuestion() {
   s.answered = false;
 
   // Header progress
-  if (ui.mbaQuizCategoryTag) ui.mbaQuizCategoryTag.textContent = q.categoryName || 'MBA用語';
+  if (ui.mbaQuizCategoryTag) {
+    let tagText = q.categoryName || 'MBA用語';
+    const mbaSubMap = window.MBA_SUBCATEGORIES || (typeof MBA_SUBCATEGORIES !== 'undefined' ? MBA_SUBCATEGORIES : {});
+    const getSubCatFn = window.getMbaQuestionSubCategory || (typeof getMbaQuestionSubCategory === 'function' ? getMbaQuestionSubCategory : null);
+    if (getSubCatFn && mbaSubMap[q.category]) {
+      const scId = getSubCatFn(q);
+      const subList = mbaSubMap[q.category] || [];
+      const found = subList.find(sc => sc.id === scId);
+      if (found && found.id !== 'all') {
+        const catBase = (q.categoryName || '').split(' ')[0];
+        tagText = `${catBase} ❯ ${found.name}`;
+      }
+    }
+    ui.mbaQuizCategoryTag.textContent = tagText;
+  }
   if (ui.mbaQuizCounterText) ui.mbaQuizCounterText.textContent = `第 ${s.currentIndex + 1} / ${s.questions.length} 問`;
   if (ui.mbaQuizComboNum) ui.mbaQuizComboNum.textContent = s.combo;
   if (ui.mbaQuizFillBar) {
@@ -3290,6 +3514,9 @@ window.handleMbaOptionChoice = handleMbaOptionChoice;
 window.openSubCategoryModal = openSubCategoryModal;
 window.closeSubCategoryModal = closeSubCategoryModal;
 window.selectSubCategoryAndStart = selectSubCategoryAndStart;
+window.openMbaSubCategoryModal = openMbaSubCategoryModal;
+window.closeMbaSubCategoryModal = closeMbaSubCategoryModal;
+window.selectMbaSubCategoryAndStart = selectMbaSubCategoryAndStart;
 
 // Start Application on Load
 document.addEventListener('DOMContentLoaded', init);

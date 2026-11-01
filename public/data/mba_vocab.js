@@ -60,6 +60,74 @@ window.MBA_CATEGORIES = [
   }
 ];
 
+window.MBA_SUBCATEGORIES = {
+  strategy: [
+    { id: "all", name: "全範囲", icon: "🌐", desc: "経営戦略の全65問からバランスよく出題" },
+    { id: "strat_comp", name: "全社戦略・競争優位・ポジショニング", icon: "🛡️", desc: "3C・5Forces・VRIO・SWOT・差別化・バリューチェーン" },
+    { id: "strat_growth", name: "成長戦略・事業開発・M&A", icon: "🚀", desc: "PPM・アンゾフ・シナジー・多角化・エコシステム" }
+  ],
+  marketing: [
+    { id: "all", name: "全範囲", icon: "🌐", desc: "マーケティング全65問からバランスよく出題" },
+    { id: "mkt_core", name: "STP・4P・ブランド・リサーチ", icon: "🎯", desc: "セグメンテーション・ターゲティング・価格・流通・4C" },
+    { id: "mkt_digital", name: "デジタルマーケ・LTV・グロース・CX", icon: "📱", desc: "CAC・LTV・ファネル・NPS・カスタマージャーニー・OMO" }
+  ],
+  finance: [
+    { id: "all", name: "全範囲", icon: "🌐", desc: "財務・ファイナンス全65問からバランスよく出題" },
+    { id: "fin_corp", name: "コーポレートファイナンス・企業価値", icon: "💎", desc: "DCF・NPV・WACC・CAPM・ROIC・資本コスト" },
+    { id: "fin_mgmt", name: "財務分析・管理会計・収益性", icon: "📊", desc: "損益分岐点/CVP・CCC・ROE・流動比率・限界利益" }
+  ],
+  leadership: [
+    { id: "all", name: "全範囲", icon: "🌐", desc: "組織行動・人事全64問からバランスよく出題" },
+    { id: "lead_org", name: "組織行動・リーダーシップ・チーム", icon: "🤝", desc: "心理的安全性・タックマン・変革型リーダーシップ・組織文化" },
+    { id: "lead_hr", name: "人的資源管理・モチベーション・評価", icon: "🌱", desc: "OKR・評価制度・動機づけ・ジョブ型雇用・人的資本" }
+  ],
+  operations: [
+    { id: "all", name: "全範囲", icon: "🌐", desc: "オペレーション・SCM全64問からバランスよく出題" },
+    { id: "ops_lean", name: "生産管理・リーン・品質・改善", icon: "⚙️", desc: "トヨタ生産方式・カンバン・シックスシグマ・TQM・ポカヨケ" },
+    { id: "ops_scm", name: "SCM・物流・業務プロセス・TOC", icon: "🚚", desc: "サプライチェーン・ブルウィップ・TOC・リードタイム・在庫" }
+  ],
+  innovation: [
+    { id: "all", name: "全範囲", icon: "🌐", desc: "DX・イノベーション全64問からバランスよく出題" },
+    { id: "inno_dx", name: "DX・テクノロジー・クラウド・データ", icon: "💻", desc: "生成AI・クラウド・IoT・APIエコノミー・サイバーセキュリティ" },
+    { id: "inno_agile", name: "新規事業・アジャイル・スタートアップ", icon: "⚡", desc: "MVP・リーンスタートアップ・デザイン思考・スクラム・両利き" }
+  ],
+  analytics: [
+    { id: "all", name: "全範囲", icon: "🌐", desc: "意思決定・定量分析全64問からバランスよく出題" },
+    { id: "dec_quant", name: "統計・定量分析・データ思考", icon: "📈", desc: "仮説検定・回帰分析・A/Bテスト・標準偏差・相関と因果" },
+    { id: "dec_logic", name: "論理思考・行動経済学・意思決定", icon: "🧠", desc: "MECE・ロジックツリー・プロスペクト理論・認知バイアス・ゲーム理論" }
+  ]
+};
+
+window.getMbaQuestionSubCategory = function(q) {
+  if (!q) return "all";
+  const text = ((q.term || "") + " " + (q.question || "") + " " + (q.explanation || "")).toLowerCase();
+  switch (q.category) {
+    case "strategy":
+      if (/ppm|アンゾフ|多角化|シナジー|m&a|買収|提携|アライアンス|エコシステム|成長|ポートフォリオ|スピンオフ|カーブアウト/.test(text)) return "strat_growth";
+      return "strat_comp";
+    case "marketing":
+      if (/cac|ltv|デジタル|web|ファネル|コンバージョン|ctr|cvr|sns|オウンドメディア|nps|カスタマー|cx|omo|オムニ|グロース|サブスク/.test(text)) return "mkt_digital";
+      return "mkt_core";
+    case "finance":
+      if (/損益分岐|cvp|限界利益|ccc|キャッシュフロー計算|財務諸表|bs|pl|roe|roa|安全|流動比率|自己資本|減価償却/.test(text)) return "fin_mgmt";
+      return "fin_corp";
+    case "leadership":
+      if (/人事|評価|okr|目標管理|モチベーション|動機づけ|ハーズバーグ|マズロー|ジョブ型|採用|育成|リスキリング|人的資本|コンピテンシー|報酬/.test(text)) return "lead_hr";
+      return "lead_org";
+    case "operations":
+      if (/scm|サプライチェーン|物流|配送|在庫|ブルウィップ|vmi|toc|制約条件|リードタイム|ボトルネック/.test(text)) return "ops_scm";
+      return "ops_lean";
+    case "innovation":
+      if (/mvp|リーンスタートアップ|アジャイル|スクラム|スプリント|デザイン思考|両利き|ピボット|破壊的イノベーション|オープンイノベーション|poc|インキュベ/.test(text)) return "inno_agile";
+      return "inno_dx";
+    case "analytics":
+      if (/mece|ロジックツリー|帰納|演繹|仮説思考|プロスペクト|バイアス|行動経済|ナッジ|ゲーム理論|囚人のジレンマ|アンカリング|サンクコスト/.test(text)) return "dec_logic";
+      return "dec_quant";
+    default:
+      return "all";
+  }
+};
+
 window.MBA_VOCAB_QUESTIONS = [
   {
     "id": "mba-strat-001",
