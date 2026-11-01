@@ -4213,20 +4213,68 @@ html, body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 0.5rem;
 }
 
-.tile-action-hint {
-  font-size: 0.76rem;
+.tile-btn-subcat,
+.cat-btn-subcat {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.08);
-  padding: 4px 10px;
+  padding: 0.42rem 0.8rem;
   border-radius: 8px;
+  cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.subject-tile:hover .tile-action-hint {
-  background: rgba(56, 189, 248, 0.2);
-  color: #7dd3fc;
-  transform: translateX(2px);
+.tile-btn-subcat:hover,
+.cat-btn-subcat:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.tile-btn-train {
+  color: #fff;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.42rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tile-btn-train:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.cat-card-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.cat-btn-train {
+  color: #fff;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.42rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.cat-btn-train:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }

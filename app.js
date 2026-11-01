@@ -214,9 +214,6 @@ const ui = {
   btnOrderSmartRandom: document.getElementById('btnOrderSmartRandom'),
   btnOrderSequential: document.getElementById('btnOrderSequential'),
   orderModeDescText: document.getElementById('orderModeDescText'),
-  subcatFastPanel: document.getElementById('subcatFastPanel'),
-  subcatFastSubjectTabs: document.getElementById('subcatFastSubjectTabs'),
-  subcatFastChipsRow: document.getElementById('subcatFastChipsRow'),
   practiceModeSwitcher: document.getElementById('practiceModeSwitcher'),
   tabModeExam: document.getElementById('tabModeExam'),
   tabModeVocab: document.getElementById('tabModeVocab'),
@@ -804,7 +801,12 @@ function renderHomeScreen() {
           </div>
 
           <div class="tile-bottom-action">
-            <span class="tile-action-hint">📂 クリックして論点・小カテゴリを選択 ▶</span>
+            <button class="tile-btn-subcat" onclick="event.stopPropagation(); openSubCategoryModal('${subKey}')" title="論点・小カテゴリ（知財・会社法・マクロ・ミクロ等）に絞る">
+              🎯 論点選択
+            </button>
+            <button class="tile-btn-train" style="background: ${sub.color};" onclick="event.stopPropagation(); startQuizSession(isVocab ? 'vocab' : 'subject', '${subKey}', 'all')">
+              ▶️ 実戦特訓
+            </button>
           </div>
         </article>
       `;
@@ -875,7 +877,7 @@ function openSubCategoryModal(subjectId) {
           </div>
           <div class="subcat-item-right">
             <span class="subcat-item-count-badge">${filtered.length}問</span>
-            <button class="subcat-item-start-btn">▶️ 特訓開始</button>
+            <button class="subcat-item-start-btn" onclick="event.stopPropagation(); selectSubCategoryAndStart('${subjectId}', '${sc.id}')">▶️ 特訓開始</button>
           </div>
         </div>
       `;
@@ -966,7 +968,7 @@ function openMbaSubCategoryModal(categoryId) {
               <span class="subcat-item-count-badge">${filtered.length}問</span>
               <span style="font-size: 0.72rem; color: ${isCompleted ? '#fbbf24' : 'var(--text-muted)'}; font-weight: 700;">${progressLabel}</span>
             </div>
-            <button class="subcat-item-start-btn">▶️ 特訓開始</button>
+            <button class="subcat-item-start-btn" onclick="event.stopPropagation(); selectMbaSubCategoryAndStart('${categoryId}', '${sc.id}')">▶️ 特訓開始</button>
           </div>
         </div>
       `;
@@ -2545,7 +2547,7 @@ function renderMbaTopScreen() {
     const masteryStar = isMastered ? '⭐ 制覇！' : (catCorrect > 0 ? `★ ${catCorrect}/${catQs.length}` : '未着手');
 
     return `
-      <div class="mba-cat-card" onclick="openMbaSubCategoryModal('${cat.id}')">
+      <div class="mba-cat-card" onclick="startMbaQuiz('${cat.id}', 10, 'all')">
         <div class="cat-card-top">
           <div class="cat-card-icon" style="background: ${cat.color}22; color: ${cat.color};">${cat.icon}</div>
           <div>
@@ -2560,9 +2562,14 @@ function renderMbaTopScreen() {
             &nbsp;•&nbsp;
             <span style="color: ${isMastered ? '#fbbf24' : 'var(--text-muted)'}; font-weight: 700;">${masteryStar}</span>
           </div>
-          <button class="cat-btn-train" style="background: ${cat.color};" onclick="event.stopPropagation(); openMbaSubCategoryModal('${cat.id}')">
-            📂 論点選択
-          </button>
+          <div class="cat-card-btn-group">
+            <button class="cat-btn-subcat" onclick="event.stopPropagation(); openMbaSubCategoryModal('${cat.id}')" title="論点・小カテゴリを絞り込んで演習">
+              🎯 論点選択
+            </button>
+            <button class="cat-btn-train" style="background: ${cat.color};" onclick="event.stopPropagation(); startMbaQuiz('${cat.id}', 10, 'all')">
+              ▶️ 10問特訓
+            </button>
+          </div>
         </div>
       </div>
     `;

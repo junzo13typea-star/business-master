@@ -30,7 +30,7 @@
     if ('caches' in window) {
       caches.keys().then(function(keys) {
         keys.forEach(function(k) {
-          if (k !== 'shindanshi-master-v11') caches.delete(k);
+          if (k !== 'shindanshi-master-v12') caches.delete(k);
         });
       });
     }
@@ -1193,7 +1193,7 @@
   </div>
 
   <!-- MBA Vocab Master Modules (初級編: MBA専門用語 451問) -->
-  <script src="data/mba_vocab.js?v=11"></script>
+  <script src="data/mba_vocab.js?v=12"></script>
 
   <!-- Subject Question Modules (実戦過去問 700問) -->
   <script src="data/management.js"></script>
@@ -1216,8 +1216,8 @@
   <!-- Case Exam Modules (第2次筆記試験 事例 I〜IV 全8事例) -->
   <script src="data/cases_data.js"></script>
 
-  <script src="questions.js?v=11"></script>
-  <script src="app.js?v=11"></script>
+  <script src="questions.js?v=12"></script>
+  <script src="app.js?v=12"></script>
 
   <!-- Service Worker for Offline / PWA Support -->
   <script>
