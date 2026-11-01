@@ -146,8 +146,25 @@
           </div>
         </div>
 
+        <!-- Section: Practice Mode Switcher (実戦過去問 vs スピード用語マスター) -->
+        <div class="mode-switcher-container">
+          <div class="mode-switcher-bar" id="practiceModeSwitcher">
+            <button class="mode-tab-btn active" id="tabModeExam" data-mode="exam">
+              <span class="tab-icon">📑</span>
+              <span class="tab-title">実戦過去問・模試</span>
+              <span class="tab-badge">700問</span>
+            </button>
+            <button class="mode-tab-btn" id="tabModeVocab" data-mode="vocab">
+              <span class="tab-icon">⚡</span>
+              <span class="tab-title">スピード用語マスター</span>
+              <span class="tab-badge special">一問一答 515問</span>
+            </button>
+          </div>
+          <p class="mode-switcher-desc" id="modeSwitcherDesc">本試験形式の実戦長文問題。消去法チェック＆法改正注記付きで本番得点力を養成。</p>
+        </div>
+
         <!-- Section: Exam Year Archive Selector (NEW) -->
-        <div class="exam-year-selector-card">
+        <div class="exam-year-selector-card" id="examYearSelectorCard">
           <div class="year-header">
             <span class="year-tag">📑 過去問年度別アーカイブ</span>
             <h3 class="year-title">出題年度から選んで過去問演習</h3>
@@ -534,7 +551,7 @@
 
   </div>
 
-  <!-- Subject Question Modules -->
+  <!-- Subject Question Modules (実戦過去問 700問) -->
   <script src="data/management.js"></script>
   <script src="data/finance.js"></script>
   <script src="data/operations.js"></script>
@@ -542,6 +559,16 @@
   <script src="data/law.js"></script>
   <script src="data/it.js"></script>
   <script src="data/policy.js"></script>
+
+  <!-- Speed Vocab Master Modules (スピード用語マスター 515問) -->
+  <script src="data/vocab_management.js"></script>
+  <script src="data/vocab_finance.js"></script>
+  <script src="data/vocab_operations.js"></script>
+  <script src="data/vocab_economics.js"></script>
+  <script src="data/vocab_law.js"></script>
+  <script src="data/vocab_it.js"></script>
+  <script src="data/vocab_policy.js"></script>
+
   <script src="questions.js"></script>
   <script src="app.js"></script>
 

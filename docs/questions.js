@@ -449,6 +449,30 @@ const QUESTIONS = (() => {
   return merged;
 })();
 
+// スピード用語マスター問題配列（全7科目515問を一元統合）
+const VOCAB_QUESTIONS = (() => {
+  const vocabPools = [
+    typeof VOCAB_MANAGEMENT_QUESTIONS !== 'undefined' ? VOCAB_MANAGEMENT_QUESTIONS : [],
+    typeof VOCAB_FINANCE_QUESTIONS !== 'undefined' ? VOCAB_FINANCE_QUESTIONS : [],
+    typeof VOCAB_OPERATIONS_QUESTIONS !== 'undefined' ? VOCAB_OPERATIONS_QUESTIONS : [],
+    typeof VOCAB_ECONOMICS_QUESTIONS !== 'undefined' ? VOCAB_ECONOMICS_QUESTIONS : [],
+    typeof VOCAB_LAW_QUESTIONS !== 'undefined' ? VOCAB_LAW_QUESTIONS : [],
+    typeof VOCAB_IT_QUESTIONS !== 'undefined' ? VOCAB_IT_QUESTIONS : [],
+    typeof VOCAB_POLICY_QUESTIONS !== 'undefined' ? VOCAB_POLICY_QUESTIONS : []
+  ];
+  const seen = new Set();
+  const merged = [];
+  for (const pool of vocabPools) {
+    for (const q of pool) {
+      if (q && q.id && !seen.has(q.id)) {
+        seen.add(q.id);
+        merged.push(q);
+      }
+    }
+  }
+  return merged;
+})();
+
 // 模擬試験（全国統一プレ模試：全7科目からバランスよく計21問＝各科目3問を厳選）
 const MOCK_EXAM_CONFIG = {
   title: "中小企業診断士 1次試験 全国統一プレ模擬試験",

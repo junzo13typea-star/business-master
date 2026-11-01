@@ -1,5 +1,5 @@
 // Service Worker for 中小企業診断士 学習マスター (PWA / オフライン動作対応)
-const CACHE_NAME = 'shindanshi-master-v1';
+const CACHE_NAME = 'shindanshi-master-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -14,7 +14,14 @@ const ASSETS_TO_CACHE = [
   './data/economics.js',
   './data/law.js',
   './data/it.js',
-  './data/policy.js'
+  './data/policy.js',
+  './data/vocab_management.js',
+  './data/vocab_finance.js',
+  './data/vocab_operations.js',
+  './data/vocab_economics.js',
+  './data/vocab_law.js',
+  './data/vocab_it.js',
+  './data/vocab_policy.js'
 ];
 
 // Install: すべての主要ファイルを事前キャッシュ
@@ -56,3 +63,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+

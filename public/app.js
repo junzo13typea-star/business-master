@@ -9,11 +9,12 @@ const STORAGE_KEY = 'shindanshi_passpro_store_v2';
 // Application State
 let state = {
   currentView: 'viewHome',
+  practiceMode: 'exam', // 'exam' (実戦過去問700問) | 'vocab' (スピード用語マスター515問)
   fontScale: 1.0,
   selectedYear: 'all',
   history: loadHistoryData(),
   session: {
-    mode: 'subject', // 'subject' | 'mock' | 'weakness' | 'anki'
+    mode: 'subject', // 'subject' | 'vocab' | 'mock' | 'weakness' | 'anki'
     subjectId: null,
     questions: [],
     currentIndex: 0,
@@ -64,6 +65,11 @@ const ui = {
   subjectsMosaic: document.getElementById('subjectsMosaic'),
   weaknessCountPill: document.getElementById('weaknessCountPill'),
   yearPillsRow: document.getElementById('yearPillsRow'),
+  examYearSelectorCard: document.getElementById('examYearSelectorCard'),
+  practiceModeSwitcher: document.getElementById('practiceModeSwitcher'),
+  tabModeExam: document.getElementById('tabModeExam'),
+  tabModeVocab: document.getElementById('tabModeVocab'),
+  modeSwitcherDesc: document.getElementById('modeSwitcherDesc'),
 
   // Mock Exam Intro
   btnStartMockExam: document.getElementById('btnStartMockExam'),
@@ -192,6 +198,20 @@ function verifyDailyStreak() {
 // Pass Probability & Cutoff Algorithm
 // ==========================================================================
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getAllQuestions() {
+  return typeof VOCAB_QUESTIONS !== 'undefined' ? [...QUESTIONS, ...VOCAB_QUESTIONS] : QUESTIONS;
+}
+
 const BENCHMARK_COUNT = 150; // 本番問題数（約225問）に準拠した正式判定基準
 
 function calculateOverallMetrics() {
@@ -203,13 +223,15 @@ function calculateOverallMetrics() {
     subjectStats[subKey] = { answered: 0, correct: 0, accuracy: 0 };
   });
 
-  QUESTIONS.forEach(q => {
+  getAllQuestions().forEach(q => {
     const item = state.history.items[q.id];
     if (item && item.count > 0) {
       totalAnswered += item.count;
       totalCorrect += (item.correctCount || 0);
-      subjectStats[q.subject].answered += item.count;
-      subjectStats[q.subject].correct += (item.correctCount || 0);
+      if (subjectStats[q.subject]) {
+        subjectStats[q.subject].answered += item.count;
+        subjectStats[q.subject].correct += (item.correctCount || 0);
+      }
     }
   });
 
@@ -356,7 +378,7 @@ function updatePassMetricsUI() {
 
 function getDueReviewQuestions() {
   const now = new Date().getTime();
-  return QUESTIONS.filter(q => {
+  return getAllQuestions().filter(q => {
     const item = state.history.items[q.id];
     if (!item) return false;
     return item.nextDueDate <= now;
@@ -364,7 +386,7 @@ function getDueReviewQuestions() {
 }
 
 function getWeaknessQuestions() {
-  return QUESTIONS.filter(q => {
+  return getAllQuestions().filter(q => {
     const item = state.history.items[q.id];
     return item && item.wrongCount > 0;
   });
@@ -383,14 +405,31 @@ function renderHomeScreen() {
     pill.classList.toggle('active', pill.getAttribute('data-year') === state.selectedYear);
   });
 
+  // Toggle year archive card visibility based on practice mode
+  if (ui.examYearSelectorCard) {
+    ui.examYearSelectorCard.style.display = state.practiceMode === 'vocab' ? 'none' : 'block';
+  }
+
   // Render 7 Subjects Mosaic
   if (ui.subjectsMosaic) {
+    const isVocab = state.practiceMode === 'vocab';
     ui.subjectsMosaic.innerHTML = Object.keys(SUBJECTS).map(subKey => {
       const sub = SUBJECTS[subKey];
-      let questionsInSub = QUESTIONS.filter(q => q.subject === subKey);
-      if (state.selectedYear !== 'all') {
-        questionsInSub = questionsInSub.filter(q => q.year === state.selectedYear);
+      let questionsInSub = [];
+      let countLabel = '';
+
+      if (isVocab) {
+        questionsInSub = (typeof VOCAB_QUESTIONS !== 'undefined' ? VOCAB_QUESTIONS : []).filter(q => q.subject === subKey);
+        countLabel = `${questionsInSub.length}問 (スピード用語)`;
+      } else {
+        questionsInSub = QUESTIONS.filter(q => q.subject === subKey);
+        if (state.selectedYear !== 'all') {
+          questionsInSub = questionsInSub.filter(q => q.year === state.selectedYear);
+        }
+        const yearLabel = state.selectedYear === 'all' ? '精選全問' : state.selectedYear;
+        countLabel = `${questionsInSub.length}問 (${yearLabel})`;
       }
+
       const stat = metrics.subjectStats[subKey];
 
       let gradeBadge = '';
@@ -406,8 +445,6 @@ function renderHomeScreen() {
         gradeBadge = `<span class="tile-grade-badge grade-e">足切り警戒 (${stat.accuracy}%)</span>`;
       }
 
-      const yearLabel = state.selectedYear === 'all' ? '精選全問' : state.selectedYear;
-
       return `
         <article class="subject-tile" data-subject-id="${subKey}">
           <div class="tile-top">
@@ -415,13 +452,13 @@ function renderHomeScreen() {
               <span class="tile-icon">${sub.icon}</span>
               <div>
                 <h4 class="tile-title">${sub.name}</h4>
-                <span class="tile-questions-count">${questionsInSub.length}問 (${yearLabel})</span>
+                <span class="tile-questions-count">${countLabel}</span>
               </div>
             </div>
             ${gradeBadge}
           </div>
 
-          <p class="tile-desc">${sub.desc}</p>
+          <p class="tile-desc">${isVocab ? 'スキマ時間に一問一答！同分野の紛らわしい類似用語を比較選択' : sub.desc}</p>
 
           <div class="tile-stat-bar">
             <div class="stat-labels">
@@ -443,7 +480,7 @@ function renderHomeScreen() {
     document.querySelectorAll('.subject-tile').forEach(tile => {
       tile.addEventListener('click', () => {
         const subId = tile.getAttribute('data-subject-id');
-        startQuizSession('subject', subId);
+        startQuizSession(isVocab ? 'vocab' : 'subject', subId);
       });
     });
   }
@@ -515,6 +552,10 @@ function startQuizSession(mode, subjectId = null) {
     state.session.questions = qList;
     const yearSuffix = state.selectedYear === 'all' ? '' : ` (${state.selectedYear})`;
     ui.quizModePill.textContent = `科目別演習${yearSuffix}`;
+    ui.examTimerBox.style.display = 'none';
+  } else if (mode === 'vocab') {
+    state.session.questions = (typeof VOCAB_QUESTIONS !== 'undefined' ? VOCAB_QUESTIONS : []).filter(q => q.subject === subjectId);
+    ui.quizModePill.textContent = '⚡ スピード用語マスター';
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'mock') {
     // Mock Exam: 16 curated representative questions
@@ -591,12 +632,12 @@ function loadQuestionInWorkspace(index) {
   ui.quizProgressBarFill.style.width = `${pct}%`;
 
   ui.qCategoryChip.textContent = q.category || '重要論点';
-  const sourceLabel = q.source || (q.year ? `${q.year}${q.questionNumber ? ' ' + q.questionNumber : ''}` : '精選過去問');
+  const sourceLabel = q.term ? `⚡ 用語: ${q.term}` : (q.source || (q.year ? `${q.year}${q.questionNumber ? ' ' + q.questionNumber : ''}` : '精選過去問'));
   ui.qSourceChip.textContent = sourceLabel;
   
   // Stars difficulty
   const diff = q.difficulty || 2;
-  const stars = diff === 1 ? '★☆☆ (基本)' : diff === 2 ? '★★☆ (標準)' : '★★★ (難関)';
+  const stars = q.term ? '⚡ 一問一答' : (diff === 1 ? '★☆☆ (基本)' : diff === 2 ? '★★☆ (標準)' : '★★★ (難関)');
   ui.qDifficultyStars.textContent = stars;
 
   // Revision Notice (Crucial for Law and Policy)
@@ -609,7 +650,11 @@ function loadQuestionInWorkspace(index) {
   }
 
   // Question text
-  ui.questionTextArea.textContent = q.question;
+  if (q.term) {
+    ui.questionTextArea.innerHTML = `<span class="term-highlight-badge">対象用語</span><strong style="color:#e2e8f0;font-size:1.08em;">【${escapeHtml(q.term)}】</strong><br><br>${escapeHtml(q.question)}`;
+  } else {
+    ui.questionTextArea.textContent = q.question;
+  }
 
   // Bookmark status
   const item = state.history.items[q.id];
@@ -920,6 +965,27 @@ function showToast(msg) {
 // ==========================================================================
 
 function bindEventListeners() {
+  // Practice Mode Switcher (実戦過去問 vs スピード用語マスター)
+  ui.tabModeExam?.addEventListener('click', () => {
+    state.practiceMode = 'exam';
+    ui.tabModeExam.classList.add('active');
+    ui.tabModeVocab?.classList.remove('active');
+    if (ui.modeSwitcherDesc) {
+      ui.modeSwitcherDesc.textContent = '本試験形式の実戦長文問題。消去法チェック＆法改正注記付きで本番得点力を養成。';
+    }
+    renderHomeScreen();
+  });
+
+  ui.tabModeVocab?.addEventListener('click', () => {
+    state.practiceMode = 'vocab';
+    ui.tabModeVocab.classList.add('active');
+    ui.tabModeExam?.classList.remove('active');
+    if (ui.modeSwitcherDesc) {
+      ui.modeSwitcherDesc.textContent = '⚡ スピード用語マスター（一問一答 515問）：1問5〜10秒で意味・キーワードを選択。スキマ時間の暗記特訓に最適！';
+    }
+    renderHomeScreen();
+  });
+
   // Navigation Tabs
   document.querySelectorAll('.nav-tab, .m-tab').forEach(tab => {
     tab.addEventListener('click', () => {
