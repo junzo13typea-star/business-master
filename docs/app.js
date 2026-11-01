@@ -267,6 +267,9 @@ const ui = {
   // Analytics Screen
   diagPassProbBig: document.getElementById('diagPassProbBig'),
   diagGradeBig: document.getElementById('diagGradeBig'),
+  diagConfidenceBadge: document.getElementById('diagConfidenceBadge'),
+  diagConfidencePct: document.getElementById('diagConfidencePct'),
+  diagConfidenceBar: document.getElementById('diagConfidenceBar'),
   diagAdviceText: document.getElementById('diagAdviceText'),
   diagTotalAnswered: document.getElementById('diagTotalAnswered'),
   diagTotalCorrect: document.getElementById('diagTotalCorrect'),
@@ -428,7 +431,8 @@ function calculateOverallMetrics() {
   let totalCorrect = 0;
   let subjectStats = {};
 
-  Object.keys(SUBJECTS).forEach(subKey => {
+  const totalSubjectKeys = Object.keys(SUBJECTS);
+  totalSubjectKeys.forEach(subKey => {
     subjectStats[subKey] = { answered: 0, correct: 0, accuracy: 0 };
   });
 
@@ -444,65 +448,149 @@ function calculateOverallMetrics() {
     }
   });
 
+  // 各科目の正答率算出
+  let coveredSubjectsCount = 0;
   Object.keys(subjectStats).forEach(k => {
     const s = subjectStats[k];
     s.accuracy = s.answered > 0 ? Math.round((s.correct / s.answered) * 100) : 0;
+    if (s.answered >= 3) {
+      coveredSubjectsCount++;
+    }
   });
 
+  // 実績正答率 (Raw Accuracy)
   const overallAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
-  const isUnlocked = totalAnswered >= BENCHMARK_COUNT;
-  const confidence = Math.min(100, Math.round((totalAnswered / BENCHMARK_COUNT) * 100));
 
-  // Cutoff check
+  // 1. 予測精度・信頼度 (Confidence: 0〜100%)
+  // 回答数要因 (70%): 目標 140問
+  const sampleProgress = Math.min(1.0, totalAnswered / 140);
+  // 科目網羅要因 (30%): 全7科目のカバー率
+  const coverageProgress = coveredSubjectsCount / totalSubjectKeys.length;
+  const confidence = totalAnswered === 0
+    ? 0
+    : Math.max(5, Math.min(100, Math.round((sampleProgress * 0.70 + coverageProgress * 0.30) * 100)));
+
+  // 足切り科目（40%未満）の検出
   const cutoffSubjects = [];
   Object.keys(subjectStats).forEach(k => {
-    if (subjectStats[k].answered > 0 && subjectStats[k].accuracy < 40) {
+    if (subjectStats[k].answered >= 3 && subjectStats[k].accuracy < 40) {
       cutoffSubjects.push({ id: k, name: SUBJECTS[k].name, accuracy: subjectStats[k].accuracy });
     }
   });
 
-  // Calculate Grade (Only official when unlocked)
-  let grade = 'B';
-  let gradeClass = 'grade-b';
+  // 2. ベイズ的縮小推定（Bayesian Shrinkage）による推定合格確率 (Pass Probability)
+  // 事前分布: 全国平均合格率 20%（擬似事前標本数 25問）
+  let passProbability = 0;
+  if (totalAnswered === 0) {
+    passProbability = 0;
+  } else {
+    const PRIOR_M = 25;
+    const PRIOR_ACC = 0.20; // 中小企業診断士の基礎合格率水準
+    const shrunkAccuracy = (PRIOR_M * PRIOR_ACC + totalCorrect) / (PRIOR_M + totalAnswered);
+
+    // シグモイドスケーリング（合格基準60%で確率約60%、75%で約85%、45%で約15%）
+    const z = (shrunkAccuracy - 0.52) * 8.5;
+    let baseProb = Math.round((1 / (1 + Math.exp(-z))) * 100);
+
+    // 足切りペナルティ（40%未満の科目1つにつき合格確率半減）
+    if (cutoffSubjects.length > 0) {
+      baseProb = Math.round(baseProb * Math.pow(0.5, cutoffSubjects.length));
+    }
+
+    // 未着手科目の不確実性ペナルティ（解いていない科目は足切りリスクがあるため）
+    const uncoveredCount = totalSubjectKeys.length - coveredSubjectsCount;
+    if (confidence < 70) {
+      baseProb = Math.max(5, baseProb - (uncoveredCount * 2));
+    }
+
+    // 上限・下限ガード（試験に絶対の100%はないため最大98%、最低3%）
+    passProbability = Math.max(3, Math.min(98, baseProb));
+  }
+
+  // 3. 判定ランク (Grade) とステータス
+  const isUnlocked = confidence >= 70;
+  let grade = 'C';
+  let gradeClass = 'grade-c';
+  let gradeLabel = '';
   let advice = '';
 
-  if (overallAccuracy >= 88 && cutoffSubjects.length === 0) {
-    grade = 'S';
-    gradeClass = 'grade-s';
-    advice = '圧倒的な実力です！全国上位での1次試験突破が極めて確実です。';
-  } else if (overallAccuracy >= 75 && cutoffSubjects.length === 0) {
-    grade = 'A';
-    gradeClass = 'grade-a';
-    advice = '合格安全圏です。過去問演習を継続し、本番でのケアレスミスを防ぎましょう。';
-  } else if (overallAccuracy >= 60) {
-    grade = 'B';
-    gradeClass = 'grade-b';
-    advice = cutoffSubjects.length > 0
-      ? `全体得点は合格ラインですが、${cutoffSubjects.map(c => c.name).join('・')}で足切り（40%未満）の危険があります！`
-      : '合格基準（60%）をクリアしています。苦手科目を底上げすれば盤石です。';
-  } else if (overallAccuracy >= 50) {
-    grade = 'C';
+  if (confidence < 25) {
+    // データ蓄積中（サンプル数不足）
+    grade = '測定中';
     gradeClass = 'grade-c';
-    advice = '合格まであと一歩（50%台）。頻出重要論点の暗記ポイントを集中反復しましょう。';
-  } else if (overallAccuracy >= 40) {
-    grade = 'D';
-    gradeClass = 'grade-d';
-    advice = '基礎論点の理解が不足しています。科目別トレーニングで解説を熟読してください。';
+    gradeLabel = `データ蓄積中 (${confidence}%)`;
+    advice = `現在${totalAnswered}問解答・${coveredSubjectsCount}/7科目着手。正答率は${overallAccuracy}%と良好ですが、サンプル不足のため推定合格確率は${passProbability}%（予測精度${confidence}%）です。全7科目を解き進めると精度が急上昇します！`;
+  } else if (confidence < 70) {
+    // 暫定判定（30問〜100問程度）
+    if (cutoffSubjects.length > 0) {
+      grade = 'D';
+      gradeClass = 'grade-d';
+      gradeLabel = '暫定 D判定 (足切り警告)';
+      advice = `${cutoffSubjects.map(c => c.name).join('・')}で足切り（40%未満）リスクを検知！弱点科目を優先的に対策してください。`;
+    } else if (passProbability >= 70) {
+      grade = 'B+';
+      gradeClass = 'grade-a';
+      gradeLabel = '暫定 B+判定';
+      advice = `合格圏に近づいています（推定合格率${passProbability}%）。未着手科目を埋めて本判定（信頼度70%以上）を目指しましょう。`;
+    } else if (passProbability >= 50) {
+      grade = 'B';
+      gradeClass = 'grade-b';
+      gradeLabel = '暫定 B判定';
+      advice = `現在の実力は当落線上です。頻出重要論点の演習を重ねて確実なA判定圏を狙いましょう。`;
+    } else {
+      grade = 'C';
+      gradeClass = 'grade-c';
+      gradeLabel = '暫定 C判定';
+      advice = `基礎知識の定着フェーズです。科目別トレーニングと解説の熟読で得点源を増やしましょう。`;
+    }
   } else {
-    grade = 'E';
-    gradeClass = 'grade-e';
-    advice = '足切りリスク大。まずは1科目ずつ頻出公式・定義の定着を徹底しましょう。';
+    // 正式本判定 (アンロック完了)
+    if (cutoffSubjects.length > 0) {
+      grade = 'D';
+      gradeClass = 'grade-d';
+      gradeLabel = 'D判定 (足切り発生)';
+      advice = `全体正答率は${overallAccuracy}%ですが、${cutoffSubjects.map(c => c.name).join('・')}が足切りラインです。最優先で補強してください。`;
+    } else if (passProbability >= 88) {
+      grade = 'S';
+      gradeClass = 'grade-s';
+      gradeLabel = 'S判定 (超安全圏)';
+      advice = `全国トップレベルの実力です（推定合格率${passProbability}%）！全科目が極めて安定しています。`;
+    } else if (passProbability >= 75) {
+      grade = 'A';
+      gradeClass = 'grade-a';
+      gradeLabel = 'A判定 (合格安全圏)';
+      advice = `合格安全圏に到達しています（推定合格率${passProbability}%）。模試で時間配分とケアレスミス防止を確認しましょう。`;
+    } else if (passProbability >= 60) {
+      grade = 'B';
+      gradeClass = 'grade-b';
+      gradeLabel = 'B判定 (合格ボーダー)';
+      advice = `合格基準（推定合格率${passProbability}%）をクリア！あと数問の得点力向上で盤石なA判定に入ります。`;
+    } else if (passProbability >= 45) {
+      grade = 'C';
+      gradeClass = 'grade-c';
+      gradeLabel = 'C判定 (努力圏)';
+      advice = `合格まであと一歩。Anki復習モードで間違えた問題を徹底的に克服しましょう。`;
+    } else {
+      grade = 'E';
+      gradeClass = 'grade-e';
+      gradeLabel = 'E判定 (要基礎固め)';
+      advice = `まずは頻出基本論点の暗記ポイントを1科目ずつ固めていきましょう。`;
+    }
   }
 
   return {
     totalAnswered,
     totalCorrect,
     overallAccuracy,
+    passProbability,
     isUnlocked,
     confidence,
+    coveredSubjectsCount,
+    totalSubjectCount: totalSubjectKeys.length,
     remainingCount: Math.max(0, BENCHMARK_COUNT - totalAnswered),
     grade,
     gradeClass,
+    gradeLabel,
     advice,
     cutoffSubjects,
     subjectStats
@@ -514,7 +602,7 @@ function updatePassMetricsUI() {
 
   // Benchmark Progress Bar
   if (ui.benchCountText) {
-    ui.benchCountText.textContent = `現在 ${metrics.totalAnswered} / ${BENCHMARK_COUNT}問 達成 (${metrics.confidence}%)`;
+    ui.benchCountText.textContent = `現在 ${metrics.totalAnswered} / ${BENCHMARK_COUNT}問 達成 (予測精度 ${metrics.confidence}%)`;
   }
   if (ui.benchFillBar) {
     ui.benchFillBar.style.width = `${metrics.confidence}%`;
@@ -523,33 +611,31 @@ function updatePassMetricsUI() {
   // Top Bar Meter
   if (ui.topPassGrade) {
     if (metrics.isUnlocked) {
-      ui.topPassGrade.textContent = `${metrics.grade}判定`;
+      ui.topPassGrade.textContent = `${metrics.grade}判定 (${metrics.passProbability}%)`;
       ui.topPassGrade.className = `prob-badge ${metrics.gradeClass}`;
     } else {
-      ui.topPassGrade.textContent = `信頼度 ${metrics.confidence}%`;
-      ui.topPassGrade.className = `prob-badge grade-c`;
+      ui.topPassGrade.textContent = `合格率 ${metrics.passProbability}% (精度${metrics.confidence}%)`;
+      ui.topPassGrade.className = `prob-badge ${metrics.gradeClass}`;
     }
   }
   if (ui.topPassRate) {
-    ui.topPassRate.textContent = metrics.isUnlocked ? `${metrics.overallAccuracy}%` : `--%`;
+    ui.topPassRate.textContent = `${metrics.passProbability}%`;
   }
 
   // Hero Card
   if (ui.heroHeadlineText) {
     ui.heroHeadlineText.innerHTML = metrics.isUnlocked
-      ? `正式合格判定: <span class="highlight-grade" id="heroPassGrade">${metrics.grade} 判定</span>`
-      : `正式合格判定: <span class="highlight-grade" id="heroPassGrade" style="color: var(--color-amber);">🔒 データ蓄積中</span>`;
+      ? `正式合格判定: <span class="highlight-grade" id="heroPassGrade">${metrics.grade} 判定 (${metrics.passProbability}%)</span>`
+      : `AI合格判定: <span class="highlight-grade" id="heroPassGrade" style="color: #60a5fa;">${metrics.gradeLabel}</span>`;
   }
   if (ui.heroPassProbPct) {
-    ui.heroPassProbPct.textContent = metrics.isUnlocked ? `${metrics.overallAccuracy}%` : `--%`;
+    ui.heroPassProbPct.textContent = `${metrics.passProbability}%`;
   }
   if (ui.heroGaugeSub) {
-    ui.heroGaugeSub.textContent = metrics.isUnlocked ? '正式合格予測' : `信頼度 ${metrics.confidence}%`;
+    ui.heroGaugeSub.textContent = `予測精度 ${metrics.confidence}%`;
   }
   if (ui.heroPassSummary) {
-    ui.heroPassSummary.textContent = metrics.isUnlocked
-      ? metrics.advice
-      : `診断士1次試験（約225問）と同等の演習母数をこなすことで、真の実力と合格可能性（A〜E判定）が正式アンロックされます。あと ${metrics.remainingCount} 問で正式判定！`;
+    ui.heroPassSummary.textContent = metrics.advice;
   }
 
   // Cutoff Banner
@@ -699,16 +785,26 @@ function renderHomeScreen() {
 function renderAnalyticsScreen() {
   const metrics = calculateOverallMetrics();
 
-  if (ui.diagPassProbBig) ui.diagPassProbBig.textContent = `${metrics.overallAccuracy}%`;
+  if (ui.diagPassProbBig) ui.diagPassProbBig.textContent = `${metrics.passProbability}%`;
   if (ui.diagGradeBig) {
-    ui.diagGradeBig.textContent = `${metrics.grade} 判定`;
+    ui.diagGradeBig.textContent = metrics.gradeLabel || `${metrics.grade} 判定`;
     ui.diagGradeBig.className = `diag-grade-tag ${metrics.gradeClass}`;
+  }
+  if (ui.diagConfidenceBadge) {
+    ui.diagConfidenceBadge.textContent = `予測精度: ${metrics.confidence}%`;
+    ui.diagConfidenceBadge.style.color = metrics.confidence >= 70 ? '#10b981' : (metrics.confidence >= 30 ? '#f59e0b' : '#60a5fa');
+  }
+  if (ui.diagConfidencePct) {
+    ui.diagConfidencePct.textContent = `${metrics.confidence}% (着手 ${metrics.coveredSubjectsCount}/${metrics.totalSubjectCount}科目)`;
+  }
+  if (ui.diagConfidenceBar) {
+    ui.diagConfidenceBar.style.width = `${metrics.confidence}%`;
   }
   if (ui.diagAdviceText) ui.diagAdviceText.textContent = metrics.advice;
 
   if (ui.diagTotalAnswered) ui.diagTotalAnswered.textContent = `${metrics.totalAnswered} 問`;
   if (ui.diagTotalCorrect) ui.diagTotalCorrect.textContent = `${metrics.totalCorrect} 問`;
-  if (ui.diagTotalAccuracy) ui.diagTotalAccuracy.textContent = `${metrics.overallAccuracy} %`;
+  if (ui.diagTotalAccuracy) ui.diagTotalAccuracy.textContent = `${metrics.overallAccuracy} % (実績正答率)`;
   if (ui.diagDueCount) ui.diagDueCount.textContent = `${getDueReviewQuestions().length} 問`;
 
   // Render Mastery bars

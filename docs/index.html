@@ -107,7 +107,7 @@
       <button class="nav-tab" data-view="viewMba" id="tabMba">
         <span class="tab-emoji">🔰</span>
         <span>初級編: MBA用語</span>
-        <span class="counter-pill" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff;">150問</span>
+        <span class="counter-pill" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff;">450問</span>
       </button>
       <button class="nav-tab active" data-view="viewHome" id="tabSubjects">
         <span class="tab-emoji">📘</span>
@@ -148,7 +148,7 @@
           <div class="mba-hero-card">
             <div class="mba-hero-left">
               <span class="mba-badge-pill">🔰 初級編：ビジネスエキスパートへの第一歩</span>
-              <h2 class="mba-hero-title">MBA専門用語マスター 150</h2>
+              <h2 class="mba-hero-title">MBA専門用語マスター 450</h2>
               <p class="mba-hero-desc">
                 世界基準のビジネススクールで学ぶ7大コア領域の必須概念を選択式で攻略。問題を解くごとにEXPを獲得し、ビジネス戦闘力（Level）をランクアップさせよう！
               </p>
@@ -706,10 +706,23 @@
           <div class="diagnostic-grid">
             
             <div class="diag-card">
-              <h3 class="diag-title">総合合格確率</h3>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <h3 class="diag-title" style="margin: 0;">推定合格シミュレーション</h3>
+                <span class="badge-confidence" id="diagConfidenceBadge" style="font-size: 0.78rem; padding: 3px 8px; border-radius: 6px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">予測精度: 0%</span>
+              </div>
               <div class="diag-metric-box">
-                <span class="diag-big-number" id="diagPassProbBig">68%</span>
-                <span class="diag-grade-tag grade-b" id="diagGradeBig">B判定</span>
+                <span class="diag-big-number" id="diagPassProbBig">0%</span>
+                <span class="diag-grade-tag grade-b" id="diagGradeBig">測定中</span>
+              </div>
+              <!-- Confidence Progress Bar -->
+              <div class="confidence-meter-box" style="margin: 0.8rem 0 0.6rem 0;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">
+                  <span>判定信頼度 (母数＆7科目網羅)</span>
+                  <span id="diagConfidencePct" style="color: #60a5fa; font-weight: 600;">0%</span>
+                </div>
+                <div class="bench-track" style="height: 6px; background: rgba(255, 255, 255, 0.08); border-radius: 999px; overflow: hidden;">
+                  <div class="bench-fill" id="diagConfidenceBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.4s ease;"></div>
+                </div>
               </div>
               <p class="diag-advice" id="diagAdviceText">
                 現在、全体平均は合格圏内（60%超）です。弱点科目の底上げでA判定を目指しましょう。
@@ -983,7 +996,7 @@
           </div>
           <h2 class="pro-modal-title">ビジネスエキスパート <span class="gradient-text">PRO</span></h2>
           <p class="pro-modal-desc">
-            全制限を解除。複数端末のクラウド同期、2次筆記AI詳細添削、MBA全150問を無制限に使い放題。
+            全制限を解除。複数端末のクラウド同期、2次筆記AI詳細添削、MBA全450問を無制限に使い放題。
           </p>
 
           <!-- Plan Switcher -->
@@ -1005,7 +1018,7 @@
               <span class="perk-check">✅</span>
               <div>
                 <strong>全問題・全コンテンツ完全無制限</strong>
-                <p>1次試験700問＋515問、2次筆記全8事例、MBA150問すべて使い放題</p>
+                <p>1次試験700問＋515問、2次筆記全8事例、MBA全450問すべて使い放題</p>
               </div>
             </div>
             <div class="perk-item">
