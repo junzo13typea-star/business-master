@@ -4278,3 +4278,203 @@ html, body {
   opacity: 0.9;
   transform: translateY(-1px);
 }
+
+/* ==========================================================================
+   上市・法務モーダル & 共通フッター スタイル (Legal & Footer)
+   ========================================================================== */
+
+.pro-legal-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.pro-legal-links a {
+  color: var(--text-muted);
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.pro-legal-links a:hover {
+  color: #38bdf8;
+}
+
+.legal-modal-card {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  width: 95%;
+  max-width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.legal-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.legal-tab-nav {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+}
+
+.legal-tab-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.legal-tab-btn.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.legal-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  font-size: 0.86rem;
+  line-height: 1.65;
+  color: #cbd5e1;
+}
+
+.legal-doc-title {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 1.2rem 0;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.legal-content-section h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 1.2rem 0 0.4rem 0;
+}
+
+.legal-content-section p {
+  margin: 0 0 0.8rem 0;
+  color: #94a3b8;
+}
+
+/* 特定商取引法 テーブル */
+.tokusho-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  margin: 0.5rem 0;
+}
+
+.tokusho-table th,
+.tokusho-table td {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tokusho-table th {
+  width: 32%;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e2e8f0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tokusho-table td {
+  color: #cbd5e1;
+}
+
+.tokusho-table a {
+  color: #38bdf8;
+  text-decoration: underline;
+}
+
+/* 共通フッター */
+.app-site-footer {
+  margin-top: 3.5rem;
+  padding: 2.5rem 1.5rem 4rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.4);
+  text-align: center;
+}
+
+.footer-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.f-logo {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.f-tagline {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.8rem;
+}
+
+.footer-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #38bdf8;
+  text-decoration: underline;
+}
+
+.footer-links span {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.footer-copy {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin: 0.4rem 0 0 0;
+}

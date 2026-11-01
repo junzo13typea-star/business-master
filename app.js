@@ -6,6 +6,22 @@
 
 const STORAGE_KEY = 'shindanshi_passpro_store_v2';
 
+// ==========================================================================
+// 上市・商用運用設定 (Operator & Payment Configuration)
+// ==========================================================================
+const CONFIG_OPERATOR = {
+  sellerName: 'ビジネスエキスパートの道 運営事務局',
+  representative: '野津 純三',
+  address: '〒150-0043 東京都渋谷区道玄坂1-10-8 渋谷道玄坂東急ビル2F-C',
+  email: 'support@business-master.example.com',
+  phone: '請求があったら遅滞なく開示します（特定商取引法規定に基づき省略）',
+  url: 'https://junzo13typea-star.github.io/business-master/',
+  stripePaymentLinks: {
+    yearly: '',  // Stripe Payment Link URL (年額プラン: ¥9,800/年)
+    monthly: '' // Stripe Payment Link URL (月額プラン: ¥980/月)
+  }
+};
+
 // Application State
 let state = {
   currentView: 'viewHome',
@@ -240,6 +256,12 @@ const ui = {
   mbaBtnOrderSeq: document.getElementById('mbaBtnOrderSeq'),
   mbaSubcatModalList: document.getElementById('mbaSubcatModalList'),
 
+  // Legal Modal Elements (特定商取引法・利用規約・プライバシー)
+  legalModal: document.getElementById('legalModal'),
+  legalTabNav: document.getElementById('legalTabNav'),
+  legalModalBody: document.getElementById('legalModalBody'),
+  btnCloseLegalModal: document.getElementById('btnCloseLegalModal'),
+
   // Mock Exam Intro
   btnStartMockExam: document.getElementById('btnStartMockExam'),
   mockQuestionCountText: document.getElementById('mockQuestionCountText'),
@@ -324,6 +346,7 @@ function init() {
   updatePlayerLevelUI();
   initStudyTracker();
   initProModal();
+  initLegalModal();
   initLtvFeatures();
   renderHomeScreen();
   initCaseExam();
@@ -2940,12 +2963,28 @@ function initProModal() {
   });
 
   ui.btnStartTrial?.addEventListener('click', () => {
+    const link = CONFIG_OPERATOR.stripePaymentLinks[selectedProPlan];
+    if (link && link.startsWith('http')) {
+      // 本番Stripe決済リンクへリダイレクト
+      showToast('Stripe安全決済ページへ移動します...');
+      setTimeout(() => {
+        window.location.href = link;
+      }, 500);
+      return;
+    }
+
+    // デモ・シミュレーションモード
     showToast(`🎉 7日間のPRO無料トライアルを開始しました！（${selectedProPlan === 'yearly' ? '年額プラン' : '月額プラン'}）`);
     closeProModal();
     if (ui.btnOpenProModal) {
       ui.btnOpenProModal.textContent = '👑 PRO会員';
       ui.btnOpenProModal.style.background = 'linear-gradient(135deg, #10b981, #059669)';
     }
+  });
+
+  // Modal background click close
+  ui.proModal?.addEventListener('click', (e) => {
+    if (e.target === ui.proModal) closeProModal();
   });
 }
 
@@ -2956,6 +2995,140 @@ function openProModal() {
 function closeProModal() {
   if (ui.proModal) ui.proModal.style.display = 'none';
 }
+
+// ==========================================================================
+// 上市・法務ドキュメント モジュール (特定商取引法・利用規約・プライバシー)
+// ==========================================================================
+
+const LEGAL_DOCS = {
+  tokusho: {
+    title: '特定商取引法に基づく表記',
+    content: `
+      <div class="legal-content-section">
+        <table class="tokusho-table">
+          <tr><th>販売事業者名</th><td>${escapeHtml(CONFIG_OPERATOR.sellerName)}</td></tr>
+          <tr><th>運営統括責任者</th><td>${escapeHtml(CONFIG_OPERATOR.representative)}</td></tr>
+          <tr><th>所在地</th><td>${escapeHtml(CONFIG_OPERATOR.address)}</td></tr>
+          <tr><th>連絡先メール</th><td>${escapeHtml(CONFIG_OPERATOR.email)}</td></tr>
+          <tr><th>連絡先電話番号</th><td>${escapeHtml(CONFIG_OPERATOR.phone)}</td></tr>
+          <tr><th>販売URL</th><td><a href="${CONFIG_OPERATOR.url}" target="_blank" rel="noopener">${CONFIG_OPERATOR.url}</a></td></tr>
+          <tr><th>販売価格</th><td>
+            <strong>年額プラン：</strong>9,800円（税込）/ 年<br>
+            <strong>月額プラン：</strong>980円（税込）/ 月
+          </td></tr>
+          <tr><th>商品代金以外の必要料金</th><td>インターネット接続料金、パケット通信料はお客様のご負担となります。</td></tr>
+          <tr><th>お支払い方法</th><td>クレジットカード決済（Visa, Mastercard, JCB, American Express 等）</td></tr>
+          <tr><th>代金の支払時期</th><td>初回登録時に即時決済。以後、各プラン期間ごとに自動更新されます。</td></tr>
+          <tr><th>サービスの提供時期</th><td>クレジットカード決済完了後、即時に全機能がご利用いただけます。</td></tr>
+          <tr><th>返品・キャンセルについて</th><td>デジタルコンテンツの性質上、購入・決済完了後の返品および返金はお受けしておりません。<br>定期購読の解約はいつでも設定より即時手続きが可能で、次回更新日以降の請求は発生いたしません。</td></tr>
+          <tr><th>動作環境</th><td>最新版の Google Chrome, Safari, Microsoft Edge, Firefox（iOS, Android, macOS, Windows）</td></tr>
+        </table>
+      </div>
+    `
+  },
+  terms: {
+    title: '利用規約 (Terms of Service)',
+    content: `
+      <div class="legal-content-section">
+        <h4>第1条（総則・適用）</h4>
+        <p>本利用規約（以下「本規約」）は、「ビジネスエキスパートの道 運営事務局」（以下「当事務局」）が提供するWebサービス「ビジネスエキスパートの道」（以下「本サービス」）の利用条件を定めるものです。利用者は本サービスを利用することにより本規約に同意したものとみなされます。</p>
+
+        <h4>第2条（サービス内容および免責事項）</h4>
+        <p>1. 本サービスは中小企業診断士試験およびMBA基礎知識に関する学習支援、模擬試験、用語演習、自己学習ログの提供を目的としています。<br>
+        2. 当事務局は本サービスに掲載される問題、解説、シミュレーション結果の有用性に注意を払っておりますが、中小企業診断士試験の合格や特定の点数を保証するものではありません。<br>
+        3. 本サービスの利用によって利用者に生じたいかなる損害についても、当事務局に故意または重大な過失がある場合を除き責任を負いません。</p>
+
+        <h4>第3条（知的財産権の帰属）</h4>
+        <p>本サービスを構成するテキスト、問題文、解説、画像、プログラムコード等の著作権その他の知的財産権は当事務局に帰属します。無断で複製、転載、改変、公衆送信、二次配布等を行うことを固く禁止します。</p>
+
+        <h4>第4条（有料プランおよび料金支払）</h4>
+        <p>1. 利用者は所定の料金（年額9,800円または月額980円）を支払うことでPRO機能を利用できます。<br>
+        2. 有料プランは所定の解約手続きを行わない限り同一期間・同一料金で自動更新されます。<br>
+        3. 決済完了後の返金・キャンセル・日割り精算は行われません。</p>
+
+        <h4>第5条（準拠法および管轄）</h4>
+        <p>本規約の準拠法は日本法とし、本サービスに関する紛争については東京地方裁判所を第一審の専属的合意管轄裁判所とします。</p>
+      </div>
+    `
+  },
+  privacy: {
+    title: 'プライバシーポリシー (Privacy Policy)',
+    content: `
+      <div class="legal-content-section">
+        <p>当事務局は、利用者のプライバシーを尊重し、個人情報の保護に努めます。</p>
+
+        <h4>1. 取得する情報</h4>
+        <p>・決済情報：決済代行事業者（Stripe等）に提供される決済トークン（カード番号等の機密情報は当事務局では保持しません）。<br>
+        ・学習データ：解答履歴、正答率、学習時間、レベルEXP等のデータ（ブラウザのLocalStorageまたはクラウドに保持されます）。<br>
+        ・アクセスログ：利用ブラウザ、アクセス日時などの標準的なログ。</p>
+
+        <h4>2. 利用目的</h4>
+        <p>・本サービスの提供、有料プランの認証および更新管理のため<br>
+        ・学習進捗管理およびパーソナライズされた出題アルゴリズム動作のため<br>
+        ・機能改善、不具合解消、新規機能開発のため</p>
+
+        <h4>3. 第三者提供について</h4>
+        <p>法令に基づく場合を除き、利用者の同意なく個人情報を第三者に提供しません。決済処理のため決済代行業者に必要最小限の情報を委託する場合があります。</p>
+
+        <h4>4. お問い合わせ窓口</h4>
+        <p>個人情報の取り扱いに関するご質問は、下記窓口までご連絡ください。<br>
+        窓口：${escapeHtml(CONFIG_OPERATOR.sellerName)} 個人情報保護担当<br>
+        E-mail：${escapeHtml(CONFIG_OPERATOR.email)}</p>
+      </div>
+    `
+  }
+};
+
+let activeLegalTab = 'tokusho';
+
+function initLegalModal() {
+  ui.btnCloseLegalModal?.addEventListener('click', closeLegalModal);
+  ui.legalModal?.addEventListener('click', (e) => {
+    if (e.target === ui.legalModal) closeLegalModal();
+  });
+
+  ui.legalTabNav?.querySelectorAll('.legal-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const docType = btn.getAttribute('data-legal');
+      if (docType) renderLegalDoc(docType);
+    });
+  });
+}
+
+function openLegalModal(docType = 'tokusho') {
+  activeLegalTab = docType;
+  renderLegalDoc(docType);
+  if (ui.legalModal) ui.legalModal.style.display = 'flex';
+}
+
+function closeLegalModal() {
+  if (ui.legalModal) ui.legalModal.style.display = 'none';
+}
+
+function renderLegalDoc(docType) {
+  activeLegalTab = docType;
+  const doc = LEGAL_DOCS[docType] || LEGAL_DOCS.tokusho;
+
+  if (ui.legalTabNav) {
+    ui.legalTabNav.querySelectorAll('.legal-tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-legal') === docType);
+    });
+  }
+
+  if (ui.legalModalBody) {
+    ui.legalModalBody.innerHTML = `
+      <h3 class="legal-doc-title">${escapeHtml(doc.title)}</h3>
+      ${doc.content}
+    `;
+    ui.legalModalBody.scrollTop = 0;
+  }
+}
+
+// Global scope bindings for inline HTML handlers
+window.openLegalModal = openLegalModal;
+window.closeLegalModal = closeLegalModal;
+window.openProModal = openProModal;
+window.closeProModal = closeProModal;
 
 // ==========================================================================
 // LTV最大化・習慣化・アチーブメント・安全バックアップ モジュール
