@@ -24,6 +24,15 @@ let state = {
     timerId: null,
     eliminated: new Set(), // Set of option indices crossed out
     subjectResults: {}     // subId -> { correct, total }
+  },
+  caseExam: {
+    activeCase: null,
+    activeQuestionIndex: 0,
+    filter: 'all',
+    timerSeconds: 80 * 60,
+    timerRunning: false,
+    timerInterval: null,
+    drafts: {}
   }
 };
 
@@ -47,6 +56,36 @@ const ui = {
   viewQuiz: document.getElementById('viewQuiz'),
   viewResult: document.getElementById('viewResult'),
   viewAnalytics: document.getElementById('viewAnalytics'),
+  viewCaseExam: document.getElementById('viewCaseExam'),
+
+  // Case Exam Workspace Elements
+  caseListView: document.getElementById('caseListView'),
+  caseWorkspaceView: document.getElementById('caseWorkspaceView'),
+  caseCardsGrid: document.getElementById('caseCardsGrid'),
+  btnCaseBackToList: document.getElementById('btnCaseBackToList'),
+  wsCaseTypeBadge: document.getElementById('wsCaseTypeBadge'),
+  wsCaseTitle: document.getElementById('wsCaseTitle'),
+  caseTimerDisplay: document.getElementById('caseTimerDisplay'),
+  btnCaseTimerToggle: document.getElementById('btnCaseTimerToggle'),
+  caseDraftIndicator: document.getElementById('caseDraftIndicator'),
+  btnMobTabStory: document.getElementById('btnMobTabStory'),
+  btnMobTabQuestions: document.getElementById('btnMobTabQuestions'),
+  caseStoryPane: document.getElementById('caseStoryPane'),
+  caseQuestionsPane: document.getElementById('caseQuestionsPane'),
+  storyCompanyName: document.getElementById('storyCompanyName'),
+  storyCompanyMeta: document.getElementById('storyCompanyMeta'),
+  storyCompanySummary: document.getElementById('storyCompanySummary'),
+  caseFinancialsArea: document.getElementById('caseFinancialsArea'),
+  financialTablesContent: document.getElementById('financialTablesContent'),
+  storyParagraphs: document.getElementById('storyParagraphs'),
+  caseQNav: document.getElementById('caseQNav'),
+  caseQActiveCard: document.getElementById('caseQActiveCard'),
+  caseResultModal: document.getElementById('caseResultModal'),
+  modalQTitle: document.getElementById('modalQTitle'),
+  modalResultBody: document.getElementById('modalResultBody'),
+  btnCloseCaseModal: document.getElementById('btnCloseCaseModal'),
+  btnModalCloseSecondary: document.getElementById('btnModalCloseSecondary'),
+  btnModalNextQ: document.getElementById('btnModalNextQ'),
 
   // Home Screen Elements
   heroHeadlineText: document.getElementById('heroHeadlineText'),
@@ -150,6 +189,7 @@ function init() {
   }
   updatePassMetricsUI();
   renderHomeScreen();
+  initCaseExam();
 }
 
 function loadHistoryData() {
@@ -931,7 +971,7 @@ function finalizeQuizSession() {
 
 function switchView(viewId) {
   state.currentView = viewId;
-  const allViews = [ui.viewHome, ui.viewMockExam, ui.viewWeakness, ui.viewQuiz, ui.viewResult, ui.viewAnalytics];
+  const allViews = [ui.viewHome, ui.viewMockExam, ui.viewWeakness, ui.viewQuiz, ui.viewResult, ui.viewAnalytics, ui.viewCaseExam];
   allViews.forEach(v => {
     if (v) v.classList.remove('active');
   });
@@ -949,6 +989,14 @@ function switchView(viewId) {
 
   if (viewId === 'viewHome') renderHomeScreen();
   if (viewId === 'viewAnalytics') renderAnalyticsScreen();
+  if (viewId === 'viewCaseExam') {
+    // ワークスペースを開いている場合は一覧に戻すか確認
+    if (ui.caseWorkspaceView.style.display === 'flex') {
+      // ワークスペースのまま
+    } else {
+      renderCaseListScreen(state.caseExam.filter);
+    }
+  }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -999,6 +1047,12 @@ function bindEventListeners() {
     if (state.currentView === 'viewQuiz') {
       if (confirm('演習を中断してホームに戻りますか？')) {
         if (state.session.timerId) clearInterval(state.session.timerId);
+        switchView('viewHome');
+      }
+    } else if (state.currentView === 'viewCaseExam') {
+      if (ui.caseWorkspaceView.style.display !== 'none') {
+        closeCaseWorkspace();
+      } else {
         switchView('viewHome');
       }
     } else {
@@ -1075,6 +1129,605 @@ function bindEventListeners() {
     }
   });
 }
+
+// ==========================================================================
+// 第2次筆記試験 実戦ケーススタディ演習 (事例 I〜IV 全8事例) モジュール
+// ==========================================================================
+
+const CASE_DRAFT_KEY = 'shindanshi_case_drafts_v1';
+
+function initCaseExam() {
+  loadCaseDrafts();
+
+  // Filter Buttons
+  document.querySelectorAll('.case-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.case-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.caseExam.filter = btn.getAttribute('data-filter') || 'all';
+      renderCaseListScreen(state.caseExam.filter);
+    });
+  });
+
+  // Workspace Back Button
+  ui.btnCaseBackToList?.addEventListener('click', () => {
+    closeCaseWorkspace();
+  });
+
+  // Timer Toggle
+  ui.btnCaseTimerToggle?.addEventListener('click', toggleCaseTimer);
+
+  // Mobile Tabs (与件文 / 設問)
+  ui.btnMobTabStory?.addEventListener('click', () => {
+    ui.btnMobTabStory.classList.add('active');
+    ui.btnMobTabQuestions.classList.remove('active');
+    ui.caseStoryPane.classList.remove('hidden-mob');
+    ui.caseQuestionsPane.classList.add('hidden-mob');
+  });
+
+  ui.btnMobTabQuestions?.addEventListener('click', () => {
+    ui.btnMobTabQuestions.classList.add('active');
+    ui.btnMobTabStory.classList.remove('active');
+    ui.caseQuestionsPane.classList.remove('hidden-mob');
+    ui.caseStoryPane.classList.add('hidden-mob');
+  });
+
+  // Modal Close Buttons
+  ui.btnCloseCaseModal?.addEventListener('click', closeCaseResultModal);
+  ui.btnModalCloseSecondary?.addEventListener('click', closeCaseResultModal);
+  ui.btnModalNextQ?.addEventListener('click', () => {
+    closeCaseResultModal();
+    const c = state.caseExam.activeCase;
+    if (!c) return;
+    const nextIdx = state.caseExam.activeQuestionIndex + 1;
+    if (nextIdx < c.questions.length) {
+      renderCaseQuestion(nextIdx);
+    } else {
+      showToast('🎉 この事例の全設問を完答しました！');
+    }
+  });
+}
+
+function loadCaseDrafts() {
+  try {
+    const raw = localStorage.getItem(CASE_DRAFT_KEY);
+    if (raw) {
+      state.caseExam.drafts = JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error('Case drafts load error', e);
+  }
+}
+
+function saveCaseDraft(caseId, fieldKey, text) {
+  if (!state.caseExam.drafts[caseId]) {
+    state.caseExam.drafts[caseId] = {};
+  }
+  state.caseExam.drafts[caseId][fieldKey] = text;
+  try {
+    localStorage.setItem(CASE_DRAFT_KEY, JSON.stringify(state.caseExam.drafts));
+    if (ui.caseDraftIndicator) {
+      ui.caseDraftIndicator.textContent = '💾 自動保存済';
+      ui.caseDraftIndicator.style.color = '#10b981';
+    }
+  } catch (e) {
+    console.error('Failed to save draft', e);
+  }
+}
+
+function renderCaseListScreen(filter = 'all') {
+  if (!ui.caseCardsGrid) return;
+  const cases = window.CASES_DATA || [];
+  const filtered = filter === 'all' ? cases : cases.filter(c => c.caseType === filter);
+
+  if (filtered.length === 0) {
+    ui.caseCardsGrid.innerHTML = `
+      <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">
+        該当する事例が見つかりませんでした。
+      </div>
+    `;
+    return;
+  }
+
+  const badgeClasses = {
+    case1: 'badge-case1',
+    case2: 'badge-case2',
+    case3: 'badge-case3',
+    case4: 'badge-case4'
+  };
+
+  ui.caseCardsGrid.innerHTML = filtered.map(c => {
+    const badgeCls = badgeClasses[c.caseType] || 'badge-case1';
+    const draftCount = state.caseExam.drafts[c.id] ? Object.keys(state.caseExam.drafts[c.id]).length : 0;
+    const draftBadge = draftCount > 0 ? `<span style="font-size: 0.72rem; color: #10b981; font-weight: 700;">💾 下書き保存あり</span>` : '';
+
+    return `
+      <div class="case-card">
+        <div>
+          <div class="case-card-header">
+            <span class="case-badge-pill ${badgeCls}">${escapeHtml(c.caseTypeName)}</span>
+            <span class="case-time-pill">⏱ ${c.timeLimitMinutes || 80}分 / 配点100点</span>
+          </div>
+          <h3 class="case-card-title">${escapeHtml(c.title)}</h3>
+          <div class="case-card-meta">
+            <div>🏢 <strong>業種:</strong> ${escapeHtml(c.industry)}</div>
+            <div>👥 <strong>規模:</strong> ${escapeHtml(c.scale)}</div>
+          </div>
+          <p class="case-card-desc">${escapeHtml(c.companyProfile?.features || '')}</p>
+        </div>
+
+        <div class="case-card-footer">
+          <div class="case-q-count">
+            <span>📝 全${c.questions?.length || 0}問</span>
+            ${draftBadge ? `&nbsp;•&nbsp;${draftBadge}` : ''}
+          </div>
+          <button class="btn-start-case" onclick="startCaseWorkspace('${c.id}')">
+            ✍️ 演習を開始
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function startCaseWorkspace(caseId) {
+  const cases = window.CASES_DATA || [];
+  const targetCase = cases.find(c => c.id === caseId);
+  if (!targetCase) {
+    showToast('事例データが見つかりませんでした');
+    return;
+  }
+
+  state.caseExam.activeCase = targetCase;
+  state.caseExam.activeQuestionIndex = 0;
+
+  // UI Setup
+  ui.caseListView.style.display = 'none';
+  ui.caseWorkspaceView.style.display = 'flex';
+  ui.btnHeaderBack.style.display = 'flex';
+
+  // Workspace Header
+  ui.wsCaseTypeBadge.textContent = targetCase.caseTypeName;
+  ui.wsCaseTypeBadge.className = `case-type-badge badge-${targetCase.caseType}`;
+  ui.wsCaseTitle.textContent = targetCase.title;
+
+  // Reset & Start 80min Timer
+  state.caseExam.timerSeconds = (targetCase.timeLimitMinutes || 80) * 60;
+  startCaseTimer();
+
+  // Render Story Pane
+  ui.storyCompanyName.textContent = targetCase.companyProfile?.business || targetCase.title;
+  ui.storyCompanyMeta.innerHTML = `
+    <span class="comp-tag">🏢 ${escapeHtml(targetCase.industry)}</span>
+    <span class="comp-tag">👥 ${escapeHtml(targetCase.scale)}</span>
+  `;
+  ui.storyCompanySummary.innerHTML = `
+    <div style="margin-bottom: 0.4rem;"><strong>【沿革・背景】</strong> ${escapeHtml(targetCase.companyProfile?.history || '')}</div>
+    <div><strong>【強み・特徴】</strong> ${escapeHtml(targetCase.companyProfile?.features || '')}</div>
+  `;
+
+  // Financial Tables (Case IV)
+  if (targetCase.financialData && ui.caseFinancialsArea) {
+    ui.caseFinancialsArea.style.display = 'block';
+    renderFinancialTables(targetCase.financialData);
+  } else if (ui.caseFinancialsArea) {
+    ui.caseFinancialsArea.style.display = 'none';
+  }
+
+  // Render Paragraphs
+  ui.storyParagraphs.innerHTML = (targetCase.story || []).map(p => {
+    return `
+      <div class="story-para">
+        <span class="para-num-badge">第${p.paraNum}段落</span>
+        ${escapeHtml(p.text)}
+      </div>
+    `;
+  }).join('');
+
+  // Render Questions Nav & Active Question
+  renderCaseQuestionsNav();
+  renderCaseQuestion(0);
+
+  // Mobile reset
+  if (window.innerWidth <= 900) {
+    ui.btnMobTabStory?.click();
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeCaseWorkspace() {
+  if (confirm('事例演習を終了して事例一覧に戻りますか？\n（入力した記述は自動保存されています）')) {
+    stopCaseTimer();
+    ui.caseWorkspaceView.style.display = 'none';
+    ui.caseListView.style.display = 'flex';
+    renderCaseListScreen(state.caseExam.filter);
+  }
+}
+
+function startCaseTimer() {
+  stopCaseTimer();
+  state.caseExam.timerRunning = true;
+  updateTimerDisplay();
+
+  state.caseExam.timerInterval = setInterval(() => {
+    if (!state.caseExam.timerRunning) return;
+    if (state.caseExam.timerSeconds > 0) {
+      state.caseExam.timerSeconds--;
+      updateTimerDisplay();
+      if (state.caseExam.timerSeconds === 10 * 60) {
+        showToast('⚠️ 残り時間 10分 です！見直しを行いましょう。');
+      }
+    } else {
+      stopCaseTimer();
+      alert('⏱ 80分の制限時間が経過しました。記述内容の自己採点を行いましょう！');
+    }
+  }, 1000);
+}
+
+function stopCaseTimer() {
+  if (state.caseExam.timerInterval) {
+    clearInterval(state.caseExam.timerInterval);
+    state.caseExam.timerInterval = null;
+  }
+  state.caseExam.timerRunning = false;
+}
+
+function toggleCaseTimer() {
+  if (state.caseExam.timerRunning) {
+    state.caseExam.timerRunning = false;
+    if (ui.btnCaseTimerToggle) ui.btnCaseTimerToggle.textContent = '▶️';
+    showToast('タイマーを一時停止しました');
+  } else {
+    state.caseExam.timerRunning = true;
+    if (ui.btnCaseTimerToggle) ui.btnCaseTimerToggle.textContent = '⏸';
+    showToast('タイマーを再開しました');
+  }
+}
+
+function updateTimerDisplay() {
+  if (!ui.caseTimerDisplay) return;
+  const totalSec = state.caseExam.timerSeconds;
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  ui.caseTimerDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  if (totalSec <= 10 * 60) {
+    ui.caseTimerDisplay.style.color = '#ef4444';
+  } else {
+    ui.caseTimerDisplay.style.color = '#fbbf24';
+  }
+}
+
+function renderFinancialTables(finData) {
+  if (!ui.financialTablesContent) return;
+  let html = '';
+
+  const renderTable = (tbl, title) => {
+    if (!tbl) return '';
+    let ths = tbl.headers.map(h => `<th>${escapeHtml(h)}</th>`).join('');
+    let trs = tbl.rows.map(row => {
+      let isCategoryHeader = row[0].startsWith('【');
+      let tds = row.map((cell, idx) => {
+        let style = isCategoryHeader ? 'font-weight: 700; color: #fbbf24;' : '';
+        return `<td style="${style}">${escapeHtml(cell)}</td>`;
+      }).join('');
+      return `<tr>${tds}</tr>`;
+    }).join('');
+
+    return `
+      <div class="fin-table-box">
+        <div class="fin-table-title">📑 ${escapeHtml(title)}（単位：${escapeHtml(finData.unit || '百万円')}）</div>
+        <table class="fin-table">
+          <thead><tr>${ths}</tr></thead>
+          <tbody>${trs}</tbody>
+        </table>
+      </div>
+    `;
+  };
+
+  if (finData.bs) html += renderTable(finData.bs, '貸借対照表（B/S）');
+  if (finData.pl) html += renderTable(finData.pl, '損益計算書（P/L）');
+
+  ui.financialTablesContent.innerHTML = html;
+}
+
+function renderCaseQuestionsNav() {
+  if (!ui.caseQNav) return;
+  const c = state.caseExam.activeCase;
+  if (!c) return;
+
+  ui.caseQNav.innerHTML = (c.questions || []).map((q, idx) => {
+    const activeCls = idx === state.caseExam.activeQuestionIndex ? 'active' : '';
+    return `
+      <button class="case-q-nav-btn ${activeCls}" onclick="renderCaseQuestion(${idx})">
+        第${q.questionNum}問 (${q.points}点)
+      </button>
+    `;
+  }).join('');
+}
+
+function renderCaseQuestion(qIndex) {
+  state.caseExam.activeQuestionIndex = qIndex;
+  renderCaseQuestionsNav();
+
+  const c = state.caseExam.activeCase;
+  if (!c || !c.questions || !c.questions[qIndex]) return;
+  const q = c.questions[qIndex];
+  const caseId = c.id;
+  const drafts = state.caseExam.drafts[caseId] || {};
+
+  let html = `
+    <div class="q-header-box">
+      <h3 class="q-title">${escapeHtml(q.title)}</h3>
+      <span class="q-points-badge">配点 ${q.points}点 / 制限 ${q.maxChars || 100}字以内</span>
+    </div>
+    <div class="q-desc-box">
+      ${escapeHtml(q.description)}
+    </div>
+  `;
+
+  if (q.subQuestions && q.subQuestions.length > 0) {
+    // Has sub-questions (e.g. (a) 強み / (b) 弱み)
+    html += q.subQuestions.map((sub, sIdx) => {
+      const fieldKey = `q_${q.questionNum}_sub_${sub.subId}`;
+      const savedText = drafts[fieldKey] || '';
+      return `
+        <div class="sub-q-block">
+          <div class="sub-q-title">
+            <span>${escapeHtml(sub.title)}</span>
+            <span style="font-size: 0.8rem; color: #fbbf24;">配点 ${sub.points}点 / ${sub.maxChars}字以内</span>
+          </div>
+          <div class="case-textarea-wrap">
+            <textarea
+              class="case-answer-textarea"
+              id="txt_${fieldKey}"
+              rows="4"
+              placeholder="ここに${sub.maxChars}字以内で記述してください..."
+              oninput="onCaseAnswerInput('${caseId}', '${fieldKey}', this, 'cnt_${fieldKey}', 'status_${fieldKey}', ${sub.maxChars})"
+            >${escapeHtml(savedText)}</textarea>
+            <div class="char-counter-strip">
+              <span class="char-count-text" id="cnt_${fieldKey}">現在 ${savedText.length} / ${sub.maxChars} 字</span>
+              <span class="char-status-badge ${savedText.length > sub.maxChars ? 'status-over' : 'status-ok'}" id="status_${fieldKey}">
+                ${savedText.length > sub.maxChars ? `⚠️ 文字数超過 (+${savedText.length - sub.maxChars}字)` : '✅ 制限内'}
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    // Single question
+    const fieldKey = `q_${q.questionNum}`;
+    const savedText = drafts[fieldKey] || '';
+    html += `
+      <div class="sub-q-block">
+        <div class="case-textarea-wrap">
+          <textarea
+            class="case-answer-textarea"
+            id="txt_${fieldKey}"
+            rows="6"
+            placeholder="ここに${q.maxChars || 100}字以内で記述してください..."
+            oninput="onCaseAnswerInput('${caseId}', '${fieldKey}', this, 'cnt_${fieldKey}', 'status_${fieldKey}', ${q.maxChars || 100})"
+          >${escapeHtml(savedText)}</textarea>
+          <div class="char-counter-strip">
+            <span class="char-count-text" id="cnt_${fieldKey}">現在 ${savedText.length} / ${q.maxChars || 100} 字</span>
+            <span class="char-status-badge ${savedText.length > (q.maxChars || 100) ? 'status-over' : 'status-ok'}" id="status_${fieldKey}">
+              ${savedText.length > (q.maxChars || 100) ? `⚠️ 文字数超過 (+${savedText.length - (q.maxChars || 100)}字)` : '✅ 制限内'}
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  html += `
+    <div class="q-action-row">
+      <button class="btn-score-case" onclick="scoreCaseQuestion(${qIndex})">
+        🎯 この設問を採点する（キーワード診断＆模範解答）
+      </button>
+    </div>
+  `;
+
+  ui.caseQActiveCard.innerHTML = html;
+}
+
+function onCaseAnswerInput(caseId, fieldKey, textarea, countElId, statusElId, maxChars) {
+  const text = textarea.value;
+  const countEl = document.getElementById(countElId);
+  const statusEl = document.getElementById(statusElId);
+  const len = text.length;
+
+  if (countEl) {
+    countEl.textContent = `現在 ${len} / ${maxChars} 字`;
+    countEl.classList.toggle('over-limit', len > maxChars);
+  }
+
+  if (statusEl) {
+    if (len > maxChars) {
+      statusEl.className = 'char-status-badge status-over';
+      statusEl.textContent = `⚠️ 文字数超過 (+${len - maxChars}字)`;
+    } else {
+      statusEl.className = 'char-status-badge status-ok';
+      statusEl.textContent = '✅ 制限内';
+    }
+  }
+
+  saveCaseDraft(caseId, fieldKey, text);
+}
+
+function scoreCaseQuestion(qIndex) {
+  const c = state.caseExam.activeCase;
+  if (!c || !c.questions || !c.questions[qIndex]) return;
+  const q = c.questions[qIndex];
+  const caseId = c.id;
+  const drafts = state.caseExam.drafts[caseId] || {};
+
+  let totalScore = 0;
+  let maxScore = q.points;
+  let subResults = [];
+
+  const evaluateAnswer = (userText, keyPoints, maxPoints) => {
+    let earned = 0;
+    let matchedKws = [];
+    let missedKws = [];
+    let highlightedText = escapeHtml(userText);
+
+    if (keyPoints && keyPoints.length > 0) {
+      keyPoints.forEach(kp => {
+        let isHit = false;
+        try {
+          const re = new RegExp(kp.regex || kp.keyword, 'i');
+          if (re.test(userText)) {
+            isHit = true;
+            earned += (kp.score || 0);
+            matchedKws.push(kp);
+            // Highlight in preview text
+            const match = userText.match(re);
+            if (match) {
+              const matchedStr = escapeHtml(match[0]);
+              highlightedText = highlightedText.split(matchedStr).join(`<span class="kw-hit">${matchedStr}</span>`);
+            }
+          } else {
+            missedKws.push(kp);
+          }
+        } catch (e) {
+          missedKws.push(kp);
+        }
+      });
+    }
+
+    if (earned > maxPoints) earned = maxPoints;
+    return {
+      earned,
+      maxPoints,
+      matchedKws,
+      missedKws,
+      highlightedText: highlightedText || '<span style="color: var(--text-muted);">(未入力)</span>'
+    };
+  };
+
+  if (q.subQuestions && q.subQuestions.length > 0) {
+    q.subQuestions.forEach(sub => {
+      const fieldKey = `q_${q.questionNum}_sub_${sub.subId}`;
+      const text = drafts[fieldKey] || '';
+      const evalRes = evaluateAnswer(text, sub.keyPoints || [], sub.points);
+      totalScore += evalRes.earned;
+      subResults.push({
+        title: sub.title,
+        text,
+        modelAnswer: sub.modelAnswer,
+        framework: sub.framework,
+        evalRes
+      });
+    });
+  } else {
+    const fieldKey = `q_${q.questionNum}`;
+    const text = drafts[fieldKey] || '';
+    const evalRes = evaluateAnswer(text, q.keyPoints || [], q.points);
+    totalScore = evalRes.earned;
+    subResults.push({
+      title: q.title,
+      text,
+      modelAnswer: q.modelAnswer,
+      framework: q.framework,
+      evalRes
+    });
+  }
+
+  // Populate Modal UI
+  ui.modalQTitle.textContent = `${q.title} 診断レポート`;
+
+  let bodyHtml = `
+    <div class="score-summary-card">
+      <div>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">キーワード獲得得点（推定）</span>
+        <div class="score-display-box">
+          <span class="score-achieved">${totalScore}</span>
+          <span class="score-total">/ ${maxScore} 点</span>
+        </div>
+      </div>
+      <div>
+        <span class="char-status-badge ${totalScore >= maxScore * 0.6 ? 'status-ok' : 'status-over'}" style="font-size: 0.9rem; padding: 6px 14px;">
+          ${totalScore >= maxScore * 0.6 ? '🎉 合格水準クリア' : '⚠️ キーワード不足'}
+        </span>
+      </div>
+    </div>
+  `;
+
+  subResults.forEach(sr => {
+    bodyHtml += `
+      <div style="background: rgba(255, 255, 255, 0.02); border-radius: 12px; padding: 1.2rem; border: 1px solid rgba(255, 255, 255, 0.06);">
+        <h4 style="color: #cbd5e1; font-size: 1rem; margin: 0 0 0.8rem 0;">
+          ${escapeHtml(sr.title)}
+          <span style="font-size: 0.82rem; color: #10b981; float: right;">得点: ${sr.evalRes.earned} / ${sr.evalRes.maxPoints}点</span>
+        </h4>
+
+        <!-- User Answer Preview with Highlights -->
+        <div style="margin-bottom: 0.8rem;">
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">【あなたの記述と検出キーワード】</div>
+          <div class="user-ans-preview">${sr.evalRes.highlightedText}</div>
+        </div>
+
+        <!-- Keyword Match Checklist -->
+        <div style="margin-bottom: 1rem;">
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">【採点キーワード診断】</div>
+          <div class="kw-analysis-box">
+            ${sr.evalRes.matchedKws.map(kw => `
+              <div class="kw-item-row matched">
+                <span>✅ <strong>${escapeHtml(kw.keyword)}</strong></span>
+                <span>+${kw.score}点</span>
+              </div>
+            `).join('')}
+            ${sr.evalRes.missedKws.map(kw => `
+              <div class="kw-item-row missed">
+                <span>⚠️ <strong>${escapeHtml(kw.keyword)}</strong>（不足）</span>
+                <span>配点 ${kw.score}点</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Model Answer -->
+        <div class="model-answer-card">
+          <div style="font-size: 0.82rem; font-weight: 700; color: #93c5fd;">🏆 完全模範解答例</div>
+          <p class="model-ans-text">${escapeHtml(sr.modelAnswer || q.modelAnswer || '')}</p>
+        </div>
+
+        <!-- Framework & Thought Process -->
+        ${(sr.framework || q.framework) ? `
+          <div class="process-expl-card" style="margin-top: 0.8rem;">
+            <span class="process-framework-tag">💡 思考プロセス・活用フレームワーク</span>
+            <p class="process-text">${escapeHtml(sr.framework || q.framework)}</p>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+
+  if (q.overallAdvice) {
+    bodyHtml += `
+      <div class="process-expl-card" style="border-left: 3px solid #10b981;">
+        <span style="color: #6ee7b7; font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">🎯 診断士からの実戦アドバイス</span>
+        <p class="process-text">${escapeHtml(q.overallAdvice)}</p>
+      </div>
+    `;
+  }
+
+  ui.modalResultBody.innerHTML = bodyHtml;
+  ui.caseResultModal.style.display = 'flex';
+}
+
+function closeCaseResultModal() {
+  if (ui.caseResultModal) {
+    ui.caseResultModal.style.display = 'none';
+  }
+}
+
+// Global scope bindings for inline HTML handlers
+window.startCaseWorkspace = startCaseWorkspace;
+window.renderCaseQuestion = renderCaseQuestion;
+window.scoreCaseQuestion = scoreCaseQuestion;
+window.onCaseAnswerInput = onCaseAnswerInput;
 
 // Start Application on Load
 document.addEventListener('DOMContentLoaded', init);
