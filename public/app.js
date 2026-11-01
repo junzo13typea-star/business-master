@@ -1720,6 +1720,12 @@ function scoreCaseQuestion(qIndex) {
   // Populate Modal UI
   ui.modalQTitle.textContent = `${q.title} 診断レポート`;
 
+  // Award EXP for 2nd stage written answers (得点×5 EXP)
+  if (totalScore > 0) {
+    const caseExp = totalScore * 5;
+    awardPlayerExp(caseExp, `2次筆記 ${q.title} (${totalScore}点)`);
+  }
+
   let bodyHtml = `
     <div class="score-summary-card">
       <div>
