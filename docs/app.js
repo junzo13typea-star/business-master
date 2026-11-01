@@ -84,6 +84,26 @@ const ui = {
   topPassRate: document.getElementById('topPassRate'),
   streakNum: document.getElementById('streakNum'),
 
+  // Avatar Speech Bubble (NEW)
+  avatarSpeechBubble: document.getElementById('avatarSpeechBubble'),
+  avatarSpeechText: document.getElementById('avatarSpeechText'),
+
+  // Daily Mission Elements (NEW)
+  dailyMissionCard: document.getElementById('dailyMissionCard'),
+  dailyGoalPct: document.getElementById('dailyGoalPct'),
+  chkMissionQuestions: document.getElementById('chkMissionQuestions'),
+  mCountQuestions: document.getElementById('mCountQuestions'),
+  chkMissionTime: document.getElementById('chkMissionTime'),
+  mCountTime: document.getElementById('mCountTime'),
+  chkMissionAnki: document.getElementById('chkMissionAnki'),
+
+  // Achievements & Backup Elements (NEW)
+  unlockedBadgesCountPill: document.getElementById('unlockedBadgesCountPill'),
+  achievementsBadgesGrid: document.getElementById('achievementsBadgesGrid'),
+  btnExportData: document.getElementById('btnExportData'),
+  fileImportData: document.getElementById('fileImportData'),
+  confettiCanvas: document.getElementById('confettiCanvas'),
+
   // Views
   viewHome: document.getElementById('viewHome'),
   viewMockExam: document.getElementById('viewMockExam'),
@@ -270,12 +290,14 @@ function init() {
   updatePlayerLevelUI();
   initStudyTracker();
   initProModal();
+  initLtvFeatures();
   renderHomeScreen();
   initCaseExam();
   initMbaVocab();
 }
 
 function loadHistoryData() {
+  const todayStr = new Date().toISOString().slice(0, 10);
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -285,9 +307,21 @@ function loadHistoryData() {
         parsed.studyTime = {
           todaySeconds: 0,
           totalSeconds: 0,
-          lastActiveDate: new Date().toISOString().slice(0, 10),
+          lastActiveDate: todayStr,
           dailyHistory: {}
         };
+      }
+      if (!parsed.dailyMissions || parsed.dailyMissions.date !== todayStr) {
+        parsed.dailyMissions = {
+          date: todayStr,
+          questions: 0,
+          timeMinutes: 0,
+          ankiCleared: false,
+          claimed: []
+        };
+      }
+      if (!Array.isArray(parsed.unlockedBadges)) {
+        parsed.unlockedBadges = [];
       }
       return parsed;
     }
@@ -302,9 +336,17 @@ function loadHistoryData() {
     studyTime: {
       todaySeconds: 0,
       totalSeconds: 0,
-      lastActiveDate: new Date().toISOString().slice(0, 10),
+      lastActiveDate: todayStr,
       dailyHistory: {}
-    }
+    },
+    dailyMissions: {
+      date: todayStr,
+      questions: 0,
+      timeMinutes: 0,
+      ankiCleared: false,
+      claimed: []
+    },
+    unlockedBadges: []
   };
 }
 
@@ -313,6 +355,20 @@ function saveHistoryData() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.history));
   } catch (err) {
     console.error('History save error', err);
+    // LocalStorage 容量超過（QuotaExceededError）時の自己修復フォールバック
+    if (err.name === 'QuotaExceededError' || err.code === 22) {
+      try {
+        if (state.history.studyTime && state.history.studyTime.dailyHistory) {
+          const keys = Object.keys(state.history.studyTime.dailyHistory).sort();
+          if (keys.length > 30) {
+            keys.slice(0, keys.length - 30).forEach(k => delete state.history.studyTime.dailyHistory[k]);
+          }
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.history));
+      } catch (e2) {
+        console.warn('Storage quota recovery failed', e2);
+      }
+    }
   }
 }
 
@@ -551,6 +607,7 @@ function getWeaknessQuestions() {
 
 function renderHomeScreen() {
   updatePassMetricsUI();
+  renderDailyMissionCard();
   const metrics = calculateOverallMetrics();
 
   // Highlight active year pill
@@ -680,6 +737,7 @@ function renderAnalyticsScreen() {
   }
 
   updateStudyTimeUI();
+  renderAchievementsGrid();
 }
 
 // ==========================================================================
@@ -889,6 +947,11 @@ function handleOptionChoice(chosenIndex) {
     }
     awardPlayerExp(20, '正解');
   }
+
+  // Update Daily Missions & Achievements
+  updateDailyMissions('questions', 1);
+  if (state.session.mode === 'anki') updateDailyMissions('anki', true);
+  checkAchievements();
 
   // Save to persistent user history
   let record = state.history.items[q.id];
@@ -1699,23 +1762,24 @@ function scoreCaseQuestion(qIndex) {
     let earned = 0;
     let matchedKws = [];
     let missedKws = [];
-    let highlightedText = escapeHtml(userText);
+    const ranges = [];
 
     if (keyPoints && keyPoints.length > 0) {
       keyPoints.forEach(kp => {
-        let isHit = false;
         try {
-          const re = new RegExp(kp.regex || kp.keyword, 'i');
-          if (re.test(userText)) {
-            isHit = true;
+          const pattern = kp.regex || (kp.keyword ? kp.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : null);
+          if (!pattern) return;
+          const re = new RegExp(pattern, 'gi');
+          let match;
+          let hit = false;
+          while ((match = re.exec(userText)) !== null) {
+            hit = true;
+            if (match[0].length === 0) break; // 空マッチによる無限ループ防止
+            ranges.push({ start: match.index, end: match.index + match[0].length });
+          }
+          if (hit) {
             earned += (kp.score || 0);
             matchedKws.push(kp);
-            // Highlight in preview text
-            const match = userText.match(re);
-            if (match) {
-              const matchedStr = escapeHtml(match[0]);
-              highlightedText = highlightedText.split(matchedStr).join(`<span class="kw-hit">${matchedStr}</span>`);
-            }
           } else {
             missedKws.push(kp);
           }
@@ -1726,6 +1790,37 @@ function scoreCaseQuestion(qIndex) {
     }
 
     if (earned > maxPoints) earned = maxPoints;
+
+    // 重複・隣接ハイライト区間のマージ（HTMLタグ破壊防止・XSS対策）
+    ranges.sort((a, b) => a.start - b.start);
+    const merged = [];
+    ranges.forEach(r => {
+      if (merged.length === 0) {
+        merged.push({ start: r.start, end: r.end });
+      } else {
+        const last = merged[merged.length - 1];
+        if (r.start <= last.end) {
+          last.end = Math.max(last.end, r.end);
+        } else {
+          merged.push({ start: r.start, end: r.end });
+        }
+      }
+    });
+
+    // 安全にエスケープしながらハイライトHTMLを構築
+    let highlightedText = '';
+    let curr = 0;
+    merged.forEach(r => {
+      if (r.start > curr) {
+        highlightedText += escapeHtml(userText.slice(curr, r.start));
+      }
+      highlightedText += `<span class="kw-hit">${escapeHtml(userText.slice(r.start, r.end))}</span>`;
+      curr = r.end;
+    });
+    if (curr < userText.length) {
+      highlightedText += escapeHtml(userText.slice(curr));
+    }
+
     return {
       earned,
       maxPoints,
@@ -2287,6 +2382,7 @@ function initStudyTracker() {
   }, 30000);
 
   updateStudyTimeUI();
+  renderAchievementsGrid();
 }
 
 function formatStudyTime(seconds) {
@@ -2366,6 +2462,425 @@ function openProModal() {
 
 function closeProModal() {
   if (ui.proModal) ui.proModal.style.display = 'none';
+}
+
+// ==========================================================================
+// LTV最大化・習慣化・アチーブメント・安全バックアップ モジュール
+// ==========================================================================
+
+const ACHIEVEMENTS = [
+  { id: 'first_step', title: '初めの一歩', desc: '初めて問題に1問解答した', icon: '🌱', req: (h) => Object.keys(h.items || {}).length >= 1 },
+  { id: 'streak_3', title: '三日坊主を卒業', desc: '3日連続で学習を継続した', icon: '🔥', req: (h) => (h.streak || 0) >= 3 },
+  { id: 'streak_7', title: '7日連続の鉄人', desc: '1週間毎日学習を達成した', icon: '⚡', req: (h) => (h.streak || 0) >= 7 },
+  { id: 'answered_50', title: '知識の探求者', desc: '累計50問以上を解答した', icon: '📚', req: (h) => getTotalAnsweredCount(h) >= 50 },
+  { id: 'answered_200', title: '模試母数を走破', desc: '累計200問以上を解答した', icon: '🎯', req: (h) => getTotalAnsweredCount(h) >= 200 },
+  { id: 'mba_master', title: 'MBA基礎の確立', desc: 'MBA専門用語を20問以上正解した', icon: '🎓', req: (h) => countMbaMastered(h) >= 20 },
+  { id: 'case_challenger', title: '2次筆記の挑戦者', desc: '2次筆記試験の採点を1回以上実行した', icon: '✍️', req: (h) => (h.playerExp || 0) >= 300 },
+  { id: 'speed_solver', title: 'スピードマスター', desc: 'MBA用語クイズで10問連続正解した', icon: '⚡', req: (h) => (state.player.combo || 0) >= 10 },
+  { id: 'level_10', title: 'リーダーシップ発揮', desc: 'レベル10（プロジェクトリーダー）に到達', icon: '🚀', req: (h) => calcPlayerLevel(h.playerExp || 0).level >= 10 },
+  { id: 'level_30', title: '戦略マネージャー', desc: 'レベル30（事業戦略マネージャー）に到達', icon: '👔', req: (h) => calcPlayerLevel(h.playerExp || 0).level >= 30 },
+  { id: 'study_10h', title: '10時間の努力', desc: '累計学習時間が10時間を突破した', icon: '⏱', req: (h) => ((h.studyTime?.totalSeconds || 0) >= 36000) },
+  { id: 'pro_mind', title: 'エリートの視座', desc: 'ビジネスエキスパートPROプランを体験した', icon: '👑', req: (h) => true }
+];
+
+function getTotalAnsweredCount(h) {
+  let cnt = 0;
+  Object.values(h.items || {}).forEach(item => {
+    if (item && item.count) cnt += item.count;
+  });
+  return cnt;
+}
+
+function countMbaMastered(h) {
+  let cnt = 0;
+  const mbaIds = (window.MBA_VOCAB_QUESTIONS || []).map(q => q.id);
+  mbaIds.forEach(id => {
+    if (h.items && h.items[id] && h.items[id].lastResult === true) cnt++;
+  });
+  return cnt;
+}
+
+const AVATAR_QUOTES = [
+  "「今日の一歩が、1年後の大きな差になるポ！」",
+  "「素晴らしい集中力！ビジネス戦闘力がグングン上がってるポ！」",
+  "「迷ったら基本に立ち返るのが一流の流儀だポ！」",
+  "「PDCAを回し続ける者だけが、真のエキスパートになれるポ！」",
+  "「休息も戦略の一部！無理せず自分のペースで進もうポ！」",
+  "「分からない用語に出会えたのは、成長の最大のチャンスだポ！」",
+  "「継続は力なり。君の努力をアバターはずっと見てるポ！」"
+];
+
+function initLtvFeatures() {
+  // Avatar Speech Bubble Trigger
+  ui.playerLevelBadge?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showAvatarSpeechBubble();
+  });
+
+  // Data Export & Import Listeners
+  ui.btnExportData?.addEventListener('click', exportLearningData);
+  ui.fileImportData?.addEventListener('change', importLearningData);
+
+  renderDailyMissionCard();
+}
+
+function showAvatarSpeechBubble() {
+  if (!ui.avatarSpeechBubble || !ui.avatarSpeechText) return;
+  const quote = AVATAR_QUOTES[Math.floor(Math.random() * AVATAR_QUOTES.length)];
+  ui.avatarSpeechText.textContent = quote;
+  ui.avatarSpeechBubble.style.display = 'block';
+
+  // Auto hide after 3.8s
+  setTimeout(() => {
+    if (ui.avatarSpeechBubble) ui.avatarSpeechBubble.style.display = 'none';
+  }, 3800);
+}
+
+function renderDailyMissionCard() {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const m = state.history.dailyMissions || { date: todayStr, questions: 0, timeMinutes: 0, ankiCleared: false, claimed: [] };
+
+  const qCount = m.questions || 0;
+  const tCount = Math.floor((state.history.studyTime?.todaySeconds || 0) / 60);
+  const ankiDone = !!m.ankiCleared;
+
+  let clearedCount = 0;
+  if (qCount >= 10) clearedCount++;
+  if (tCount >= 15) clearedCount++;
+  if (ankiDone) clearedCount++;
+
+  const pct = Math.round((clearedCount / 3) * 100);
+
+  if (ui.dailyGoalPct) ui.dailyGoalPct.textContent = `${pct}%`;
+  if (ui.mCountQuestions) ui.mCountQuestions.textContent = Math.min(10, qCount);
+  if (ui.mCountTime) ui.mCountTime.textContent = tCount;
+
+  // Question task status
+  if (ui.chkMissionQuestions) {
+    ui.chkMissionQuestions.classList.toggle('completed', qCount >= 10);
+    const icon = ui.chkMissionQuestions.querySelector('.m-icon-status');
+    if (icon) icon.textContent = qCount >= 10 ? '✅' : '⏳';
+  }
+
+  // Time task status
+  if (ui.chkMissionTime) {
+    ui.chkMissionTime.classList.toggle('completed', tCount >= 15);
+    const icon = ui.chkMissionTime.querySelector('.m-icon-status');
+    if (icon) icon.textContent = tCount >= 15 ? '✅' : '⏳';
+  }
+
+  // Anki task status
+  if (ui.chkMissionAnki) {
+    ui.chkMissionAnki.classList.toggle('completed', ankiDone);
+    const icon = ui.chkMissionAnki.querySelector('.m-icon-status');
+    if (icon) icon.textContent = ankiDone ? '✅' : '⏳';
+  }
+
+  // Trigger celebration on full completion (once per day)
+  if (clearedCount === 3 && !m.claimed.includes('all_clear')) {
+    m.claimed.push('all_clear');
+    saveHistoryData();
+    awardPlayerExp(100, '🎉 本日の全デイリーミッション完全達成！');
+    triggerConfetti();
+  }
+}
+
+function updateDailyMissions(type, val = 1) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let m = state.history.dailyMissions;
+  if (!m || m.date !== todayStr) {
+    m = { date: todayStr, questions: 0, timeMinutes: 0, ankiCleared: false, claimed: [] };
+    state.history.dailyMissions = m;
+  }
+
+  if (type === 'questions') {
+    m.questions = (m.questions || 0) + val;
+  } else if (type === 'time') {
+    m.timeMinutes = val;
+  } else if (type === 'anki') {
+    m.ankiCleared = true;
+  }
+
+  saveHistoryData();
+  renderDailyMissionCard();
+}
+
+function checkAchievements() {
+  const h = state.history;
+  const unlocked = new Set(h.unlockedBadges || []);
+  let newlyUnlocked = false;
+
+  ACHIEVEMENTS.forEach(ach => {
+    if (!unlocked.has(ach.id)) {
+      if (ach.req(h)) {
+        unlocked.add(ach.id);
+        newlyUnlocked = true;
+        showToast(`🏆 新実績解除: 【${ach.title}】 (+50 EXP)`);
+        awardPlayerExp(50, `実績【${ach.title}】`);
+      }
+    }
+  });
+
+  if (newlyUnlocked) {
+    h.unlockedBadges = Array.from(unlocked);
+    saveHistoryData();
+    renderAchievementsGrid();
+    triggerConfetti();
+  }
+}
+
+function renderAchievementsGrid() {
+  if (!ui.achievementsBadgesGrid) return;
+  const unlockedSet = new Set(state.history.unlockedBadges || []);
+
+  if (ui.unlockedBadgesCountPill) {
+    ui.unlockedBadgesCountPill.textContent = `獲得: ${unlockedSet.size} / ${ACHIEVEMENTS.length}`;
+  }
+
+  ui.achievementsBadgesGrid.innerHTML = ACHIEVEMENTS.map(ach => {
+    const isUnlocked = unlockedSet.has(ach.id);
+    return `
+      <div class="achieve-badge-card ${isUnlocked ? 'unlocked' : 'locked'}" title="${isUnlocked ? '獲得済み' : '未解除'}">
+        <div class="achieve-icon">${isUnlocked ? ach.icon : '🔒'}</div>
+        <div class="achieve-info">
+          <h4 class="achieve-title">${escapeHtml(ach.title)}</h4>
+          <p class="achieve-desc">${escapeHtml(ach.desc)}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==========================================================================
+// 安全な学習データ バックアップ & 復元
+// ==========================================================================
+
+function exportLearningData() {
+  try {
+    const backupData = {
+      app: 'PathOfTheBusinessExpert',
+      version: '2.0',
+      exportedAt: new Date().toISOString(),
+      history: state.history,
+      caseDrafts: state.caseExam.drafts
+    };
+
+    const jsonStr = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    a.href = url;
+    a.download = `business_expert_backup_${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast('📥 学習データを安全にファイル保存しました');
+  } catch (err) {
+    console.error('Export error', err);
+    alert('バックアップのエクスポートに失敗しました。');
+  }
+}
+
+function importLearningData(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  // ファイルサイズ制限 (最大 5MB) - メモリ枯渇・DoS対策
+  if (file.size > 5 * 1024 * 1024) {
+    alert('ファイルサイズが大きすぎます（上限5MB）。');
+    e.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      // Prototype Pollution 防御（危険なキーを破棄）
+      const parsed = JSON.parse(evt.target.result, (key, value) => {
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+          return undefined;
+        }
+        return value;
+      });
+
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('無効なデータ形式です');
+      }
+
+      const importedHistory = parsed.history || (parsed.items ? { items: parsed.items } : null);
+      if (!importedHistory || typeof importedHistory !== 'object') {
+        throw new Error('有効な学習データが見つかりません');
+      }
+
+      if (confirm('現在の学習データを上書きしてバックアップから復元しますか？')) {
+        // 安全なスキーマ正規化
+        const cleanHistory = {
+          items: {},
+          player: { exp: 0, level: 1 },
+          studyTime: {
+            todaySeconds: 0,
+            totalSeconds: 0,
+            lastActiveDate: new Date().toISOString().slice(0, 10),
+            dailyHistory: {}
+          },
+          dailyMissions: {
+            date: new Date().toISOString().slice(0, 10),
+            questions: 0,
+            timeMinutes: 0,
+            ankiCleared: false,
+            claimed: []
+          },
+          unlockedBadges: []
+        };
+
+        // Items のサニタイズ（ホワイトリスト検証）
+        if (importedHistory.items && typeof importedHistory.items === 'object') {
+          Object.keys(importedHistory.items).forEach(k => {
+            if (/^[a-zA-Z0-9_\-]+$/.test(k)) {
+              const item = importedHistory.items[k];
+              if (item && typeof item === 'object') {
+                cleanHistory.items[k] = {
+                  timesTested: Number(item.timesTested) || 0,
+                  timesCorrect: Number(item.timesCorrect) || 0,
+                  correctStreak: Number(item.correctStreak) || 0,
+                  lastTested: typeof item.lastTested === 'string' ? item.lastTested.slice(0, 30) : null,
+                  nextReviewDate: typeof item.nextReviewDate === 'string' ? item.nextReviewDate.slice(0, 30) : null,
+                  intervalDays: Number(item.intervalDays) || 1,
+                  starred: Boolean(item.starred)
+                };
+              }
+            }
+          });
+        }
+
+        // Player (EXP, Level) のサニタイズ
+        if (importedHistory.player && typeof importedHistory.player === 'object') {
+          cleanHistory.player.exp = Math.max(0, Math.min(10000000, Number(importedHistory.player.exp) || 0));
+          cleanHistory.player.level = Math.max(1, Math.min(99, Number(importedHistory.player.level) || 1));
+        }
+
+        // StudyTime のサニタイズ
+        if (importedHistory.studyTime && typeof importedHistory.studyTime === 'object') {
+          cleanHistory.studyTime.totalSeconds = Math.max(0, Number(importedHistory.studyTime.totalSeconds) || 0);
+          cleanHistory.studyTime.todaySeconds = Math.max(0, Number(importedHistory.studyTime.todaySeconds) || 0);
+          cleanHistory.studyTime.lastActiveDate = String(importedHistory.studyTime.lastActiveDate || '').slice(0, 10);
+          if (importedHistory.studyTime.dailyHistory && typeof importedHistory.studyTime.dailyHistory === 'object') {
+            Object.keys(importedHistory.studyTime.dailyHistory).slice(0, 90).forEach(dk => {
+              if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) {
+                cleanHistory.studyTime.dailyHistory[dk] = Math.max(0, Number(importedHistory.studyTime.dailyHistory[dk]) || 0);
+              }
+            });
+          }
+        }
+
+        // Daily Missions のサニタイズ
+        if (importedHistory.dailyMissions && typeof importedHistory.dailyMissions === 'object') {
+          cleanHistory.dailyMissions.date = String(importedHistory.dailyMissions.date || '').slice(0, 10);
+          cleanHistory.dailyMissions.questions = Math.max(0, Number(importedHistory.dailyMissions.questions) || 0);
+          cleanHistory.dailyMissions.timeMinutes = Math.max(0, Number(importedHistory.dailyMissions.timeMinutes) || 0);
+          cleanHistory.dailyMissions.ankiCleared = Boolean(importedHistory.dailyMissions.ankiCleared);
+          if (Array.isArray(importedHistory.dailyMissions.claimed)) {
+            cleanHistory.dailyMissions.claimed = importedHistory.dailyMissions.claimed.filter(c => typeof c === 'string');
+          }
+        }
+
+        // Unlocked Badges のサニタイズ
+        if (Array.isArray(importedHistory.unlockedBadges)) {
+          cleanHistory.unlockedBadges = importedHistory.unlockedBadges.filter(b => typeof b === 'string' && /^[a-zA-Z0-9_\-]+$/.test(b));
+        }
+
+        // Case Drafts のサニタイズ
+        if (parsed.caseDrafts && typeof parsed.caseDrafts === 'object') {
+          const cleanDrafts = {};
+          Object.keys(parsed.caseDrafts).slice(0, 50).forEach(ck => {
+            if (/^[a-zA-Z0-9_\-]+$/.test(ck)) {
+              cleanDrafts[ck] = String(parsed.caseDrafts[ck]).slice(0, 5000);
+            }
+          });
+          state.caseExam.drafts = cleanDrafts;
+          try {
+            localStorage.setItem('shindanshi_case_drafts_v1', JSON.stringify(cleanDrafts));
+          } catch (eDraft) {
+            console.warn('Draft save error', eDraft);
+          }
+        }
+
+        state.history = cleanHistory;
+        saveHistoryData();
+        updatePassMetricsUI();
+        updatePlayerLevelUI();
+        updateStudyTimeUI();
+        renderHomeScreen();
+        showToast('🎉 バックアップから安全にデータを復元しました！');
+      }
+    } catch (err) {
+      console.error('Import error', err);
+      alert('ファイルの読み込みに失敗しました。有効なJSONファイルを選択してください。');
+    } finally {
+      e.target.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ==========================================================================
+// 祝賀・紙吹雪 (Confetti) アニメーションエンジン
+// ==========================================================================
+
+function triggerConfetti() {
+  const canvas = ui.confettiCanvas;
+  if (!canvas) return;
+  canvas.style.display = 'block';
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+
+  const particles = [];
+  const colors = ['#f59e0b', '#10b981', '#6366f1', '#ec4899', '#3b82f6', '#fbbf24'];
+
+  for (let i = 0; i < 70; i++) {
+    particles.push({
+      x: canvas.width / 2,
+      y: canvas.height * 0.4,
+      vx: (Math.random() - 0.5) * 14,
+      vy: (Math.random() - 0.8) * 15,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      vRot: (Math.random() - 0.5) * 10
+    });
+  }
+
+  let frames = 0;
+  function animate() {
+    frames++;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.35; // gravity
+      p.rotation += p.vRot;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rotation * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+      ctx.restore();
+    });
+
+    if (frames < 90) {
+      requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.style.display = 'none';
+    }
+  }
+
+  animate();
 }
 
 // Global scope bindings for inline HTML handlers

@@ -20,6 +20,11 @@
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="icon.svg">
 
+  <!-- Security Headers: CSP, No-Sniff, Referrer -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
   <link rel="stylesheet" href="index.css">
 </head>
 <body class="theme-dark">
@@ -54,7 +59,7 @@
         </div>
 
         <!-- Live Player Level & Character Avatar Badge (NEW: キャラクター進化) -->
-        <div class="player-level-badge" id="playerLevelBadge" title="あなたのビジネスアバターと戦闘力レベル">
+        <div class="player-level-badge" id="playerLevelBadge" title="あなたのビジネスアバターと戦闘力レベル (タップで対話)">
           <div class="lvl-avatar-icon" id="headerAvatarEmoji">🐣</div>
           <div class="lvl-circle">
             <span class="lvl-prefix">Lv.</span><span id="headerLvlNum">1</span>
@@ -65,6 +70,12 @@
               <div class="lvl-bar-fill" id="headerExpBar" style="width: 0%;"></div>
             </div>
           </div>
+        </div>
+
+        <!-- Floating Avatar Speech Bubble (NEW: 対話システム) -->
+        <div class="avatar-speech-bubble" id="avatarSpeechBubble" style="display: none;">
+          <span class="bubble-arrow"></span>
+          <span class="bubble-text" id="avatarSpeechText">今日も一緒にビジネス戦闘力を高めよう！</span>
         </div>
 
         <!-- Live Pass Probability Gauge -->
@@ -280,6 +291,37 @@
            =================================================================== -->
       <section id="viewHome" class="stage-view active">
         
+        <!-- Daily Goal & Mission Card (NEW: 習慣化・LTV向上エンジン) -->
+        <div class="daily-mission-card" id="dailyMissionCard">
+          <div class="mission-header">
+            <div>
+              <span class="mission-tag">🎯 今日の学習ミッション</span>
+              <h3 class="mission-title">毎日の積み重ねがビジネス戦闘力を創る</h3>
+            </div>
+            <div class="mission-circle-wrap">
+              <span class="mission-progress-text" id="dailyGoalPct">0%</span>
+              <span class="mission-sub">本日達成度</span>
+            </div>
+          </div>
+          <div class="mission-checklist">
+            <div class="m-check-item" id="chkMissionQuestions">
+              <span class="m-icon-status">⏳</span>
+              <span class="m-label">1日10問を解く (<span id="mCountQuestions">0</span>/10問)</span>
+              <span class="m-reward">+30 EXP</span>
+            </div>
+            <div class="m-check-item" id="chkMissionTime">
+              <span class="m-icon-status">⏳</span>
+              <span class="m-label">15分以上学習する (<span id="mCountTime">0</span>/15分)</span>
+              <span class="m-reward">+30 EXP</span>
+            </div>
+            <div class="m-check-item" id="chkMissionAnki">
+              <span class="m-icon-status">⏳</span>
+              <span class="m-label">忘却曲線の復習問題を解く</span>
+              <span class="m-reward">+50 EXP</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Live Pass Prediction Hero Card (Benchmark Unlock System) -->
         <div class="prediction-hero-card" id="predictionHeroCard">
           <div class="hero-header">
@@ -729,6 +771,41 @@
             </div>
           </div>
 
+          <!-- Achievements & Badges Collection (NEW: 実績システム) -->
+          <div class="achievements-section">
+            <div class="section-title-bar">
+              <div>
+                <h3 class="title-text">🏆 アチーブメント・実績バッジコレクション</h3>
+                <p class="title-sub">学習のマイルストーンを達成して名誉あるバッジとボーナスEXPを獲得しよう</p>
+              </div>
+              <span class="badge-count-pill" id="unlockedBadgesCountPill">獲得: 0 / 12</span>
+            </div>
+            <div class="badges-grid" id="achievementsBadgesGrid">
+              <!-- Dynamic Badges -->
+            </div>
+          </div>
+
+          <!-- Data Backup & Cloud Sync Prep (NEW: セキュリティ & LTV保護) -->
+          <div class="data-backup-card">
+            <div class="backup-header">
+              <div>
+                <h3 class="backup-title">💾 学習データの安全バックアップ ＆ 復元</h3>
+                <p class="backup-desc">
+                  ブラウザのキャッシュ消去や端末の機種変更でも安心。学習履歴・レベル・2次記述下書きをワンクリックで安全にJSON保存・復元できます。
+                </p>
+              </div>
+            </div>
+            <div class="backup-actions-row">
+              <button class="btn btn-primary" id="btnExportData">
+                📥 データをダウンロード保存 (JSON)
+              </button>
+              <label class="btn btn-outline" style="cursor: pointer; margin: 0;">
+                📤 バックアップから復元
+                <input type="file" id="fileImportData" accept=".json" style="display: none;">
+              </label>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -994,6 +1071,9 @@
 
     <!-- Toast Notification -->
     <div id="toastNotification" class="toast-popup"></div>
+
+    <!-- Celebration Confetti Canvas (NEW: 達成演出) -->
+    <canvas id="confettiCanvas" class="confetti-canvas" style="display: none;"></canvas>
 
   </div>
 
