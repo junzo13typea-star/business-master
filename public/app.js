@@ -61,6 +61,23 @@ const ui = {
   headerLvlNum: document.getElementById('headerLvlNum'),
   headerRankTitle: document.getElementById('headerRankTitle'),
   headerExpBar: document.getElementById('headerExpBar'),
+  headerAvatarEmoji: document.getElementById('headerAvatarEmoji'),
+
+  // Study Time Auto-Tracker Elements (NEW)
+  studyTimeBadge: document.getElementById('studyTimeBadge'),
+  headerStudyTimeText: document.getElementById('headerStudyTimeText'),
+  diagTodayStudyTime: document.getElementById('diagTodayStudyTime'),
+  diagWeeklyStudyTime: document.getElementById('diagWeeklyStudyTime'),
+  diagTotalStudyTime: document.getElementById('diagTotalStudyTime'),
+  diagDailyAvgTime: document.getElementById('diagDailyAvgTime'),
+
+  // PRO Modal Elements (NEW)
+  btnOpenProModal: document.getElementById('btnOpenProModal'),
+  proModal: document.getElementById('proModal'),
+  btnCloseProModal: document.getElementById('btnCloseProModal'),
+  btnPlanYearly: document.getElementById('btnPlanYearly'),
+  btnPlanMonthly: document.getElementById('btnPlanMonthly'),
+  btnStartTrial: document.getElementById('btnStartTrial'),
 
   // Header Meters
   topPassGrade: document.getElementById('topPassGrade'),
@@ -251,6 +268,8 @@ function init() {
   }
   updatePassMetricsUI();
   updatePlayerLevelUI();
+  initStudyTracker();
+  initProModal();
   renderHomeScreen();
   initCaseExam();
   initMbaVocab();
@@ -262,6 +281,14 @@ function loadHistoryData() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (typeof parsed.playerExp !== 'number') parsed.playerExp = 0;
+      if (!parsed.studyTime) {
+        parsed.studyTime = {
+          todaySeconds: 0,
+          totalSeconds: 0,
+          lastActiveDate: new Date().toISOString().slice(0, 10),
+          dailyHistory: {}
+        };
+      }
       return parsed;
     }
   } catch (err) {
@@ -271,7 +298,13 @@ function loadHistoryData() {
     items: {}, // qId -> { count, correctCount, wrongCount, lastResult, intervalDays, easeFactor, nextDueDate, bookmarked }
     streak: 1,
     lastActiveDate: null,
-    playerExp: 0
+    playerExp: 0,
+    studyTime: {
+      todaySeconds: 0,
+      totalSeconds: 0,
+      lastActiveDate: new Date().toISOString().slice(0, 10),
+      dailyHistory: {}
+    }
   };
 }
 
@@ -285,9 +318,12 @@ function saveHistoryData() {
 
 function verifyDailyStreak() {
   const today = new Date().toISOString().slice(0, 10);
+  const st = state.history.studyTime || { todaySeconds: 0, totalSeconds: 0, lastActiveDate: today, dailyHistory: {} };
+
   if (!state.history.lastActiveDate) {
     state.history.lastActiveDate = today;
     state.history.streak = 1;
+    st.lastActiveDate = today;
   } else if (state.history.lastActiveDate !== today) {
     const last = new Date(state.history.lastActiveDate);
     const curr = new Date(today);
@@ -297,8 +333,16 @@ function verifyDailyStreak() {
     } else if (diffDays > 1) {
       state.history.streak = 1;
     }
+
+    // Archive previous day's study time
+    if (st.todaySeconds > 0) {
+      st.dailyHistory[state.history.lastActiveDate] = st.todaySeconds;
+    }
+    st.todaySeconds = 0;
+    st.lastActiveDate = today;
     state.history.lastActiveDate = today;
   }
+  state.history.studyTime = st;
   saveHistoryData();
   if (ui.streakNum) ui.streakNum.textContent = state.history.streak || 1;
 }
@@ -634,6 +678,8 @@ function renderAnalyticsScreen() {
       `;
     }).join('');
   }
+
+  updateStudyTimeUI();
 }
 
 // ==========================================================================
@@ -1817,14 +1863,14 @@ function closeCaseResultModal() {
 // ==========================================================================
 
 const RANK_TITLES = [
-  { minLvl: 90, title: "🌟 伝説のビジネスエキスパート", icon: "👑" },
-  { minLvl: 70, title: "👑 取締役・CxO", icon: "💎" },
-  { minLvl: 50, title: "🏛️ 執行役員 / VP", icon: "🏛️" },
-  { minLvl: 30, title: "👔 事業戦略マネージャー", icon: "👔" },
-  { minLvl: 20, title: "🎖️ シニアコンサルタント", icon: "🎖️" },
-  { minLvl: 10, title: "🚀 プロジェクトリーダー", icon: "🚀" },
-  { minLvl: 5,  title: "💼 自立型プレイヤー", icon: "💼" },
-  { minLvl: 1,  title: "🌱 新人アソシエイト", icon: "🌱" }
+  { minLvl: 90, title: "🌟 伝説のビジネスエキスパート", icon: "👑", avatar: "🦅", charName: "不死鳥フェニックス" },
+  { minLvl: 70, title: "👑 取締役・CxO", icon: "💎", avatar: "🦁", charName: "黄金ライオン" },
+  { minLvl: 50, title: "🏛️ 執行役員 / VP", icon: "🏛️", avatar: "🐻‍❄️", charName: "重厚シロクマ" },
+  { minLvl: 30, title: "👔 事業戦略マネージャー", icon: "👔", avatar: "🦅", charName: "戦略タカ" },
+  { minLvl: 20, title: "🎖️ シニアコンサルタント", icon: "🎖️", avatar: "🦊", charName: "敏腕キツネ" },
+  { minLvl: 10, title: "🚀 プロジェクトリーダー", icon: "🚀", avatar: "🦉", charName: "インカムフクロウ" },
+  { minLvl: 5,  title: "💼 自立型プレイヤー", icon: "💼", avatar: "🐧", charName: "スーツペンギン" },
+  { minLvl: 1,  title: "🌱 新人アソシエイト", icon: "🌱", avatar: "🐣", charName: "見習いポッポ" }
 ];
 
 function getExpForLevel(lvl) {
@@ -1853,7 +1899,9 @@ function calcPlayerLevel(totalExp) {
     neededInLvl,
     pct,
     rankTitle: rank.title,
-    rankIcon: rank.icon
+    rankIcon: rank.icon,
+    avatar: rank.avatar,
+    charName: rank.charName
   };
 }
 
@@ -1864,11 +1912,12 @@ function updatePlayerLevelUI() {
   if (ui.headerLvlNum) ui.headerLvlNum.textContent = info.level;
   if (ui.headerRankTitle) ui.headerRankTitle.textContent = info.rankTitle;
   if (ui.headerExpBar) ui.headerExpBar.style.width = `${info.pct}%`;
+  if (ui.headerAvatarEmoji) ui.headerAvatarEmoji.textContent = info.avatar;
 
   // MBA Dashboard Card
   if (ui.mbaStatusLevelNum) ui.mbaStatusLevelNum.textContent = info.level;
-  if (ui.mbaStatusRankTitle) ui.mbaStatusRankTitle.textContent = info.rankTitle.replace(/^[^\s]+\s*/, '');
-  if (ui.mbaStatusRankIcon) ui.mbaStatusRankIcon.textContent = info.rankIcon;
+  if (ui.mbaStatusRankTitle) ui.mbaStatusRankTitle.textContent = `${info.avatar} ${info.rankTitle.replace(/^[^\s]+\s*/, '')}`;
+  if (ui.mbaStatusRankIcon) ui.mbaStatusRankIcon.textContent = info.avatar;
   if (ui.mbaStatusExpText) ui.mbaStatusExpText.textContent = `${info.progressInLvl} / ${info.neededInLvl} EXP (累計: ${info.totalExp})`;
   if (ui.mbaStatusExpFill) ui.mbaStatusExpFill.style.width = `${info.pct}%`;
 }
@@ -1891,8 +1940,8 @@ function awardPlayerExp(amount, reason = '') {
 function triggerLevelUpModal(lvlInfo) {
   if (!ui.levelUpModal) return;
   if (ui.lvlUpModalLevel) ui.lvlUpModalLevel.textContent = lvlInfo.level;
-  if (ui.lvlUpModalRankTitle) ui.lvlUpModalRankTitle.textContent = lvlInfo.rankTitle;
-  if (ui.lvlUpModalIcon) ui.lvlUpModalIcon.textContent = lvlInfo.rankIcon;
+  if (ui.lvlUpModalRankTitle) ui.lvlUpModalRankTitle.textContent = `${lvlInfo.avatar} ${lvlInfo.charName} (${lvlInfo.rankTitle})`;
+  if (ui.lvlUpModalIcon) ui.lvlUpModalIcon.textContent = lvlInfo.avatar;
   ui.levelUpModal.style.display = 'flex';
 }
 
@@ -2192,6 +2241,131 @@ function closeMbaQuiz() {
   ui.mbaResultView.style.display = 'none';
   ui.mbaCategoryView.style.display = 'flex';
   renderMbaTopScreen();
+}
+
+// ==========================================================================
+// 勉強時間自動トラッキング モジュール
+// ==========================================================================
+
+let studyTracker = {
+  active: true,
+  lastActivity: Date.now(),
+  idleThresholdMs: 2 * 60 * 1000 // 2分間無操作で一時休止
+};
+
+function initStudyTracker() {
+  const resetActivity = () => {
+    studyTracker.lastActivity = Date.now();
+    studyTracker.active = true;
+  };
+
+  ['mousemove', 'keydown', 'touchstart', 'scroll', 'click'].forEach(evt => {
+    window.addEventListener(evt, resetActivity, { passive: true });
+  });
+
+  // 1秒ごとに勉強時間をインクリメント
+  setInterval(() => {
+    const isIdle = (Date.now() - studyTracker.lastActivity) > studyTracker.idleThresholdMs;
+    if (isIdle) {
+      studyTracker.active = false;
+      return;
+    }
+
+    const st = state.history.studyTime || { todaySeconds: 0, totalSeconds: 0, lastActiveDate: new Date().toISOString().slice(0, 10), dailyHistory: {} };
+    st.todaySeconds = (st.todaySeconds || 0) + 1;
+    st.totalSeconds = (st.totalSeconds || 0) + 1;
+    state.history.studyTime = st;
+
+    updateStudyTimeUI();
+  }, 1000);
+
+  // 30秒ごとに自動保存
+  setInterval(() => {
+    if (studyTracker.active) {
+      saveHistoryData();
+    }
+  }, 30000);
+
+  updateStudyTimeUI();
+}
+
+function formatStudyTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  if (m < 60) {
+    return `${m} 分`;
+  }
+  const h = (seconds / 3600).toFixed(1);
+  return `${h} 時間`;
+}
+
+function updateStudyTimeUI() {
+  const st = state.history.studyTime || { todaySeconds: 0, totalSeconds: 0, dailyHistory: {} };
+  
+  // Header badge
+  if (ui.headerStudyTimeText) {
+    ui.headerStudyTimeText.textContent = `本日 ${formatStudyTime(st.todaySeconds || 0)}`;
+  }
+
+  // Analytics View elements
+  if (ui.diagTodayStudyTime) ui.diagTodayStudyTime.textContent = formatStudyTime(st.todaySeconds || 0);
+  if (ui.diagTotalStudyTime) ui.diagTotalStudyTime.textContent = formatStudyTime(st.totalSeconds || 0);
+
+  // Calculate Weekly and Daily Average
+  if (ui.diagWeeklyStudyTime || ui.diagDailyAvgTime) {
+    let weekTotalSec = st.todaySeconds || 0;
+    const historyEntries = Object.entries(st.dailyHistory || {});
+    // 直近6日分の過去ログを集計
+    const sorted = historyEntries.sort((a, b) => b[0].localeCompare(a[0]));
+    sorted.slice(0, 6).forEach(([_, sec]) => {
+      weekTotalSec += sec;
+    });
+
+    if (ui.diagWeeklyStudyTime) ui.diagWeeklyStudyTime.textContent = formatStudyTime(weekTotalSec);
+
+    const totalDays = Math.max(1, historyEntries.length + 1);
+    const avgSec = Math.round((st.totalSeconds || 0) / totalDays);
+    if (ui.diagDailyAvgTime) ui.diagDailyAvgTime.textContent = `${Math.floor(avgSec / 60)} 分 / 日`;
+  }
+}
+
+// ==========================================================================
+// PROプラン (マネタイズ機能) モジュール
+// ==========================================================================
+
+let selectedProPlan = 'yearly';
+
+function initProModal() {
+  ui.btnOpenProModal?.addEventListener('click', openProModal);
+  ui.btnCloseProModal?.addEventListener('click', closeProModal);
+
+  ui.btnPlanYearly?.addEventListener('click', () => {
+    selectedProPlan = 'yearly';
+    ui.btnPlanYearly.classList.add('active');
+    ui.btnPlanMonthly.classList.remove('active');
+  });
+
+  ui.btnPlanMonthly?.addEventListener('click', () => {
+    selectedProPlan = 'monthly';
+    ui.btnPlanMonthly.classList.add('active');
+    ui.btnPlanYearly.classList.remove('active');
+  });
+
+  ui.btnStartTrial?.addEventListener('click', () => {
+    showToast(`🎉 7日間のPRO無料トライアルを開始しました！（${selectedProPlan === 'yearly' ? '年額プラン' : '月額プラン'}）`);
+    closeProModal();
+    if (ui.btnOpenProModal) {
+      ui.btnOpenProModal.textContent = '👑 PRO会員';
+      ui.btnOpenProModal.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    }
+  });
+}
+
+function openProModal() {
+  if (ui.proModal) ui.proModal.style.display = 'flex';
+}
+
+function closeProModal() {
+  if (ui.proModal) ui.proModal.style.display = 'none';
 }
 
 // Global scope bindings for inline HTML handlers
