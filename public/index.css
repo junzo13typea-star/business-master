@@ -3411,6 +3411,28 @@ html, body {
   font-size: 0.9rem;
 }
 
+.header-refresh-pill {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.22rem 0.55rem;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  transition: all 0.2s ease;
+}
+
+.header-refresh-pill:active {
+  transform: scale(0.95);
+  background: rgba(56, 189, 248, 0.3);
+}
+
 /* Header Avatar Icon */
 .lvl-avatar-icon {
   font-size: 1.25rem;
@@ -4817,11 +4839,14 @@ html, body {
     box-sizing: border-box !important;
   }
 
-  /* ヘッダー (スマホセーフエリア ＆ 2段構成) */
+  /* ヘッダー (スマホセーフエリア ＆ 2段構成) - iPhoneステータスバー・Dynamic Island完全回避 */
   .app-top-bar {
-    padding: max(0.6rem, env(safe-area-inset-top)) 0.5rem 0.5rem 0.5rem !important;
+    padding-top: max(48px, calc(env(safe-area-inset-top, 44px) + 8px)) !important;
+    padding-left: max(0.6rem, env(safe-area-inset-left)) !important;
+    padding-right: max(0.6rem, env(safe-area-inset-right)) !important;
+    padding-bottom: 0.5rem !important;
     margin-bottom: 0.65rem !important;
-    gap: 0.35rem !important;
+    gap: 0.4rem !important;
   }
 
   .top-bar-main-row {
@@ -4829,46 +4854,60 @@ html, body {
     align-items: center !important;
     justify-content: space-between !important;
     width: 100% !important;
+    gap: 0.5rem !important;
   }
 
   .bar-left {
-    gap: 0.45rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
     min-width: 0 !important;
-    flex: 1 !important;
+    flex: 1 1 auto !important;
   }
 
   .brand-container {
-    gap: 0.45rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
     min-width: 0 !important;
+    flex: 1 1 auto !important;
   }
 
   .brand-titles-wrap {
     min-width: 0 !important;
+    flex: 1 1 auto !important;
   }
 
   .brand-logo-mark {
-    width: 30px !important;
-    height: 30px !important;
+    width: 32px !important;
+    height: 32px !important;
     font-size: 0.65rem !important;
     flex-shrink: 0 !important;
+    border-radius: 8px !important;
   }
 
   .brand-title {
     font-size: 1.05rem !important;
-    line-height: 1.2 !important;
+    line-height: 1.25 !important;
     white-space: nowrap !important;
     word-break: keep-all !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin: 0 !important;
   }
 
   .compliance-tag {
-    font-size: 0.6rem !important;
+    font-size: 0.62rem !important;
     white-space: nowrap !important;
     display: block !important;
+    margin-top: 1px !important;
+    color: #34d399 !important;
   }
 
   .bar-right {
-    gap: 0.35rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
     flex-shrink: 0 !important;
   }
 
@@ -5155,5 +5194,310 @@ html, body {
     font-size: 0.64rem !important;
     white-space: nowrap !important;
     letter-spacing: -0.03em !important;
+  }
+}
+
+
+/* =========================================================================
+   CHARACTER "HOUSUKE" & MICRO-INTERACTION ENGINE (AI感払拭・生命感の注入)
+   ========================================================================= */
+
+/* キャラクター浮遊＆バウンスアニメーション */
+.ch-idle-float {
+  animation: housukeFloat 3.2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes housukeFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.5deg);
+  }
+}
+
+.ch-bounce-happy {
+  animation: housukeHappy 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate;
+  transform-origin: center bottom;
+}
+
+@keyframes housukeHappy {
+  0% {
+    transform: translateY(0) scale(1, 0.95);
+  }
+  100% {
+    transform: translateY(-16px) scale(0.98, 1.05);
+  }
+}
+
+/* 瞬きアニメーション */
+.pupil-left, .pupil-right {
+  animation: housukeBlink 4.5s infinite;
+  transform-origin: center;
+}
+
+@keyframes housukeBlink {
+  0%, 96%, 100% { transform: scaleY(1); }
+  98% { transform: scaleY(0.1); }
+}
+
+/* ホーム画面のバディウェルカムカード */
+.buddy-welcome-card {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 2px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.buddy-welcome-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+.buddy-speech-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.buddy-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.buddy-greeting {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.35;
+  margin-bottom: 0.25rem;
+}
+
+.buddy-sub {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.buddy-avatar-col {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Duolingoライクな3D押し込みボタン (Tactile Press Buttons) */
+.btn-primary, .btn-resume, .btn-submit-action, .btn-action-primary {
+  position: relative;
+  border: none !important;
+  box-shadow: 0 4px 0 #047857, 0 6px 14px rgba(0, 0, 0, 0.4) !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+}
+
+.btn-primary:active, .btn-resume:active, .btn-submit-action:active, .btn-action-primary:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 1px 0 #047857, 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.btn-secondary {
+  box-shadow: 0 4px 0 #1e293b, 0 6px 14px rgba(0, 0, 0, 0.3) !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+}
+.btn-secondary:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 1px 0 #1e293b !important;
+}
+
+/* 選択肢カード (Option Cards) の3D押し心地 */
+.option-card {
+  position: relative;
+  box-shadow: 0 3px 0 rgba(255, 255, 255, 0.06);
+  transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.1s ease !important;
+}
+
+.option-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 5px 0 rgba(2, 132, 199, 0.3);
+}
+
+.option-card:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 rgba(2, 132, 199, 0.5) !important;
+}
+
+/* 正解時のポップバウンス */
+.option-card.correct-flash {
+  animation: correctPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: rgba(16, 185, 129, 0.22) !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 4px 0 #059669, 0 0 16px rgba(16, 185, 129, 0.4) !important;
+}
+
+@keyframes correctPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+/* 不正解時のシェイク (Shake) */
+.option-card.incorrect-flash {
+  animation: shakeHorizontal 0.35s ease-in-out;
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 4px 0 #b91c1c !important;
+}
+
+@keyframes shakeHorizontal {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+/* 炎のメラメラアニメーション */
+.streak-badge {
+  position: relative;
+  overflow: visible;
+  animation: flamePulse 2s ease-in-out infinite;
+}
+
+@keyframes flamePulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.65);
+    border-color: #f59e0b;
+  }
+}
+
+/* プログレスバーの光沢シマー (Shimmer) */
+.lvl-bar-fill, .quiz-progress-bar-fill, .bench-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.lvl-bar-fill::after, .quiz-progress-bar-fill::after, .bench-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: shimmerFlow 2.4s infinite;
+}
+
+@keyframes shimmerFlow {
+  0% { left: -100%; }
+  100% { left: 150%; }
+}
+
+/* サウンドミュート切り替えボタン */
+.sound-toggle-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sound-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+/* クイズ解答時のリアクションキャラクターバナー */
+.quiz-reaction-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.quiz-reaction-banner.correct {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.quiz-reaction-banner.incorrect {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.qr-avatar {
+  flex-shrink: 0;
+}
+
+.qr-text-wrap {
+  flex: 1;
+}
+
+.qr-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.quiz-reaction-banner.correct .qr-title {
+  color: #34d399;
+}
+
+.quiz-reaction-banner.incorrect .qr-title {
+  color: #f87171;
+}
+
+.qr-desc {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  margin-top: 1px;
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 680px) {
+  .buddy-welcome-card {
+    padding: 0.9rem 1rem;
+    gap: 0.8rem;
+  }
+  .buddy-greeting {
+    font-size: 0.98rem;
+  }
+  .buddy-sub {
+    font-size: 0.72rem;
   }
 }

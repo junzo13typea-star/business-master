@@ -110,6 +110,14 @@ const ui = {
   avatarSpeechBubble: document.getElementById('avatarSpeechBubble'),
   avatarSpeechText: document.getElementById('avatarSpeechText'),
 
+  // Sound & Character Mascot (ホウ助 & 効果音システム)
+  btnSoundToggle: document.getElementById('btnSoundToggle'),
+  btnForceRefresh: document.getElementById('btnForceRefresh'),
+  buddyWelcomeCard: document.getElementById('buddyWelcomeCard'),
+  buddyGreetingText: document.getElementById('buddyGreetingText'),
+  buddySubText: document.getElementById('buddySubText'),
+  buddyAvatarWrap: document.getElementById('buddyAvatarWrap'),
+
   // Habit Streak & Quick Resume (習慣化エンジン)
   habitStreakCard: document.getElementById('habitStreakCard'),
   habitStreakNum: document.getElementById('habitStreakNum'),
@@ -1396,13 +1404,26 @@ function handleOptionChoice(chosenIndex) {
   saveHistoryData();
   updatePassMetricsUI();
 
+  // Sound feedback
+  if (typeof SoundFX !== 'undefined') {
+    if (isCorrect) {
+      SoundFX.playCorrect();
+    } else {
+      SoundFX.playIncorrect();
+    }
+  }
+
   // Style the options
   document.querySelectorAll('.option-card').forEach((btn, idx) => {
     btn.disabled = true;
     if (idx === q.answerIndex) {
       btn.classList.add('correct');
+      if (isCorrect && idx === chosenIndex) {
+        btn.classList.add('correct-flash');
+      }
     } else if (idx === chosenIndex) {
       btn.classList.add('wrong');
+      btn.classList.add('incorrect-flash');
     }
   });
 
@@ -1616,6 +1637,64 @@ function showToast(msg) {
 // ==========================================================================
 
 function bindEventListeners() {
+  // Sound FX Toggle (効果音 ON/OFF)
+  ui.btnSoundToggle?.addEventListener('click', () => {
+    if (typeof SoundFX !== 'undefined') {
+      const isMuted = SoundFX.toggleMute();
+      ui.btnSoundToggle.textContent = isMuted ? '🔇' : '🔊';
+      showToast(isMuted ? '🔇 効果音をオフにしました' : '🔊 効果音をオンにしました');
+      if (!isMuted) SoundFX.playTap();
+    }
+  });
+
+  // Force Refresh & Cache Purge (スマホ/PWA用 最新版即時更新)
+  ui.btnForceRefresh?.addEventListener('click', async () => {
+    if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+    showToast('🔄 キャッシュをクリアして最新版を読み込み中...');
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let reg of registrations) {
+          await reg.unregister();
+        }
+      }
+    } catch (e) {
+      console.warn('Cache purge error:', e);
+    }
+    setTimeout(() => {
+      window.location.href = window.location.pathname + '?t=' + Date.now();
+    }, 400);
+  });
+
+  // Buddy Mascot "Housuke" Interaction (ホウ助との対話)
+  ui.buddyWelcomeCard?.addEventListener('click', () => {
+    if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+    if (typeof window.getRandomHousukeQuote === 'function' && ui.buddyGreetingText) {
+      ui.buddyGreetingText.textContent = window.getRandomHousukeQuote('general');
+    }
+    if (ui.buddyAvatarWrap && typeof window.renderCharacterSvg === 'function') {
+      const info = calcPlayerLevel(state.history.playerExp || 0);
+      ui.buddyAvatarWrap.innerHTML = window.renderCharacterSvg(info.level, 'happy', 82);
+      setTimeout(() => {
+        if (ui.buddyAvatarWrap) {
+          ui.buddyAvatarWrap.innerHTML = window.renderCharacterSvg(info.level, 'idle', 82);
+        }
+      }, 1400);
+    }
+  });
+
+  // Global Tactile Tap Feedback on primary actions
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('.btn-primary, .btn-resume, .btn-action-primary, .tab-btn, .cat-card, .btn-start-action, .option-card');
+    if (target && typeof SoundFX !== 'undefined') {
+      SoundFX.playTap();
+    }
+  });
+
   // Order Mode Switcher (スマート均等ランダム vs 順番に解く)
   ui.btnOrderSmartRandom?.addEventListener('click', () => {
     state.quizOrderMode = 'smart_random';
@@ -2501,7 +2580,18 @@ function updatePlayerLevelUI() {
   if (ui.headerLvlNum) ui.headerLvlNum.textContent = info.level;
   if (ui.headerRankTitle) ui.headerRankTitle.textContent = info.rankTitle;
   if (ui.headerExpBar) ui.headerExpBar.style.width = `${info.pct}%`;
-  if (ui.headerAvatarEmoji) ui.headerAvatarEmoji.textContent = info.avatar;
+  if (ui.headerAvatarEmoji) {
+    if (typeof window.renderCharacterSvg === 'function') {
+      ui.headerAvatarEmoji.innerHTML = window.renderCharacterSvg(info.level, 'idle', 26);
+    } else {
+      ui.headerAvatarEmoji.textContent = info.avatar;
+    }
+  }
+
+  // Home Screen Buddy Mascot (ホウ助)
+  if (ui.buddyAvatarWrap && typeof window.renderCharacterSvg === 'function') {
+    ui.buddyAvatarWrap.innerHTML = window.renderCharacterSvg(info.level, 'idle', 82);
+  }
 
   // MBA Dashboard Card
   if (ui.mbaStatusLevelNum) ui.mbaStatusLevelNum.textContent = info.level;
@@ -2527,10 +2617,19 @@ function awardPlayerExp(amount, reason = '') {
 }
 
 function triggerLevelUpModal(lvlInfo) {
+  if (typeof SoundFX !== 'undefined') {
+    SoundFX.playFanfare();
+  }
   if (!ui.levelUpModal) return;
   if (ui.lvlUpModalLevel) ui.lvlUpModalLevel.textContent = lvlInfo.level;
   if (ui.lvlUpModalRankTitle) ui.lvlUpModalRankTitle.textContent = `${lvlInfo.avatar} ${lvlInfo.charName} (${lvlInfo.rankTitle})`;
-  if (ui.lvlUpModalIcon) ui.lvlUpModalIcon.textContent = lvlInfo.avatar;
+  if (ui.lvlUpModalIcon) {
+    if (typeof window.renderCharacterSvg === 'function') {
+      ui.lvlUpModalIcon.innerHTML = window.renderCharacterSvg(lvlInfo.level, 'celebrate', 100);
+    } else {
+      ui.lvlUpModalIcon.textContent = lvlInfo.avatar;
+    }
+  }
   ui.levelUpModal.style.display = 'flex';
 }
 
@@ -2808,14 +2907,22 @@ function handleMbaOptionChoice(chosenIndex) {
   const q = s.questions[s.currentIndex];
   const isCorrect = (chosenIndex === q.answerIndex);
 
+  // Sound feedback
+  if (typeof SoundFX !== 'undefined') {
+    if (isCorrect) SoundFX.playCorrect();
+    else SoundFX.playIncorrect();
+  }
+
   // Disable option buttons & mark colors
   const btns = ui.mbaQuizOptionsGrid.querySelectorAll('.mba-opt-btn');
   btns.forEach((btn, idx) => {
     btn.disabled = true;
     if (idx === q.answerIndex) {
       btn.classList.add('correct');
+      if (isCorrect && idx === chosenIndex) btn.classList.add('correct-flash');
     } else if (idx === chosenIndex && !isCorrect) {
       btn.classList.add('wrong');
+      btn.classList.add('incorrect-flash');
     }
   });
 

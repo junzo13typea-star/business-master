@@ -25,18 +25,18 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
-  <!-- Immediate Cache Purge for PWA Updates -->
+  <!-- Immediate Cache Purge for PWA Updates (v19) -->
   <script>
     if ('caches' in window) {
       caches.keys().then(function(keys) {
         keys.forEach(function(k) {
-          if (k !== 'shindanshi-master-v17') caches.delete(k);
+          if (k !== 'shindanshi-master-v19') caches.delete(k);
         });
       });
     }
   </script>
 
-  <link rel="stylesheet" href="index.css?v=17">
+  <link rel="stylesheet" href="index.css?v=19">
 </head>
 <body class="theme-dark">
   <!-- Dynamic Glow Backgrounds -->
@@ -64,9 +64,12 @@
         </div>
 
         <div class="bar-right">
+          <!-- サウンド効果音 ON/OFF 切り替えボタン -->
+          <button class="sound-toggle-btn" id="btnSoundToggle" title="効果音 ON/OFF">🔊</button>
+
           <!-- Live Player Level & Character Avatar Badge (習慣化: アバター進化・タップで対話) -->
           <div class="player-level-badge" id="playerLevelBadge" title="あなたのビジネスアバター (タップで応援メッセージ)">
-            <div class="lvl-avatar-icon" id="headerAvatarEmoji">🐣</div>
+            <div class="lvl-avatar-icon" id="headerAvatarEmoji">🦉</div>
             <div class="lvl-circle">
               <span class="lvl-prefix">Lv.</span><span id="headerLvlNum">1</span>
             </div>
@@ -105,6 +108,11 @@
           <span class="h-stat-icon">🎓</span>
           <span class="h-stat-val" id="headerPassText">合格判定 B (65%)</span>
         </div>
+
+        <!-- 強制最新版リロード (PWAキャッシュ一発クリア) -->
+        <button class="header-refresh-pill" id="btnForceRefresh" title="最新版へ更新 (キャッシュクリア)">
+          🔄 最新版
+        </button>
       </div>
 
       <!-- Floating Avatar Speech Bubble (アバター対話・応援吹き出し) -->
@@ -302,6 +310,18 @@
            VIEW 1: HOME / 科目一覧 & 忘却曲線
            =================================================================== -->
       <section id="viewHome" class="stage-view active">
+
+        <!-- オリジナルバディキャラクター: ホウ助 (生命感・AI感払拭) -->
+        <div class="buddy-welcome-card" id="buddyWelcomeCard">
+          <div class="buddy-speech-col">
+            <span class="buddy-tag">🦉 あなたの学習パートナー</span>
+            <h2 class="buddy-greeting" id="buddyGreetingText">「おかえり！今日も1問から始めようポ！」</h2>
+            <p class="buddy-sub" id="buddySubText">ホウ助をタップするとアドバイスや応援メッセージが聞けるよ</p>
+          </div>
+          <div class="buddy-avatar-col" id="buddyAvatarWrap">
+            <!-- Populated by character.js -->
+          </div>
+        </div>
 
         <!-- 習慣化促進: 週間ストリーク & クイック再開ダッシュボード (NEW) -->
         <div class="habit-streak-card" id="habitStreakCard">
@@ -1233,17 +1253,43 @@
   <!-- Case Exam Modules (第2次筆記試験 事例 I〜IV 全8事例) -->
   <script src="data/cases_data.js"></script>
 
-  <script src="questions.js?v=17"></script>
-  <script src="app.js?v=17"></script>
+  <!-- Character & Sound Engines (AI感払拭・Duolingo風インタラクション) -->
+  <script src="sound.js?v=19"></script>
+  <script src="character.js?v=19"></script>
 
-  <!-- Service Worker for Offline / PWA Support -->
+  <script src="questions.js?v=19"></script>
+  <script src="app.js?v=19"></script>
+
+  <!-- Service Worker for Offline / PWA Support & Automatic Update Flow -->
   <script>
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js?v=19')
           .then(reg => {
             console.log('PWA Service Worker registered:', reg.scope);
+            // サーバー上の最新SWを即座に確認
             reg.update();
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // 新バージョンがインストールされたらユーザーに通知
+                    if (typeof showToast === 'function') {
+                      showToast('🚀 新バージョンが利用可能です。更新中...');
+                    }
+                  }
+                });
+              }
+            });
           })
           .catch(err => console.log('Service Worker registration failed:', err));
       });
