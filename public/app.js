@@ -3231,9 +3231,63 @@ const AVATAR_QUOTES = [
 function initHabitTracker() {
   renderWeeklyStreak();
   renderQuickResume();
+  renderDailyChallengeStatus();
 
   // クイック再開ボタンのクリックイベント
   ui.btnQuickResume?.addEventListener('click', handleQuickResumeClick);
+
+  // 1日1問デイリーチャレンジのクリックイベント
+  const btnDC = document.getElementById('btnDailyChallenge');
+  btnDC?.addEventListener('click', handleDailyChallengeClick);
+}
+
+function renderDailyChallengeStatus() {
+  const badge = document.getElementById('dailyChallengeStatusBadge');
+  if (!badge) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const m = state.history.dailyMissions;
+  const isCleared = (m && m.date === todayStr && m.questions >= 1);
+
+  if (isCleared) {
+    badge.textContent = '達成済 ✓';
+    badge.className = 'd1-badge cleared';
+  } else {
+    badge.textContent = '未挑戦';
+    badge.className = 'd1-badge';
+  }
+}
+
+function handleDailyChallengeClick() {
+  // 今日のデイリー1問（未演習の問題を優先して1問だけ出題）
+  const allQs = getAllQuestions();
+  const historyItems = state.history.items || {};
+  
+  // 未演習問題を探す
+  let unAnswered = allQs.filter(q => !historyItems[q.id]);
+  if (unAnswered.length === 0) unAnswered = allQs;
+
+  // 日替わりのシード値に基づいて今日の1問を決定
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let hash = 0;
+  for (let i = 0; i < todayStr.length; i++) hash = (hash * 31 + todayStr.charCodeAt(i)) >>> 0;
+  const pickedQ = unAnswered[hash % unAnswered.length];
+
+  // 1問だけの特別セッション開始
+  state.session.mode = 'daily_one';
+  state.session.subjectId = pickedQ.subject;
+  state.session.subCategoryId = 'all';
+  state.session.currentIndex = 0;
+  state.session.score = 0;
+  state.session.answered = false;
+  state.session.eliminated.clear();
+  state.session.subjectResults = {};
+  state.session.questions = [pickedQ];
+
+  ui.quizModePill.textContent = '🌟 今日の1問デイリーチャレンジ';
+  ui.examTimerBox.style.display = 'none';
+
+  switchView('viewQuiz');
+  renderCurrentQuestion();
 }
 
 function renderWeeklyStreak() {
@@ -3420,6 +3474,8 @@ function renderDailyMissionCard() {
     awardPlayerExp(100, '🎉 本日の全デイリーミッション完全達成！');
     triggerConfetti();
   }
+
+  renderDailyChallengeStatus();
 }
 
 function updateDailyMissions(type, val = 1) {

@@ -30,13 +30,13 @@
     if ('caches' in window) {
       caches.keys().then(function(keys) {
         keys.forEach(function(k) {
-          if (k !== 'shindanshi-master-v16') caches.delete(k);
+          if (k !== 'shindanshi-master-v17') caches.delete(k);
         });
       });
     }
   </script>
 
-  <link rel="stylesheet" href="index.css?v=16">
+  <link rel="stylesheet" href="index.css?v=17">
 </head>
 <body class="theme-dark">
   <!-- Dynamic Glow Backgrounds -->
@@ -320,15 +320,30 @@
             <!-- Populated by JS: 月 火 水 木 金 土 日 -->
           </div>
 
-          <!-- クイック再開ボタン (前回の続きからワンタップで即勉強開始) -->
-          <div class="quick-resume-box" id="quickResumeBox">
-            <div class="resume-info">
-              <span class="resume-label">⚡ 前回の続きからすぐ再開:</span>
-              <span class="resume-target" id="resumeTargetText">企業経営理論 - 経営戦略論</span>
+          <!-- 習慣化アクション: クイック再開 ＆ 1日1問デイリーチャレンジ -->
+          <div class="habit-actions-grid">
+            <!-- クイック再開ボタン (前回の続きからワンタップで即勉強開始) -->
+            <div class="quick-resume-box" id="quickResumeBox">
+              <div class="resume-info">
+                <span class="resume-label">⚡ 前回の続きから再開:</span>
+                <span class="resume-target" id="resumeTargetText">企業経営理論 - 経営戦略論</span>
+              </div>
+              <button class="btn-resume" id="btnQuickResume">
+                <span>▶ 再開</span>
+              </button>
             </div>
-            <button class="btn-resume" id="btnQuickResume">
-              <span>▶ 再開する</span>
-            </button>
+
+            <!-- 1日1問デイリーチャレンジ (忙しい日も1問でストリーク確定) -->
+            <div class="daily-one-box" id="btnDailyChallenge">
+              <div class="d1-content">
+                <span class="d1-icon">🌟</span>
+                <div class="d1-text-wrap">
+                  <span class="d1-title">今日の日替わり 1問チャレンジ</span>
+                  <span class="d1-sub">忙しい日も10秒で連続記録達成！</span>
+                </div>
+              </div>
+              <span class="d1-badge" id="dailyChallengeStatusBadge">未挑戦</span>
+            </div>
           </div>
         </div>
         
@@ -1218,8 +1233,8 @@
   <!-- Case Exam Modules (第2次筆記試験 事例 I〜IV 全8事例) -->
   <script src="data/cases_data.js"></script>
 
-  <script src="questions.js?v=16"></script>
-  <script src="app.js?v=16"></script>
+  <script src="questions.js?v=17"></script>
+  <script src="app.js?v=17"></script>
 
   <!-- Service Worker for Offline / PWA Support -->
   <script>
