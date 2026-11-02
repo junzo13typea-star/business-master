@@ -25,18 +25,18 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
-  <!-- Immediate Cache Purge for PWA Updates -->
+  <!-- Immediate Cache Purge for PWA Updates (v19) -->
   <script>
     if ('caches' in window) {
       caches.keys().then(function(keys) {
         keys.forEach(function(k) {
-          if (k !== 'shindanshi-master-v13') caches.delete(k);
+          if (k !== 'shindanshi-master-v19') caches.delete(k);
         });
       });
     }
   </script>
 
-  <link rel="stylesheet" href="index.css?v=9">
+  <link rel="stylesheet" href="index.css?v=19">
 </head>
 <body class="theme-dark">
   <!-- Dynamic Glow Backgrounds -->
@@ -45,71 +45,80 @@
 
   <div id="passApp" class="pass-app-shell">
     
-    <!-- Top Global App Bar -->
+    <!-- Top Global App Bar (スリム＆スマホ最適化: 2段セーフエリア構造) -->
     <header class="app-top-bar" id="appTopBar">
-      <div class="bar-left">
-        <button id="btnHeaderBack" class="icon-btn-round" style="display: none;" title="一覧に戻る">
-          ←
-        </button>
-        <div class="brand-container">
-          <div class="brand-logo-mark" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-            <span>EXP</span>
+      <div class="top-bar-main-row">
+        <div class="bar-left">
+          <button id="btnHeaderBack" class="icon-btn-round" style="display: none;" title="一覧に戻る">
+            ←
+          </button>
+          <div class="brand-container">
+            <div class="brand-logo-mark" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+              <span>EXP</span>
+            </div>
+            <div class="brand-titles-wrap">
+              <h1 class="brand-title">ビジネスエキスパートの<span class="gradient-text">道</span></h1>
+              <span class="compliance-tag" title="初級MBA用語・中級1次・上級2次筆記まで完全網羅">🎓 診断士＆MBA 総合OS</span>
+            </div>
           </div>
-          <div>
-            <h1 class="brand-title">ビジネスエキスパートの<span class="gradient-text">道</span></h1>
-            <span class="compliance-tag" title="初級MBA用語・中級1次・上級2次筆記まで完全網羅">🎓 MBA実務用語 ＆ 診断士 総合OS</span>
+        </div>
+
+        <div class="bar-right">
+          <!-- サウンド効果音 ON/OFF 切り替えボタン -->
+          <button class="sound-toggle-btn" id="btnSoundToggle" title="効果音 ON/OFF">🔊</button>
+
+          <!-- Live Player Level & Character Avatar Badge (習慣化: アバター進化・タップで対話) -->
+          <div class="player-level-badge" id="playerLevelBadge" title="あなたのビジネスアバター (タップで応援メッセージ)">
+            <div class="lvl-avatar-icon" id="headerAvatarEmoji">🦉</div>
+            <div class="lvl-circle">
+              <span class="lvl-prefix">Lv.</span><span id="headerLvlNum">1</span>
+            </div>
+            <div class="lvl-info">
+              <span class="lvl-title" id="headerRankTitle">🌱 新人アソシエイト</span>
+              <div class="lvl-bar-track">
+                <div class="lvl-bar-fill" id="headerExpBar" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Pass Probability Gauge (PC用) -->
+          <div class="pass-prob-meter desktop-only-badge" id="passProbMeter" title="総合正答率に基づく合格判定">
+            <span class="prob-label">判定</span>
+            <span class="prob-badge grade-b" id="topPassGrade">B判定</span>
+            <span class="prob-rate" id="topPassRate">65%</span>
           </div>
         </div>
       </div>
 
-      <div class="bar-right">
-        <!-- Live Study Time Auto-Tracker Badge (NEW: 勉強時間ログ) -->
+      <!-- スマホ用サブバー（習慣化ステータス）: 2段目に独立配置することでタイトルを一切圧迫しない -->
+      <div class="top-bar-sub-row" id="topBarSubRow">
+        <!-- Streak Counter (習慣化: 連続日数) -->
+        <div class="streak-badge" id="streakBadge" title="学習継続記録">
+          🔥 <span id="streakNum">1</span>日連続
+        </div>
+
+        <!-- Live Study Time Auto-Tracker Badge (習慣化: 本日の勉強時間) -->
         <div class="study-time-badge" id="studyTimeBadge" title="自動計測された本日の学習時間">
           <span class="st-icon">⏱</span>
           <span class="st-val" id="headerStudyTimeText">本日 0分</span>
         </div>
 
-        <!-- Live Player Level & Character Avatar Badge (NEW: キャラクター進化) -->
-        <div class="player-level-badge" id="playerLevelBadge" title="あなたのビジネスアバターと戦闘力レベル (タップで対話)">
-          <div class="lvl-avatar-icon" id="headerAvatarEmoji">🐣</div>
-          <div class="lvl-circle">
-            <span class="lvl-prefix">Lv.</span><span id="headerLvlNum">1</span>
-          </div>
-          <div class="lvl-info">
-            <span class="lvl-title" id="headerRankTitle">🌱 新人アソシエイト</span>
-            <div class="lvl-bar-track">
-              <div class="lvl-bar-fill" id="headerExpBar" style="width: 0%;"></div>
-            </div>
-          </div>
+        <!-- サブ情報（判定または目標） -->
+        <div class="header-status-pill" id="headerPassStatusPill">
+          <span class="h-stat-icon">🎓</span>
+          <span class="h-stat-val" id="headerPassText">合格判定 B (65%)</span>
         </div>
 
-        <!-- Floating Avatar Speech Bubble (NEW: 対話システム) -->
-        <div class="avatar-speech-bubble" id="avatarSpeechBubble" style="display: none;">
-          <span class="bubble-arrow"></span>
-          <span class="bubble-text" id="avatarSpeechText">今日も一緒にビジネス戦闘力を高めよう！</span>
-        </div>
-
-        <!-- Live Pass Probability Gauge -->
-        <div class="pass-prob-meter" id="passProbMeter" title="総合正答率に基づく合格判定">
-          <span class="prob-label">合格判定</span>
-          <span class="prob-badge grade-b" id="topPassGrade">B判定</span>
-          <span class="prob-rate" id="topPassRate">65%</span>
-        </div>
-
-        <!-- Streak Counter -->
-        <div class="streak-badge" id="streakBadge" title="学習継続記録">
-          🔥 <span id="streakNum">1</span>日
-        </div>
-
-        <!-- PRO Plan Upgrade Button (NEW: マネタイズ導線) -->
-        <button class="pro-upgrade-chip" id="btnOpenProModal" title="PROプランで全機能・クラウド同期を解放">
-          👑 PRO
+        <!-- 強制最新版リロード (PWAキャッシュ一発クリア) -->
+        <button class="header-refresh-pill" id="btnForceRefresh" title="最新版へ更新 (キャッシュクリア)">
+          🔄 最新版
         </button>
+      </div>
 
-        <!-- DevFlow Hub Link -->
-        <a href="http://localhost:8765" class="hub-link-chip" target="_blank" title="DevFlow Hubへ戻る">
-          ⚡ Hub
-        </a>
+      <!-- Floating Avatar Speech Bubble (アバター対話・応援吹き出し) -->
+      <div class="avatar-speech-bubble" id="avatarSpeechBubble" style="display: none;">
+        <span class="bubble-arrow"></span>
+        <span class="bubble-text" id="avatarSpeechText">今日も一緒にビジネス戦闘力を高めよう！</span>
       </div>
     </header>
 
@@ -301,8 +310,64 @@
            VIEW 1: HOME / 科目一覧 & 忘却曲線
            =================================================================== -->
       <section id="viewHome" class="stage-view active">
+
+        <!-- オリジナルバディキャラクター: ホウ助 (生命感・AI感払拭) -->
+        <div class="buddy-welcome-card" id="buddyWelcomeCard">
+          <div class="buddy-speech-col">
+            <span class="buddy-tag">🦉 あなたの学習パートナー</span>
+            <h2 class="buddy-greeting" id="buddyGreetingText">「おかえり！今日も1問から始めようポ！」</h2>
+            <p class="buddy-sub" id="buddySubText">ホウ助をタップするとアドバイスや応援メッセージが聞けるよ</p>
+          </div>
+          <div class="buddy-avatar-col" id="buddyAvatarWrap">
+            <!-- Populated by character.js -->
+          </div>
+        </div>
+
+        <!-- 習慣化促進: 週間ストリーク & クイック再開ダッシュボード (NEW) -->
+        <div class="habit-streak-card" id="habitStreakCard">
+          <div class="habit-header">
+            <div class="habit-title-wrap">
+              <span class="habit-badge-tag">🔥 習慣化トラッカー</span>
+              <h3 class="habit-title">
+                連続 <span class="streak-highlight" id="habitStreakNum">1</span> 日学習中！
+              </h3>
+            </div>
+            <span class="habit-cheer" id="habitCheerText">毎日1問でも解いて記録を守ろう</span>
+          </div>
+
+          <!-- 週間カレンダー (月〜日 7日間スタンプ) -->
+          <div class="weekly-streak-strip" id="weeklyStreakStrip">
+            <!-- Populated by JS: 月 火 水 木 金 土 日 -->
+          </div>
+
+          <!-- 習慣化アクション: クイック再開 ＆ 1日1問デイリーチャレンジ -->
+          <div class="habit-actions-grid">
+            <!-- クイック再開ボタン (前回の続きからワンタップで即勉強開始) -->
+            <div class="quick-resume-box" id="quickResumeBox">
+              <div class="resume-info">
+                <span class="resume-label">⚡ 前回の続きから再開:</span>
+                <span class="resume-target" id="resumeTargetText">企業経営理論 - 経営戦略論</span>
+              </div>
+              <button class="btn-resume" id="btnQuickResume">
+                <span>▶ 再開</span>
+              </button>
+            </div>
+
+            <!-- 1日1問デイリーチャレンジ (忙しい日も1問でストリーク確定) -->
+            <div class="daily-one-box" id="btnDailyChallenge">
+              <div class="d1-content">
+                <span class="d1-icon">🌟</span>
+                <div class="d1-text-wrap">
+                  <span class="d1-title">今日の日替わり 1問チャレンジ</span>
+                  <span class="d1-sub">忙しい日も10秒で連続記録達成！</span>
+                </div>
+              </div>
+              <span class="d1-badge" id="dailyChallengeStatusBadge">未挑戦</span>
+            </div>
+          </div>
+        </div>
         
-        <!-- Daily Goal & Mission Card (NEW: 習慣化・LTV向上エンジン) -->
+        <!-- Daily Goal & Mission Card (習慣化・デイリーゴール) -->
         <div class="daily-mission-card" id="dailyMissionCard">
           <div class="mission-header">
             <div>
@@ -1019,78 +1084,6 @@
         </div>
       </div>
 
-      <!-- PRO Plan Subscription Modal (NEW: マネタイズ機能) -->
-      <div id="proModal" class="case-modal-overlay" style="display: none;">
-        <div class="pro-modal-card">
-          <div class="pro-modal-header">
-            <span class="pro-crown-badge">👑 PREMIUM MEMBERSHIP</span>
-            <button class="modal-close-btn" id="btnCloseProModal" style="color: #fff;">×</button>
-          </div>
-          <h2 class="pro-modal-title">ビジネスエキスパート <span class="gradient-text">PRO</span></h2>
-          <p class="pro-modal-desc">
-            全制限を解除。複数端末のクラウド同期、2次筆記AI詳細添削、MBA全450問を無制限に使い放題。
-          </p>
-
-          <!-- Plan Switcher -->
-          <div class="pro-plan-toggle-row">
-            <button class="pro-plan-btn active" id="btnPlanYearly" data-plan="yearly">
-              <span class="p-rec-tag">実質2ヶ月分無料</span>
-              <div class="p-plan-name">年額プラン</div>
-              <div class="p-plan-price">¥9,800 <span class="p-period">/ 年 (月換算 約¥816)</span></div>
-            </button>
-            <button class="pro-plan-btn" id="btnPlanMonthly" data-plan="monthly">
-              <div class="p-plan-name">月額プラン</div>
-              <div class="p-plan-price">¥980 <span class="p-period">/ 月</span></div>
-            </button>
-          </div>
-
-          <!-- Feature Perks List -->
-          <div class="pro-perks-list">
-            <div class="perk-item">
-              <span class="perk-check">✅</span>
-              <div>
-                <strong>全問題・全コンテンツ完全無制限</strong>
-                <p>1次試験700問＋515問、2次筆記全8事例、MBA全450問すべて使い放題</p>
-              </div>
-            </div>
-            <div class="perk-item">
-              <span class="perk-check">✅</span>
-              <div>
-                <strong>スマホ・PC・タブレット クラウドリアルタイム同期</strong>
-                <p>外出先ではスマホ、自宅ではPCでシームレスに学習ログ・レベルを引き継ぎ</p>
-              </div>
-            </div>
-            <div class="perk-item">
-              <span class="perk-check">✅</span>
-              <div>
-                <strong>第2次試験 AI実戦記述添削 ＆ 模範解答</strong>
-                <p>重要キーワード判定・配点シミュレーション・詳細フィードバック</p>
-              </div>
-            </div>
-            <div class="perk-item">
-              <span class="perk-check">✅</span>
-              <div>
-                <strong>広告・利用制限の完全非表示 ＆ 優先アップデート</strong>
-              </div>
-            </div>
-          </div>
-
-          <div class="pro-modal-footer">
-            <button class="btn btn-primary btn-block btn-lg" id="btnStartTrial">
-              🚀 7日間の無料トライアルを開始する
-            </button>
-            <p class="trial-note">※ トライアル期間中はいつでもキャンセル可能。費用は発生しません。</p>
-            <div class="pro-legal-links">
-              <a href="javascript:void(0)" onclick="openLegalModal('tokusho')">特定商取引法に基づく表記</a>
-              <span>•</span>
-              <a href="javascript:void(0)" onclick="openLegalModal('terms')">利用規約</a>
-              <span>•</span>
-              <a href="javascript:void(0)" onclick="openLegalModal('privacy')">プライバシーポリシー</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Sub-Category Selection Modal (NEW: 論点・小カテゴリ選択ダイアログ) -->
       <div id="subCategoryModal" class="case-modal-overlay" style="display: none;">
         <div class="subcat-modal-card">
@@ -1260,17 +1253,43 @@
   <!-- Case Exam Modules (第2次筆記試験 事例 I〜IV 全8事例) -->
   <script src="data/cases_data.js"></script>
 
-  <script src="questions.js?v=13"></script>
-  <script src="app.js?v=13"></script>
+  <!-- Character & Sound Engines (AI感払拭・Duolingo風インタラクション) -->
+  <script src="sound.js?v=19"></script>
+  <script src="character.js?v=19"></script>
 
-  <!-- Service Worker for Offline / PWA Support -->
+  <script src="questions.js?v=19"></script>
+  <script src="app.js?v=19"></script>
+
+  <!-- Service Worker for Offline / PWA Support & Automatic Update Flow -->
   <script>
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js?v=19')
           .then(reg => {
             console.log('PWA Service Worker registered:', reg.scope);
+            // サーバー上の最新SWを即座に確認
             reg.update();
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // 新バージョンがインストールされたらユーザーに通知
+                    if (typeof showToast === 'function') {
+                      showToast('🚀 新バージョンが利用可能です。更新中...');
+                    }
+                  }
+                });
+              }
+            });
           })
           .catch(err => console.log('Service Worker registration failed:', err));
       });

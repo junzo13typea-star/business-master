@@ -110,6 +110,22 @@ const ui = {
   avatarSpeechBubble: document.getElementById('avatarSpeechBubble'),
   avatarSpeechText: document.getElementById('avatarSpeechText'),
 
+  // Sound & Character Mascot (ホウ助 & 効果音システム)
+  btnSoundToggle: document.getElementById('btnSoundToggle'),
+  btnForceRefresh: document.getElementById('btnForceRefresh'),
+  buddyWelcomeCard: document.getElementById('buddyWelcomeCard'),
+  buddyGreetingText: document.getElementById('buddyGreetingText'),
+  buddySubText: document.getElementById('buddySubText'),
+  buddyAvatarWrap: document.getElementById('buddyAvatarWrap'),
+
+  // Habit Streak & Quick Resume (習慣化エンジン)
+  habitStreakCard: document.getElementById('habitStreakCard'),
+  habitStreakNum: document.getElementById('habitStreakNum'),
+  habitCheerText: document.getElementById('habitCheerText'),
+  weeklyStreakStrip: document.getElementById('weeklyStreakStrip'),
+  resumeTargetText: document.getElementById('resumeTargetText'),
+  btnQuickResume: document.getElementById('btnQuickResume'),
+
   // Daily Mission Elements (NEW)
   dailyMissionCard: document.getElementById('dailyMissionCard'),
   dailyGoalPct: document.getElementById('dailyGoalPct'),
@@ -676,6 +692,13 @@ function updatePassMetricsUI() {
     ui.topPassRate.textContent = `${metrics.passProbability}%`;
   }
 
+  const headerPassText = document.getElementById('headerPassText');
+  if (headerPassText) {
+    headerPassText.textContent = metrics.isUnlocked
+      ? `判定 ${metrics.grade} (${metrics.passProbability}%)`
+      : `合格率 ${metrics.passProbability}%`;
+  }
+
   // Hero Card
   if (ui.heroHeadlineText) {
     ui.heroHeadlineText.innerHTML = metrics.isUnlocked
@@ -1116,6 +1139,22 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all') {
   // Clear any existing timer
   if (state.session.timerId) clearInterval(state.session.timerId);
 
+  // 習慣化: セッションを直近学習として保存
+  if (subjectId) {
+    const subObj = SUBJECTS.find(s => s.id === subjectId);
+    let title = subObj ? subObj.name : subjectId;
+    if (subCategoryId && subCategoryId !== 'all' && typeof SUBJECT_SUBCATEGORIES !== 'undefined' && SUBJECT_SUBCATEGORIES[subjectId]) {
+      const sc = SUBJECT_SUBCATEGORIES[subjectId].find(c => c.id === subCategoryId);
+      if (sc) title += ` - ${sc.name}`;
+    }
+    saveLastSession({
+      mode: mode,
+      subjectId: subjectId,
+      subcatId: subCategoryId,
+      title: title
+    });
+  }
+
   state.session.mode = mode;
   state.session.subjectId = subjectId;
   state.session.subCategoryId = subCategoryId || 'all';
@@ -1365,13 +1404,26 @@ function handleOptionChoice(chosenIndex) {
   saveHistoryData();
   updatePassMetricsUI();
 
+  // Sound feedback
+  if (typeof SoundFX !== 'undefined') {
+    if (isCorrect) {
+      SoundFX.playCorrect();
+    } else {
+      SoundFX.playIncorrect();
+    }
+  }
+
   // Style the options
   document.querySelectorAll('.option-card').forEach((btn, idx) => {
     btn.disabled = true;
     if (idx === q.answerIndex) {
       btn.classList.add('correct');
+      if (isCorrect && idx === chosenIndex) {
+        btn.classList.add('correct-flash');
+      }
     } else if (idx === chosenIndex) {
       btn.classList.add('wrong');
+      btn.classList.add('incorrect-flash');
     }
   });
 
@@ -1585,6 +1637,64 @@ function showToast(msg) {
 // ==========================================================================
 
 function bindEventListeners() {
+  // Sound FX Toggle (効果音 ON/OFF)
+  ui.btnSoundToggle?.addEventListener('click', () => {
+    if (typeof SoundFX !== 'undefined') {
+      const isMuted = SoundFX.toggleMute();
+      ui.btnSoundToggle.textContent = isMuted ? '🔇' : '🔊';
+      showToast(isMuted ? '🔇 効果音をオフにしました' : '🔊 効果音をオンにしました');
+      if (!isMuted) SoundFX.playTap();
+    }
+  });
+
+  // Force Refresh & Cache Purge (スマホ/PWA用 最新版即時更新)
+  ui.btnForceRefresh?.addEventListener('click', async () => {
+    if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+    showToast('🔄 キャッシュをクリアして最新版を読み込み中...');
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let reg of registrations) {
+          await reg.unregister();
+        }
+      }
+    } catch (e) {
+      console.warn('Cache purge error:', e);
+    }
+    setTimeout(() => {
+      window.location.href = window.location.pathname + '?t=' + Date.now();
+    }, 400);
+  });
+
+  // Buddy Mascot "Housuke" Interaction (ホウ助との対話)
+  ui.buddyWelcomeCard?.addEventListener('click', () => {
+    if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+    if (typeof window.getRandomHousukeQuote === 'function' && ui.buddyGreetingText) {
+      ui.buddyGreetingText.textContent = window.getRandomHousukeQuote('general');
+    }
+    if (ui.buddyAvatarWrap && typeof window.renderCharacterSvg === 'function') {
+      const info = calcPlayerLevel(state.history.playerExp || 0);
+      ui.buddyAvatarWrap.innerHTML = window.renderCharacterSvg(info.level, 'happy', 82);
+      setTimeout(() => {
+        if (ui.buddyAvatarWrap) {
+          ui.buddyAvatarWrap.innerHTML = window.renderCharacterSvg(info.level, 'idle', 82);
+        }
+      }, 1400);
+    }
+  });
+
+  // Global Tactile Tap Feedback on primary actions
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('.btn-primary, .btn-resume, .btn-action-primary, .tab-btn, .cat-card, .btn-start-action, .option-card');
+    if (target && typeof SoundFX !== 'undefined') {
+      SoundFX.playTap();
+    }
+  });
+
   // Order Mode Switcher (スマート均等ランダム vs 順番に解く)
   ui.btnOrderSmartRandom?.addEventListener('click', () => {
     state.quizOrderMode = 'smart_random';
@@ -2470,7 +2580,18 @@ function updatePlayerLevelUI() {
   if (ui.headerLvlNum) ui.headerLvlNum.textContent = info.level;
   if (ui.headerRankTitle) ui.headerRankTitle.textContent = info.rankTitle;
   if (ui.headerExpBar) ui.headerExpBar.style.width = `${info.pct}%`;
-  if (ui.headerAvatarEmoji) ui.headerAvatarEmoji.textContent = info.avatar;
+  if (ui.headerAvatarEmoji) {
+    if (typeof window.renderCharacterSvg === 'function') {
+      ui.headerAvatarEmoji.innerHTML = window.renderCharacterSvg(info.level, 'idle', 26);
+    } else {
+      ui.headerAvatarEmoji.textContent = info.avatar;
+    }
+  }
+
+  // Home Screen Buddy Mascot (ホウ助)
+  if (ui.buddyAvatarWrap && typeof window.renderCharacterSvg === 'function') {
+    ui.buddyAvatarWrap.innerHTML = window.renderCharacterSvg(info.level, 'idle', 82);
+  }
 
   // MBA Dashboard Card
   if (ui.mbaStatusLevelNum) ui.mbaStatusLevelNum.textContent = info.level;
@@ -2496,10 +2617,19 @@ function awardPlayerExp(amount, reason = '') {
 }
 
 function triggerLevelUpModal(lvlInfo) {
+  if (typeof SoundFX !== 'undefined') {
+    SoundFX.playFanfare();
+  }
   if (!ui.levelUpModal) return;
   if (ui.lvlUpModalLevel) ui.lvlUpModalLevel.textContent = lvlInfo.level;
   if (ui.lvlUpModalRankTitle) ui.lvlUpModalRankTitle.textContent = `${lvlInfo.avatar} ${lvlInfo.charName} (${lvlInfo.rankTitle})`;
-  if (ui.lvlUpModalIcon) ui.lvlUpModalIcon.textContent = lvlInfo.avatar;
+  if (ui.lvlUpModalIcon) {
+    if (typeof window.renderCharacterSvg === 'function') {
+      ui.lvlUpModalIcon.innerHTML = window.renderCharacterSvg(lvlInfo.level, 'celebrate', 100);
+    } else {
+      ui.lvlUpModalIcon.textContent = lvlInfo.avatar;
+    }
+  }
   ui.levelUpModal.style.display = 'flex';
 }
 
@@ -2600,6 +2730,22 @@ function renderMbaTopScreen() {
 }
 
 function startMbaQuiz(categoryId = null, count = 10, subCategoryId = 'all') {
+  // 習慣化: セッションを直近学習として保存
+  if (categoryId) {
+    const cat = (window.MBA_CATEGORIES || []).find(c => c.id === categoryId);
+    let title = cat ? cat.name : categoryId;
+    if (subCategoryId && subCategoryId !== 'all' && typeof MBA_SUBCATEGORIES !== 'undefined' && MBA_SUBCATEGORIES[categoryId]) {
+      const sc = MBA_SUBCATEGORIES[categoryId].find(c => c.id === subCategoryId);
+      if (sc) title += ` - ${sc.name}`;
+    }
+    saveLastSession({
+      mode: 'mba',
+      subjectId: categoryId,
+      subcatId: subCategoryId,
+      title: `MBA: ${title}`
+    });
+  }
+
   const allQs = window.MBA_VOCAB_QUESTIONS || [];
   let pool = categoryId ? allQs.filter(q => q.category === categoryId) : [...allQs];
 
@@ -2761,14 +2907,22 @@ function handleMbaOptionChoice(chosenIndex) {
   const q = s.questions[s.currentIndex];
   const isCorrect = (chosenIndex === q.answerIndex);
 
+  // Sound feedback
+  if (typeof SoundFX !== 'undefined') {
+    if (isCorrect) SoundFX.playCorrect();
+    else SoundFX.playIncorrect();
+  }
+
   // Disable option buttons & mark colors
   const btns = ui.mbaQuizOptionsGrid.querySelectorAll('.mba-opt-btn');
   btns.forEach((btn, idx) => {
     btn.disabled = true;
     if (idx === q.answerIndex) {
       btn.classList.add('correct');
+      if (isCorrect && idx === chosenIndex) btn.classList.add('correct-flash');
     } else if (idx === chosenIndex && !isCorrect) {
       btn.classList.add('wrong');
+      btn.classList.add('incorrect-flash');
     }
   });
 
@@ -2915,7 +3069,7 @@ function updateStudyTimeUI() {
   
   // Header badge
   if (ui.headerStudyTimeText) {
-    ui.headerStudyTimeText.textContent = `本日 ${formatStudyTime(st.todaySeconds || 0)}`;
+    ui.headerStudyTimeText.textContent = formatStudyTime(st.todaySeconds || 0);
   }
 
   // Analytics View elements
@@ -3167,16 +3321,194 @@ function countMbaMastered(h) {
 }
 
 const AVATAR_QUOTES = [
-  "「今日の一歩が、1年後の大きな差になるポ！」",
-  "「素晴らしい集中力！ビジネス戦闘力がグングン上がってるポ！」",
-  "「迷ったら基本に立ち返るのが一流の流儀だポ！」",
-  "「PDCAを回し続ける者だけが、真のエキスパートになれるポ！」",
-  "「休息も戦略の一部！無理せず自分のペースで進もうポ！」",
-  "「分からない用語に出会えたのは、成長の最大のチャンスだポ！」",
-  "「継続は力なり。君の努力をアバターはずっと見てるポ！」"
+  "「今日の一歩が、1年後の大きな合格につながるよ！」",
+  "「素晴らしい集中力！ビジネス戦闘力がグングン上がってるね！」",
+  "「迷ったら基本に立ち返るのがプロの流儀だよ！」",
+  "「毎日10分の継続が、本番での圧倒的な自信になるよ！」",
+  "「休息も戦略の一部！無理せず自分のペースで続けよう！」",
+  "「間違えた問題こそ最大の宝物。しっかり復習しておこう！」",
+  "「継続は力なり。君の努力をずっと応援しているよ！」",
+  "「あと少しで今日の目標達成！この調子で駆け抜けよう！」"
 ];
 
+// ==========================================================================
+// 習慣化エンジン: 週間ストリーク & クイック再開
+// ==========================================================================
+
+function initHabitTracker() {
+  renderWeeklyStreak();
+  renderQuickResume();
+  renderDailyChallengeStatus();
+
+  // クイック再開ボタンのクリックイベント
+  ui.btnQuickResume?.addEventListener('click', handleQuickResumeClick);
+
+  // 1日1問デイリーチャレンジのクリックイベント
+  const btnDC = document.getElementById('btnDailyChallenge');
+  btnDC?.addEventListener('click', handleDailyChallengeClick);
+}
+
+function renderDailyChallengeStatus() {
+  const badge = document.getElementById('dailyChallengeStatusBadge');
+  if (!badge) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const m = state.history.dailyMissions;
+  const isCleared = (m && m.date === todayStr && m.questions >= 1);
+
+  if (isCleared) {
+    badge.textContent = '達成済 ✓';
+    badge.className = 'd1-badge cleared';
+  } else {
+    badge.textContent = '未挑戦';
+    badge.className = 'd1-badge';
+  }
+}
+
+function handleDailyChallengeClick() {
+  // 今日のデイリー1問（未演習の問題を優先して1問だけ出題）
+  const allQs = getAllQuestions();
+  const historyItems = state.history.items || {};
+  
+  // 未演習問題を探す
+  let unAnswered = allQs.filter(q => !historyItems[q.id]);
+  if (unAnswered.length === 0) unAnswered = allQs;
+
+  // 日替わりのシード値に基づいて今日の1問を決定
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let hash = 0;
+  for (let i = 0; i < todayStr.length; i++) hash = (hash * 31 + todayStr.charCodeAt(i)) >>> 0;
+  const pickedQ = unAnswered[hash % unAnswered.length];
+
+  // 1問だけの特別セッション開始
+  state.session.mode = 'daily_one';
+  state.session.subjectId = pickedQ.subject;
+  state.session.subCategoryId = 'all';
+  state.session.currentIndex = 0;
+  state.session.score = 0;
+  state.session.answered = false;
+  state.session.eliminated.clear();
+  state.session.subjectResults = {};
+  state.session.questions = [pickedQ];
+
+  ui.quizModePill.textContent = '🌟 今日の1問デイリーチャレンジ';
+  ui.examTimerBox.style.display = 'none';
+
+  switchView('viewQuiz');
+  renderCurrentQuestion();
+}
+
+function renderWeeklyStreak() {
+  const streakCount = state.history.streak || 1;
+  if (ui.habitStreakNum) ui.habitStreakNum.textContent = streakCount;
+
+  // 今日のミッション進捗に応じた応援メッセージ
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const m = state.history.dailyMissions || { date: todayStr, questions: 0 };
+  const qCount = m.questions || 0;
+
+  if (ui.habitCheerText) {
+    if (qCount >= 10) {
+      ui.habitCheerText.textContent = '🌟 本日のデイリー目標達成！素晴らしい！';
+      ui.habitCheerText.style.color = '#34d399';
+    } else {
+      ui.habitCheerText.textContent = `🔥 あと ${10 - qCount} 問で本日の目標達成！`;
+      ui.habitCheerText.style.color = '#fde68a';
+    }
+  }
+
+  // 週間カレンダー（直近7日間）の描画
+  if (!ui.weeklyStreakStrip) return;
+  ui.weeklyStreakStrip.innerHTML = '';
+
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+  const dailyHistory = (state.history.studyTime && state.history.studyTime.dailyHistory) || {};
+  const today = new Date();
+
+  // 直近7日分（6日前〜今日）
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const isToday = (i === 0);
+    const dayOfWeek = dayNames[d.getDay()];
+
+    // その日に学習実績があるか？
+    let hasStudied = false;
+    if (isToday) {
+      hasStudied = (qCount > 0 || (state.history.studyTime?.todaySeconds || 0) > 60);
+    } else {
+      hasStudied = (dailyHistory[dateStr] && dailyHistory[dateStr] > 60);
+    }
+
+    const box = document.createElement('div');
+    box.className = `w-day-box ${hasStudied ? 'completed' : ''} ${isToday ? 'today' : ''}`;
+    box.title = `${dateStr} (${dayOfWeek})`;
+
+    let icon = '○';
+    if (hasStudied) icon = '🔥';
+    else if (isToday) icon = '🎯';
+
+    box.innerHTML = `
+      <span class="w-day-name">${dayOfWeek}</span>
+      <span class="w-day-icon">${icon}</span>
+    `;
+
+    ui.weeklyStreakStrip.appendChild(box);
+  }
+}
+
+const LAST_SESSION_KEY = 'shindanshi_last_session';
+
+function saveLastSession(sessionData) {
+  try {
+    localStorage.setItem(LAST_SESSION_KEY, JSON.stringify({
+      ...sessionData,
+      updatedAt: Date.now()
+    }));
+    renderQuickResume();
+  } catch (e) {
+    console.warn('Failed to save last session', e);
+  }
+}
+
+function getLastSession() {
+  try {
+    const raw = localStorage.getItem(LAST_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function renderQuickResume() {
+  const session = getLastSession();
+  if (ui.resumeTargetText) {
+    if (session && session.title) {
+      ui.resumeTargetText.textContent = session.title;
+    } else {
+      ui.resumeTargetText.textContent = '企業経営理論 - 経営戦略論 (おすすめ)';
+    }
+  }
+}
+
+function handleQuickResumeClick() {
+  const session = getLastSession();
+  if (session && session.subjectId) {
+    if (session.mode === 'mba') {
+      startMbaQuiz(session.subjectId, 10, session.subcatId || 'all');
+    } else {
+      startQuizSession(session.mode || 'subject', session.subjectId, session.subcatId || 'all');
+    }
+  } else {
+    // デフォルト: 企業経営理論の演習開始
+    startQuizSession('subject', 'management', 'all');
+  }
+}
+
 function initLtvFeatures() {
+  // 習慣化トラッカー & 週間ストリーク & クイック再開の初期化
+  initHabitTracker();
+
   // Avatar Speech Bubble Trigger
   ui.playerLevelBadge?.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -3249,6 +3581,8 @@ function renderDailyMissionCard() {
     awardPlayerExp(100, '🎉 本日の全デイリーミッション完全達成！');
     triggerConfetti();
   }
+
+  renderDailyChallengeStatus();
 }
 
 function updateDailyMissions(type, val = 1) {
@@ -3269,6 +3603,7 @@ function updateDailyMissions(type, val = 1) {
 
   saveHistoryData();
   renderDailyMissionCard();
+  renderWeeklyStreak();
 }
 
 function checkAchievements() {

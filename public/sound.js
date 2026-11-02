@@ -144,3 +144,4 @@
   window.SoundFX = SoundFX;
 
 })(typeof window !== 'undefined' ? window : this);
+
