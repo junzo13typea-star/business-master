@@ -684,6 +684,13 @@ function updatePassMetricsUI() {
     ui.topPassRate.textContent = `${metrics.passProbability}%`;
   }
 
+  const headerPassText = document.getElementById('headerPassText');
+  if (headerPassText) {
+    headerPassText.textContent = metrics.isUnlocked
+      ? `判定 ${metrics.grade} (${metrics.passProbability}%)`
+      : `合格率 ${metrics.passProbability}%`;
+  }
+
   // Hero Card
   if (ui.heroHeadlineText) {
     ui.heroHeadlineText.innerHTML = metrics.isUnlocked

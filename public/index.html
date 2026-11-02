@@ -30,13 +30,13 @@
     if ('caches' in window) {
       caches.keys().then(function(keys) {
         keys.forEach(function(k) {
-          if (k !== 'shindanshi-master-v14') caches.delete(k);
+          if (k !== 'shindanshi-master-v16') caches.delete(k);
         });
       });
     }
   </script>
 
-  <link rel="stylesheet" href="index.css?v=14">
+  <link rel="stylesheet" href="index.css?v=16">
 </head>
 <body class="theme-dark">
   <!-- Dynamic Glow Backgrounds -->
@@ -45,61 +45,72 @@
 
   <div id="passApp" class="pass-app-shell">
     
-    <!-- Top Global App Bar (スリム＆スマホ最適化) -->
+    <!-- Top Global App Bar (スリム＆スマホ最適化: 2段セーフエリア構造) -->
     <header class="app-top-bar" id="appTopBar">
-      <div class="bar-left">
-        <button id="btnHeaderBack" class="icon-btn-round" style="display: none;" title="一覧に戻る">
-          ←
-        </button>
-        <div class="brand-container">
-          <div class="brand-logo-mark" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-            <span>EXP</span>
+      <div class="top-bar-main-row">
+        <div class="bar-left">
+          <button id="btnHeaderBack" class="icon-btn-round" style="display: none;" title="一覧に戻る">
+            ←
+          </button>
+          <div class="brand-container">
+            <div class="brand-logo-mark" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+              <span>EXP</span>
+            </div>
+            <div class="brand-titles-wrap">
+              <h1 class="brand-title">ビジネスエキスパートの<span class="gradient-text">道</span></h1>
+              <span class="compliance-tag" title="初級MBA用語・中級1次・上級2次筆記まで完全網羅">🎓 診断士＆MBA 総合OS</span>
+            </div>
           </div>
-          <div>
-            <h1 class="brand-title">ビジネスエキスパートの<span class="gradient-text">道</span></h1>
-            <span class="compliance-tag" title="初級MBA用語・中級1次・上級2次筆記まで完全網羅">🎓 診断士＆MBA 総合OS</span>
+        </div>
+
+        <div class="bar-right">
+          <!-- Live Player Level & Character Avatar Badge (習慣化: アバター進化・タップで対話) -->
+          <div class="player-level-badge" id="playerLevelBadge" title="あなたのビジネスアバター (タップで応援メッセージ)">
+            <div class="lvl-avatar-icon" id="headerAvatarEmoji">🐣</div>
+            <div class="lvl-circle">
+              <span class="lvl-prefix">Lv.</span><span id="headerLvlNum">1</span>
+            </div>
+            <div class="lvl-info">
+              <span class="lvl-title" id="headerRankTitle">🌱 新人アソシエイト</span>
+              <div class="lvl-bar-track">
+                <div class="lvl-bar-fill" id="headerExpBar" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Pass Probability Gauge (PC用) -->
+          <div class="pass-prob-meter desktop-only-badge" id="passProbMeter" title="総合正答率に基づく合格判定">
+            <span class="prob-label">判定</span>
+            <span class="prob-badge grade-b" id="topPassGrade">B判定</span>
+            <span class="prob-rate" id="topPassRate">65%</span>
           </div>
         </div>
       </div>
 
-      <div class="bar-right">
+      <!-- スマホ用サブバー（習慣化ステータス）: 2段目に独立配置することでタイトルを一切圧迫しない -->
+      <div class="top-bar-sub-row" id="topBarSubRow">
         <!-- Streak Counter (習慣化: 連続日数) -->
-        <div class="streak-badge" id="streakBadge" title="学習継続記録（タップで週間ストリーク表示）">
-          🔥 <span id="streakNum">1</span>日
+        <div class="streak-badge" id="streakBadge" title="学習継続記録">
+          🔥 <span id="streakNum">1</span>日連続
         </div>
 
         <!-- Live Study Time Auto-Tracker Badge (習慣化: 本日の勉強時間) -->
         <div class="study-time-badge" id="studyTimeBadge" title="自動計測された本日の学習時間">
           <span class="st-icon">⏱</span>
-          <span class="st-val" id="headerStudyTimeText">0分</span>
+          <span class="st-val" id="headerStudyTimeText">本日 0分</span>
         </div>
 
-        <!-- Live Player Level & Character Avatar Badge (習慣化: アバター進化・タップで対話) -->
-        <div class="player-level-badge" id="playerLevelBadge" title="あなたのビジネスアバター (タップで応援メッセージ)">
-          <div class="lvl-avatar-icon" id="headerAvatarEmoji">🐣</div>
-          <div class="lvl-circle">
-            <span class="lvl-prefix">Lv.</span><span id="headerLvlNum">1</span>
-          </div>
-          <div class="lvl-info">
-            <span class="lvl-title" id="headerRankTitle">🌱 新人アソシエイト</span>
-            <div class="lvl-bar-track">
-              <div class="lvl-bar-fill" id="headerExpBar" style="width: 0%;"></div>
-            </div>
-          </div>
+        <!-- サブ情報（判定または目標） -->
+        <div class="header-status-pill" id="headerPassStatusPill">
+          <span class="h-stat-icon">🎓</span>
+          <span class="h-stat-val" id="headerPassText">合格判定 B (65%)</span>
         </div>
+      </div>
 
-        <!-- Floating Avatar Speech Bubble (アバター対話・応援吹き出し) -->
-        <div class="avatar-speech-bubble" id="avatarSpeechBubble" style="display: none;">
-          <span class="bubble-arrow"></span>
-          <span class="bubble-text" id="avatarSpeechText">今日も一緒にビジネス戦闘力を高めよう！</span>
-        </div>
-
-        <!-- Live Pass Probability Gauge (PC用) -->
-        <div class="pass-prob-meter desktop-only-badge" id="passProbMeter" title="総合正答率に基づく合格判定">
-          <span class="prob-label">判定</span>
-          <span class="prob-badge grade-b" id="topPassGrade">B判定</span>
-          <span class="prob-rate" id="topPassRate">65%</span>
-        </div>
+      <!-- Floating Avatar Speech Bubble (アバター対話・応援吹き出し) -->
+      <div class="avatar-speech-bubble" id="avatarSpeechBubble" style="display: none;">
+        <span class="bubble-arrow"></span>
+        <span class="bubble-text" id="avatarSpeechText">今日も一緒にビジネス戦闘力を高めよう！</span>
       </div>
     </header>
 
@@ -1207,8 +1218,8 @@
   <!-- Case Exam Modules (第2次筆記試験 事例 I〜IV 全8事例) -->
   <script src="data/cases_data.js"></script>
 
-  <script src="questions.js?v=14"></script>
-  <script src="app.js?v=14"></script>
+  <script src="questions.js?v=16"></script>
+  <script src="app.js?v=16"></script>
 
   <!-- Service Worker for Offline / PWA Support -->
   <script>

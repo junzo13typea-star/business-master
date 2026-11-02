@@ -126,28 +126,38 @@ html, body {
 /* Top App Bar */
 .app-top-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.9rem 0;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: max(0.65rem, env(safe-area-inset-top)) 0 0.65rem 0;
   border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
-  background: rgba(6, 9, 17, 0.88);
+  background: rgba(6, 9, 17, 0.94);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   z-index: 60;
   margin-bottom: 1rem;
 }
 
+.top-bar-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+}
+
 .bar-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .icon-btn-round {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-subtle);
@@ -158,6 +168,7 @@ html, body {
   justify-content: center;
   cursor: pointer;
   transition: var(--transition);
+  flex-shrink: 0;
 }
 .icon-btn-round:hover {
   background: rgba(255, 255, 255, 0.12);
@@ -167,50 +178,101 @@ html, body {
 .brand-container {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.brand-titles-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .brand-logo-mark {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+  flex-shrink: 0;
 }
 
 .brand-title {
   font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow: visible;
+  margin: 0;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #818cf8, #38bdf8);
+  background: linear-gradient(135deg, #f59e0b, #38bdf8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .compliance-tag {
   display: inline-block;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--color-emerald);
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .bar-right {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* サブステータス行 (習慣化バー) */
+.top-bar-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.top-bar-sub-row::-webkit-scrollbar {
+  display: none;
+}
+
+.header-status-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 0.22rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.h-stat-icon {
+  font-size: 0.75rem;
+}
+.h-stat-val {
+  font-weight: 700;
+  color: #38bdf8;
 }
 
 /* Live Pass Probability Meter in Header */
@@ -4681,38 +4743,69 @@ html, body {
     box-sizing: border-box !important;
   }
 
-  /* ヘッダー */
+  /* ヘッダー (スマホセーフエリア ＆ 2段構成) */
   .app-top-bar {
-    padding: 0.5rem 0.4rem !important;
-    margin-bottom: 0.75rem !important;
-    gap: 0.4rem !important;
+    padding: max(0.6rem, env(safe-area-inset-top)) 0.5rem 0.5rem 0.5rem !important;
+    margin-bottom: 0.65rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .top-bar-main-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
   }
 
   .bar-left {
-    gap: 0.4rem !important;
+    gap: 0.45rem !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+
+  .brand-container {
+    gap: 0.45rem !important;
+    min-width: 0 !important;
+  }
+
+  .brand-titles-wrap {
     min-width: 0 !important;
   }
 
   .brand-logo-mark {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 0.62rem !important;
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 0.65rem !important;
     flex-shrink: 0 !important;
   }
 
   .brand-title {
-    font-size: 0.95rem !important;
-    line-height: 1.1 !important;
+    font-size: 1.05rem !important;
+    line-height: 1.2 !important;
     white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow: visible !important;
   }
 
   .compliance-tag {
-    display: none !important;
+    font-size: 0.6rem !important;
+    white-space: nowrap !important;
+    display: block !important;
   }
 
   .bar-right {
-    gap: 0.3rem !important;
+    gap: 0.35rem !important;
     flex-shrink: 0 !important;
+  }
+
+  .top-bar-sub-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    padding-top: 0.3rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .streak-badge {
