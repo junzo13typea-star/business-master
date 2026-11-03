@@ -1141,7 +1141,7 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all') {
 
   // 習慣化: セッションを直近学習として保存
   if (subjectId) {
-    const subObj = SUBJECTS.find(s => s.id === subjectId);
+    const subObj = SUBJECTS[subjectId];
     let title = subObj ? subObj.name : subjectId;
     if (subCategoryId && subCategoryId !== 'all' && typeof SUBJECT_SUBCATEGORIES !== 'undefined' && SUBJECT_SUBCATEGORIES[subjectId]) {
       const sc = SUBJECT_SUBCATEGORIES[subjectId].find(c => c.id === subCategoryId);
@@ -3369,8 +3369,14 @@ function renderDailyChallengeStatus() {
 }
 
 function handleDailyChallengeClick() {
+  if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+
   // 今日のデイリー1問（未演習の問題を優先して1問だけ出題）
   const allQs = getAllQuestions();
+  if (!allQs || allQs.length === 0) {
+    showToast('問題データを読み込めませんでした');
+    return;
+  }
   const historyItems = state.history.items || {};
   
   // 未演習問題を探す
@@ -3383,6 +3389,11 @@ function handleDailyChallengeClick() {
   for (let i = 0; i < todayStr.length; i++) hash = (hash * 31 + todayStr.charCodeAt(i)) >>> 0;
   const pickedQ = unAnswered[hash % unAnswered.length];
 
+  if (!pickedQ) {
+    showToast('問題が見つかりませんでした');
+    return;
+  }
+
   // 1問だけの特別セッション開始
   state.session.mode = 'daily_one';
   state.session.subjectId = pickedQ.subject;
@@ -3391,14 +3402,16 @@ function handleDailyChallengeClick() {
   state.session.score = 0;
   state.session.answered = false;
   state.session.eliminated.clear();
-  state.session.subjectResults = {};
+  state.session.subjectResults = {
+    [pickedQ.subject]: { correct: 0, total: 1 }
+  };
   state.session.questions = [pickedQ];
 
   ui.quizModePill.textContent = '🌟 今日の1問デイリーチャレンジ';
   ui.examTimerBox.style.display = 'none';
 
   switchView('viewQuiz');
-  renderCurrentQuestion();
+  loadQuestionInWorkspace(0);
 }
 
 function renderWeeklyStreak() {
