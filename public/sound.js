@@ -143,5 +143,14 @@
   SoundFX.init();
   window.SoundFX = SoundFX;
 
+  // iOS Safari Autoplay Policy解除 (最初のタップでAudioContextをアンロック)
+  const unlockAudio = () => {
+    getAudioContext();
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('click', unlockAudio);
+  };
+  document.addEventListener('touchstart', unlockAudio, { passive: true });
+  document.addEventListener('click', unlockAudio, { passive: true });
+
 })(typeof window !== 'undefined' ? window : this);
 

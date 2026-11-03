@@ -3143,7 +3143,11 @@ function initProModal() {
 }
 
 function openProModal() {
-  if (ui.proModal) ui.proModal.style.display = 'flex';
+  if (ui.proModal) {
+    ui.proModal.style.display = 'flex';
+  } else {
+    showToast('✨ 現在すべての機能・問題を完全無料で無制限にご利用いただけます！');
+  }
 }
 
 function closeProModal() {
