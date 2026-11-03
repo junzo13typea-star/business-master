@@ -1,5 +1,5 @@
 // Service Worker for ビジネスエキスパートの道 (PWA / オフライン動作対応)
-const CACHE_NAME = 'shindanshi-master-v20';
+const CACHE_NAME = 'shindanshi-master-v21';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const ASSETS_TO_CACHE = [
   './questions.js',
   './manifest.json',
   './icon.svg',
+  './data/exam_break_data.js',
   './data/mba_vocab.js',
   './data/management.js',
   './data/finance.js',

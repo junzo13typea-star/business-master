@@ -5195,6 +5195,202 @@ html, body {
     white-space: nowrap !important;
     letter-spacing: -0.03em !important;
   }
+
+  /* モード切替タブ (実戦過去問 vs スピード用語マスター) のスマホ文字切れ完全解消 */
+  .mode-switcher-bar {
+    padding: 3px !important;
+    gap: 4px !important;
+  }
+
+  .mode-tab-btn {
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 0.55rem 0.35rem !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  .mode-tab-btn .tab-icon {
+    font-size: 1.05rem !important;
+    margin-bottom: 1px !important;
+  }
+
+  .mode-tab-btn .tab-title {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .mode-tab-btn .tab-badge {
+    font-size: 0.65rem !important;
+    padding: 1px 6px !important;
+    border-radius: 8px !important;
+    margin-top: 2px !important;
+    white-space: nowrap !important;
+  }
+
+  /* 2次筆記試験 ワークスペース (スマホ崩れ完全解消) */
+  .case-workspace-container {
+    height: auto !important;
+    min-height: calc(100vh - 120px) !important;
+    padding-bottom: 5.5rem !important;
+    gap: 0.6rem !important;
+  }
+
+  .case-workspace-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+    padding: 0.7rem 0.8rem !important;
+    border-radius: 12px !important;
+  }
+
+  .case-workspace-bar .bar-left-group {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  #btnCaseBackToList {
+    font-size: 0.72rem !important;
+    padding: 0.3rem 0.55rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  #wsCaseTypeBadge {
+    font-size: 0.7rem !important;
+    padding: 2px 7px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  #wsCaseTitle {
+    font-size: 0.82rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 140px !important;
+    flex: 1 1 auto !important;
+    margin: 0 !important;
+  }
+
+  .case-workspace-bar .bar-right-group {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding-top: 0.35rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    gap: 0.5rem !important;
+  }
+
+  .case-timer-box {
+    font-size: 0.8rem !important;
+    padding: 0.25rem 0.55rem !important;
+  }
+
+  .draft-indicator {
+    font-size: 0.7rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* モバイルタブ切り替え (与件文 vs 設問・記述解答) */
+  .case-mobile-switch {
+    display: flex !important;
+    width: 100% !important;
+    gap: 4px !important;
+    padding: 3px !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .c-mob-tab {
+    padding: 0.5rem 0.4rem !important;
+    font-size: 0.78rem !important;
+    text-align: center !important;
+  }
+
+  .case-split-layout {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    min-height: auto !important;
+  }
+
+  .case-story-pane,
+  .case-questions-pane {
+    padding: 0.85rem !important;
+    border-radius: 12px !important;
+    overflow-y: visible !important;
+    height: auto !important;
+  }
+
+  .case-q-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 0.35rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 0.35rem !important;
+    scrollbar-width: none !important;
+  }
+  .case-q-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .case-q-nav-btn {
+    font-size: 0.75rem !important;
+    padding: 0.35rem 0.65rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .q-header-box {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.35rem !important;
+  }
+
+  .q-title {
+    font-size: 0.98rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .q-desc-box {
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.84rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .sub-q-block {
+    padding: 0.75rem !important;
+  }
+
+  .sub-q-title {
+    font-size: 0.88rem !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+  }
+
+  .case-answer-textarea {
+    font-size: 0.88rem !important;
+    line-height: 1.5 !important;
+    min-height: 110px !important;
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  .case-char-counter {
+    font-size: 0.72rem !important;
+  }
+
+  .btn-submit-action {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.7rem 1rem !important;
+    font-size: 0.88rem !important;
+  }
 }
 
 
@@ -5499,5 +5695,415 @@ html, body {
   }
   .buddy-sub {
     font-size: 0.72rem;
+  }
+}
+
+/* =========================================================================
+   EXAM BREAK FINAL CHARGE (試験当日・休憩時間専用 直前予習機能)
+   ========================================================================= */
+
+/* ホーム画面のバナー */
+.exam-break-banner {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.45);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.eb-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eb-tag {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.18);
+  padding: 2px 9px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.eb-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.eb-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eb-text-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.eb-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.35;
+}
+
+.eb-desc {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.eb-open-btn {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  font-size: 0.85rem !important;
+  padding: 0.65rem 1.1rem !important;
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 4px 0 #b45309, 0 6px 16px rgba(245, 158, 11, 0.35) !important;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.eb-open-btn:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 1px 0 #b45309 !important;
+}
+
+/* 休憩時間モーダルカード */
+.break-modal-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 20px;
+  width: 95%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: zoomIn 0.22s ease-out;
+}
+
+.break-modal-header {
+  padding: 1.1rem 1.4rem;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bm-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fbbf24;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.bm-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* 科目選択スワイプタブ */
+.break-subject-nav {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.break-subject-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.bs-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  padding: 0.4rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.bs-tab.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #fef08a;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.break-modal-body {
+  padding: 1.2rem 1.4rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+/* ホウ助メッセージ */
+.break-buddy-box {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+}
+
+.bb-avatar {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.bb-quote {
+  font-size: 0.85rem;
+  color: #fde68a;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* セクション切り替えタブ (チートシート vs ○×クイズ) */
+.break-section-switch {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.bss-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0.6rem 0.4rem;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  font-weight: 700;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.bss-tab.active {
+  background: var(--bg-card);
+  color: #ffffff;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* チートシートカード */
+.cheat-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid #f59e0b;
+  border-radius: 0 12px 12px 0;
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.9rem;
+}
+
+.cheat-card-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fbbf24;
+  margin: 0 0 0.6rem 0;
+}
+
+.cheat-card-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.cheat-card-list li {
+  font-size: 0.86rem;
+  color: #e2e8f0;
+  line-height: 1.55;
+}
+
+/* ○×スピードチェックカード */
+.ox-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.ox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.ox-num-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 2px 7px;
+  border-radius: 8px;
+}
+
+.ox-q-text {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.55;
+  margin-bottom: 0.9rem;
+}
+
+.ox-btn-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.ox-btn {
+  flex: 1;
+  padding: 0.65rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1.5px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.ox-btn.btn-o {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+.ox-btn.btn-o:active {
+  transform: translateY(2px);
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.ox-btn.btn-x {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+.ox-btn.btn-x:active {
+  transform: translateY(2px);
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.ox-feedback-box {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  animation: fadeIn 0.2s ease;
+}
+
+.ox-feedback-box.correct {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.ox-feedback-box.incorrect {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.ox-fb-title {
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.ox-feedback-box.correct .ox-fb-title {
+  color: #34d399;
+}
+
+.ox-feedback-box.incorrect .ox-fb-title {
+  color: #f87171;
+}
+
+.ox-fb-exp {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.break-modal-footer {
+  padding: 0.9rem 1.4rem;
+  background: rgba(15, 23, 42, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 680px) {
+  .exam-break-banner {
+    padding: 0.85rem 0.95rem;
+  }
+  .eb-main-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+  .eb-open-btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.6rem;
+  }
+  .break-modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92vh !important;
+    margin: 0 !important;
+  }
+  .break-modal-header {
+    padding: 0.9rem 1rem;
+  }
+  .break-modal-body {
+    padding: 0.9rem 1rem;
+  }
+  .bss-tab {
+    font-size: 0.74rem;
+    padding: 0.5rem 0.2rem;
   }
 }

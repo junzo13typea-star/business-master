@@ -118,6 +118,20 @@ const ui = {
   buddySubText: document.getElementById('buddySubText'),
   buddyAvatarWrap: document.getElementById('buddyAvatarWrap'),
 
+  // Exam Break Feature (当日の休憩時間専用 直前ファイナルチャージ)
+  btnOpenBreakModal: document.getElementById('btnOpenBreakModal'),
+  examBreakModal: document.getElementById('examBreakModal'),
+  btnCloseBreakModal: document.getElementById('btnCloseBreakModal'),
+  btnBreakModalCloseBottom: document.getElementById('btnBreakModalCloseBottom'),
+  breakSubjectNav: document.getElementById('breakSubjectNav'),
+  bmSubjectTitle: document.getElementById('bmSubjectTitle'),
+  breakBuddyAvatar: document.getElementById('breakBuddyAvatar'),
+  breakBuddyQuote: document.getElementById('breakBuddyQuote'),
+  btnBssCheat: document.getElementById('btnBssCheat'),
+  btnBssQuiz: document.getElementById('btnBssQuiz'),
+  breakCheatsheetArea: document.getElementById('breakCheatsheetArea'),
+  breakQuizArea: document.getElementById('breakQuizArea'),
+
   // Habit Streak & Quick Resume (習慣化エンジン)
   habitStreakCard: document.getElementById('habitStreakCard'),
   habitStreakNum: document.getElementById('habitStreakNum'),
@@ -3526,6 +3540,9 @@ function initLtvFeatures() {
   // 習慣化トラッカー & 週間ストリーク & クイック再開の初期化
   initHabitTracker();
 
+  // 休憩時間直前予習機能の初期化
+  initExamBreakFeature();
+
   // Avatar Speech Bubble Trigger
   ui.playerLevelBadge?.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -3550,6 +3567,162 @@ function showAvatarSpeechBubble() {
     if (ui.avatarSpeechBubble) ui.avatarSpeechBubble.style.display = 'none';
   }, 3800);
 }
+
+// ==========================================================================
+// ☕️ 試験当日・休憩時間専用 直前ファイナルチャージ機能
+// ==========================================================================
+
+let activeBreakSubKey = 'economics';
+let activeBreakSection = 'cheat'; // 'cheat' | 'quiz'
+
+function initExamBreakFeature() {
+  ui.btnOpenBreakModal?.addEventListener('click', openBreakModal);
+  ui.btnCloseBreakModal?.addEventListener('click', closeBreakModal);
+  ui.btnBreakModalCloseBottom?.addEventListener('click', closeBreakModal);
+
+  // 科目ナビゲーションタブ
+  ui.breakSubjectNav?.addEventListener('click', (e) => {
+    const tab = e.target.closest('.bs-tab');
+    if (!tab) return;
+    if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+    const subKey = tab.getAttribute('data-sub');
+    if (subKey && window.EXAM_BREAK_DATA?.[subKey]) {
+      activeBreakSubKey = subKey;
+      document.querySelectorAll('#breakSubjectNav .bs-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderBreakSubject(activeBreakSubKey);
+    }
+  });
+
+  // セクション切替 (チートシート vs ○×クイズ)
+  ui.btnBssCheat?.addEventListener('click', () => {
+    if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+    activeBreakSection = 'cheat';
+    ui.btnBssCheat.classList.add('active');
+    ui.btnBssQuiz?.classList.remove('active');
+    if (ui.breakCheatsheetArea) ui.breakCheatsheetArea.style.display = 'block';
+    if (ui.breakQuizArea) ui.breakQuizArea.style.display = 'none';
+  });
+
+  ui.btnBssQuiz?.addEventListener('click', () => {
+    if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+    activeBreakSection = 'quiz';
+    ui.btnBssQuiz.classList.add('active');
+    ui.btnBssCheat?.classList.remove('active');
+    if (ui.breakCheatsheetArea) ui.breakCheatsheetArea.style.display = 'none';
+    if (ui.breakQuizArea) ui.breakQuizArea.style.display = 'block';
+  });
+}
+
+function openBreakModal() {
+  if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+  if (!ui.examBreakModal) return;
+  ui.examBreakModal.style.display = 'flex';
+  renderBreakSubject(activeBreakSubKey);
+}
+
+function closeBreakModal() {
+  if (typeof SoundFX !== 'undefined') SoundFX.playTap();
+  if (ui.examBreakModal) ui.examBreakModal.style.display = 'none';
+}
+
+function renderBreakSubject(subKey) {
+  const data = window.EXAM_BREAK_DATA?.[subKey];
+  if (!data) return;
+
+  // Header Title
+  if (ui.bmSubjectTitle) {
+    ui.bmSubjectTitle.textContent = `${data.icon} ${data.name} ファイナルチャージ`;
+  }
+
+  // Buddy Quote & Avatar
+  if (ui.breakBuddyQuote) {
+    ui.breakBuddyQuote.textContent = data.quote;
+  }
+  if (ui.breakBuddyAvatar) {
+    if (typeof window.renderCharacterSvg === 'function') {
+      ui.breakBuddyAvatar.innerHTML = window.renderCharacterSvg(3, 'cheer', 48);
+    } else {
+      ui.breakBuddyAvatar.textContent = '🦉';
+    }
+  }
+
+  // 1. Render Cheat Sheet
+  if (ui.breakCheatsheetArea) {
+    ui.breakCheatsheetArea.innerHTML = data.cheatSheet.map(item => `
+      <div class="cheat-card">
+        <h4 class="cheat-card-title">${escapeHtml(item.title)}</h4>
+        <ul class="cheat-card-list">
+          ${item.points.map(pt => `<li>${escapeHtml(pt)}</li>`).join('')}
+        </ul>
+      </div>
+    `).join('');
+  }
+
+  // 2. Render 3-Minute Quick OX Quiz
+  if (ui.breakQuizArea) {
+    ui.breakQuizArea.innerHTML = data.quickQuiz.map((quiz, idx) => `
+      <div class="ox-card" id="oxCard_${idx}">
+        <div class="ox-header">
+          <span class="ox-num-tag">第 ${idx + 1} 問 / 5問</span>
+          <span class="ox-status" id="oxStatus_${idx}" style="font-size: 0.75rem; color: #94a3b8;">未回答</span>
+        </div>
+        <p class="ox-q-text">${escapeHtml(quiz.q)}</p>
+        <div class="ox-btn-group" id="oxBtnGroup_${idx}">
+          <button class="ox-btn btn-o" onclick="handleBreakOxChoice(${idx}, true)">
+            <span>⭕️ 正しい</span>
+          </button>
+          <button class="ox-btn btn-x" onclick="handleBreakOxChoice(${idx}, false)">
+            <span>❌ 誤り</span>
+          </button>
+        </div>
+        <div class="ox-feedback-box" id="oxFeedback_${idx}" style="display: none;"></div>
+      </div>
+    `).join('');
+  }
+}
+
+function handleBreakOxChoice(qIndex, userChoice) {
+  const data = window.EXAM_BREAK_DATA?.[activeBreakSubKey];
+  if (!data || !data.quickQuiz || !data.quickQuiz[qIndex]) return;
+
+  const quiz = data.quickQuiz[qIndex];
+  const isCorrect = (userChoice === quiz.ans);
+
+  // Sound feedback
+  if (typeof SoundFX !== 'undefined') {
+    if (isCorrect) SoundFX.playCorrect();
+    else SoundFX.playIncorrect();
+  }
+
+  // Disable buttons
+  const btnGroup = document.getElementById(`oxBtnGroup_${qIndex}`);
+  if (btnGroup) {
+    btnGroup.querySelectorAll('.ox-btn').forEach(btn => btn.disabled = true);
+  }
+
+  const status = document.getElementById(`oxStatus_${qIndex}`);
+  if (status) {
+    status.textContent = isCorrect ? '⭕️ 正解！' : '❌ 不正解';
+    status.style.color = isCorrect ? '#34d399' : '#f87171';
+    status.style.fontWeight = 'bold';
+  }
+
+  const fbBox = document.getElementById(`oxFeedback_${qIndex}`);
+  if (fbBox) {
+    fbBox.className = `ox-feedback-box ${isCorrect ? 'correct' : 'incorrect'}`;
+    fbBox.innerHTML = `
+      <div class="ox-fb-title">${isCorrect ? '✨ 正解！ナイス判断！' : '⚠️ 不正解（本番で気をつけよう！）'}</div>
+      <div class="ox-fb-exp">${escapeHtml(quiz.exp)}</div>
+    `;
+    fbBox.style.display = 'block';
+  }
+
+  // Award tiny EXP
+  if (isCorrect) awardPlayerExp(5, '直前○×チェック');
+}
+
+window.handleBreakOxChoice = handleBreakOxChoice;
 
 function renderDailyMissionCard() {
   const todayStr = new Date().toISOString().slice(0, 10);
