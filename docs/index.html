@@ -25,18 +25,18 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
-  <!-- Immediate Cache Purge for PWA Updates (v21) -->
+  <!-- Immediate Cache Purge for PWA Updates (v22) -->
   <script>
     if ('caches' in window) {
       caches.keys().then(function(keys) {
         keys.forEach(function(k) {
-          if (k !== 'shindanshi-master-v21') caches.delete(k);
+          if (k !== 'shindanshi-master-v22') caches.delete(k);
         });
       });
     }
   </script>
 
-  <link rel="stylesheet" href="index.css?v=21">
+  <link rel="stylesheet" href="index.css?v=22">
 </head>
 <body class="theme-dark">
   <!-- Dynamic Glow Backgrounds -->
@@ -1326,11 +1326,11 @@
   <script src="data/exam_break_data.js"></script>
 
   <!-- Character & Sound Engines (AI感払拭・Duolingo風インタラクション) -->
-  <script src="sound.js?v=21"></script>
-  <script src="character.js?v=21"></script>
+  <script src="sound.js?v=22"></script>
+  <script src="character.js?v=22"></script>
 
-  <script src="questions.js?v=21"></script>
-  <script src="app.js?v=21"></script>
+  <script src="questions.js?v=22"></script>
+  <script src="app.js?v=22"></script>
 
   <!-- Service Worker for Offline / PWA Support & Automatic Update Flow -->
   <script>
@@ -1344,7 +1344,7 @@
       });
 
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js?v=21')
+        navigator.serviceWorker.register('./service-worker.js?v=22')
           .then(reg => {
             console.log('PWA Service Worker registered:', reg.scope);
             // サーバー上の最新SWを即座に確認

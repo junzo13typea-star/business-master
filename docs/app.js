@@ -864,7 +864,7 @@ function renderHomeScreen() {
             <button class="tile-btn-subcat" onclick="event.stopPropagation(); openSubCategoryModal('${subKey}')" title="論点・小カテゴリ（知財・会社法・マクロ・ミクロ等）に絞る">
               🎯 論点選択
             </button>
-            <button class="tile-btn-train" style="background: ${sub.color};" onclick="event.stopPropagation(); startQuizSession(isVocab ? 'vocab' : 'subject', '${subKey}', 'all')">
+            <button class="tile-btn-train" style="background: ${sub.color};" onclick="event.stopPropagation(); startQuizSession('${isVocab ? 'vocab' : 'subject'}', '${subKey}', 'all')">
               ▶️ 実戦特訓
             </button>
           </div>
@@ -4075,6 +4075,7 @@ function triggerConfetti() {
 }
 
 // Global scope bindings for inline HTML handlers
+window.startQuizSession = startQuizSession;
 window.startCaseWorkspace = startCaseWorkspace;
 window.renderCaseQuestion = renderCaseQuestion;
 window.scoreCaseQuestion = scoreCaseQuestion;
