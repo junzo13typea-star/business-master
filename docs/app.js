@@ -10,7 +10,7 @@ const STORAGE_KEY = 'shindanshi_passpro_store_v2';
 // 上市・商用運用設定 (Operator & Payment Configuration)
 // ==========================================================================
 const CONFIG_OPERATOR = {
-  sellerName: 'ビジネスエキスパートの道 運営事務局',
+  sellerName: 'ビズロギア 運営事務局',
   representative: '野津 純三',
   address: '〒150-0043 東京都渋谷区道玄坂1-10-8 渋谷道玄坂東急ビル2F-C',
   email: 'support@business-master.example.com',
@@ -3203,7 +3203,7 @@ const LEGAL_DOCS = {
     content: `
       <div class="legal-content-section">
         <h4>第1条（総則・適用）</h4>
-        <p>本利用規約（以下「本規約」）は、「ビジネスエキスパートの道 運営事務局」（以下「当事務局」）が提供するWebサービス「ビジネスエキスパートの道」（以下「本サービス」）の利用条件を定めるものです。利用者は本サービスを利用することにより本規約に同意したものとみなされます。</p>
+        <p>本利用規約（以下「本規約」）は、「ビズロギア 運営事務局」（以下「当事務局」）が提供するWebサービス「ビズロギア」（以下「本サービス」）の利用条件を定めるものです。利用者は本サービスを利用することにより本規約に同意したものとみなされます。</p>
 
         <h4>第2条（サービス内容および免責事項）</h4>
         <p>1. 本サービスは中小企業診断士試験およびMBA基礎知識に関する学習支援、模擬試験、用語演習、自己学習ログの提供を目的としています。<br>
@@ -3318,7 +3318,7 @@ const ACHIEVEMENTS = [
   { id: 'level_10', title: 'リーダーシップ発揮', desc: 'レベル10（プロジェクトリーダー）に到達', icon: '🚀', req: (h) => calcPlayerLevel(h.playerExp || 0).level >= 10 },
   { id: 'level_30', title: '戦略マネージャー', desc: 'レベル30（事業戦略マネージャー）に到達', icon: '👔', req: (h) => calcPlayerLevel(h.playerExp || 0).level >= 30 },
   { id: 'study_10h', title: '10時間の努力', desc: '累計学習時間が10時間を突破した', icon: '⏱', req: (h) => ((h.studyTime?.totalSeconds || 0) >= 36000) },
-  { id: 'pro_mind', title: 'エリートの視座', desc: 'ビジネスエキスパートPROプランを体験した', icon: '👑', req: (h) => true }
+  { id: 'pro_mind', title: 'エリートの視座', desc: 'ビズロギアPROプランを体験した', icon: '👑', req: (h) => true }
 ];
 
 function getTotalAnsweredCount(h) {

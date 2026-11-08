@@ -1,4 +1,4 @@
-// Service Worker for ビジネスエキスパートの道 (PWA / オフライン動作対応)
+// Service Worker for ビズロギア (PWA / オフライン動作対応)
 const CACHE_NAME = 'shindanshi-master-v22';
 const ASSETS_TO_CACHE = [
   './',
