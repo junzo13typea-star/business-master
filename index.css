@@ -6168,6 +6168,14 @@ select:focus-visible,
   border-radius: var(--radius-xs);
 }
 
+/* カード全体がフォーカス対象の場合: 角丸を保ったまま少し強めのリングにする */
+.subject-tile:focus-visible,
+.mba-cat-card:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
 /* ナビタブ: 横スクロールのバーを隠してスッキリ見せる */
 .app-nav-tabs {
   scrollbar-width: none;

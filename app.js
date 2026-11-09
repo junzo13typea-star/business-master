@@ -886,7 +886,7 @@ function renderHomeScreen() {
       }
 
       return `
-        <article class="subject-tile" data-subject-id="${subKey}">
+        <article class="subject-tile" data-subject-id="${subKey}" tabindex="0" role="button" aria-label="${sub.name}の論点選択を開く">
           <div class="tile-top">
             <div class="tile-icon-title">
               <span class="tile-icon">${sub.icon}</span>
@@ -930,6 +930,15 @@ function renderHomeScreen() {
       tile.addEventListener('click', () => {
         const subId = tile.getAttribute('data-subject-id');
         openSubCategoryModal(subId);
+      });
+      // キーボード対応: タイル自体にフォーカスがある場合のみ Enter/Space で開く
+      // (内側ボタンのキー操作は対象外にして二重発火を防ぐ)
+      tile.addEventListener('keydown', (e) => {
+        if (e.target !== tile) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          tile.click();
+        }
       });
     });
   }
@@ -2814,7 +2823,7 @@ function renderMbaTopScreen() {
     const masteryStar = isMastered ? '⭐ 制覇！' : (catCorrect > 0 ? `★ ${catCorrect}/${catQs.length}` : '未着手');
 
     return `
-      <div class="mba-cat-card" onclick="startMbaQuiz('${cat.id}', 10, 'all')">
+      <div class="mba-cat-card" onclick="startMbaQuiz('${cat.id}', 10, 'all')" tabindex="0" role="button" aria-label="${escapeHtml(cat.name)}の10問特訓を開始">
         <div class="cat-card-top">
           <div class="cat-card-icon" style="background: ${cat.color}22; color: ${cat.color};">${cat.icon}</div>
           <div>
@@ -2841,6 +2850,17 @@ function renderMbaTopScreen() {
       </div>
     `;
   }).join('');
+
+  // キーボード対応: カード自体にフォーカスがある場合のみ Enter/Space で開始
+  document.querySelectorAll('.mba-cat-card').forEach(card => {
+    card.addEventListener('keydown', (e) => {
+      if (e.target !== card) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click();
+      }
+    });
+  });
 }
 
 function startMbaQuiz(categoryId = null, count = 10, subCategoryId = 'all') {
