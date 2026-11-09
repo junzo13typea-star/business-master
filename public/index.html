@@ -2,18 +2,26 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ビズロギア">
   <meta name="theme-color" content="#070a13">
   <meta name="description" content="ビズロギア - 初級編MBA専門用語から中級編診断士1次試験、上級編2次筆記実戦ケーススタディまでビジネス戦闘力を極める総合学習OS">
+  <meta property="og:title" content="ビズロギア | MBA用語・中小企業診断士 総合学習OS">
+  <meta property="og:description" content="ビズロギア - 初級編MBA専門用語から中級編診断士1次試験、上級編2次筆記実戦ケーススタディまでビジネス戦闘力を極める総合学習OS">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="icon.svg">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="ビズロギア | MBA用語・中小企業診断士 総合学習OS">
+  <meta name="twitter:description" content="ビズロギア - 初級編MBA専門用語から中級編診断士1次試験、上級編2次筆記実戦ケーススタディまでビジネス戦闘力を極める総合学習OS">
+  <meta name="twitter:image" content="icon.svg">
   <title>ビズロギア | MBA用語・中小企業診断士 総合学習OS</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Outfit:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- PWA & Mobile Web App Settings -->
   <link rel="manifest" href="manifest.json">
@@ -38,7 +46,7 @@
 
   <link rel="stylesheet" href="index.css?v=22">
 </head>
-<body class="theme-dark">
+<body class="theme-dark on-home-view">
   <!-- Dynamic Glow Backgrounds -->
   <div class="bg-orb orb-primary"></div>
   <div class="bg-orb orb-emerald"></div>
@@ -49,7 +57,7 @@
     <header class="app-top-bar" id="appTopBar">
       <div class="top-bar-main-row">
         <div class="bar-left">
-          <button id="btnHeaderBack" class="icon-btn-round" style="display: none;" title="一覧に戻る">
+          <button id="btnHeaderBack" class="icon-btn-round" style="display: none;" title="一覧に戻る" aria-label="一覧に戻る">
             ←
           </button>
           <div class="brand-container">
@@ -65,7 +73,7 @@
 
         <div class="bar-right">
           <!-- サウンド効果音 ON/OFF 切り替えボタン -->
-          <button class="sound-toggle-btn" id="btnSoundToggle" title="効果音 ON/OFF">🔊</button>
+          <button class="sound-toggle-btn" id="btnSoundToggle" title="効果音 ON/OFF" aria-label="効果音 ON/OFF">🔊</button>
 
           <!-- Live Player Level & Character Avatar Badge (習慣化: アバター進化・タップで対話) -->
           <div class="player-level-badge" id="playerLevelBadge" title="あなたのビジネスアバター (タップで応援メッセージ)">
@@ -627,7 +635,7 @@
           <!-- Timer (Only visible in Mock Exam) -->
           <div class="exam-timer-box" id="examTimerBox" style="display: none;">
             <span class="timer-icon">⏳</span>
-            <span class="timer-digits" id="timerDigits">30:00</span>
+            <span class="timer-digits" id="timerDigits">60:00</span>
           </div>
 
           <!-- Question Progress & Font Controls -->
@@ -636,7 +644,7 @@
               <button class="btn-font-size" id="btnFontDecrease" title="文字サイズ縮小">A-</button>
               <button class="btn-font-size" id="btnFontIncrease" title="文字サイズ拡大">A+</button>
             </div>
-            <button class="bookmark-btn" id="btnBookmarkToggle" title="この問題をブックマーク">
+            <button class="bookmark-btn" id="btnBookmarkToggle" title="この問題をブックマーク" aria-label="この問題をブックマーク">
               <span id="bookmarkIcon">☆</span>
             </button>
             <div class="progress-indicator-text">
@@ -673,7 +681,7 @@
 
           <!-- Question Text -->
           <div class="question-text-area" id="questionTextArea">
-            問題文読み込み中...
+            <span class="quiz-loading" role="status"><span class="loading-spinner" aria-hidden="true"></span>問題文読み込み中...</span>
           </div>
 
           <div class="elimination-hint-bar">
@@ -1062,14 +1070,14 @@
       </section>
 
       <!-- Case Scoring & Explanation Modal -->
-      <div id="caseResultModal" class="case-modal-overlay" style="display: none;">
+      <div id="caseResultModal" class="case-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modalQTitle">
         <div class="case-modal-content">
           <div class="modal-header">
             <div>
               <span class="modal-eyebrow">🎯 採点・キーワード診断レポート</span>
               <h3 class="modal-title" id="modalQTitle">第1問 採点結果</h3>
             </div>
-            <button class="modal-close-btn" id="btnCloseCaseModal">×</button>
+            <button class="modal-close-btn" id="btnCloseCaseModal" aria-label="閉じる">×</button>
           </div>
 
           <div class="modal-body" id="modalResultBody">
@@ -1084,7 +1092,7 @@
       </div>
 
       <!-- Level Up Celebration Modal (NEW: ゲームシステム) -->
-      <div id="levelUpModal" class="case-modal-overlay" style="display: none;">
+      <div id="levelUpModal" class="case-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-label="レベルアップ">
         <div class="level-up-modal-card">
           <div class="lvl-up-sparkle">✨ ランクアップ！ ✨</div>
           <div class="lvl-up-icon-wrap" id="lvlUpModalIcon">🚀</div>
@@ -1102,7 +1110,7 @@
       </div>
 
       <!-- Sub-Category Selection Modal (NEW: 論点・小カテゴリ選択ダイアログ) -->
-      <div id="subCategoryModal" class="case-modal-overlay" style="display: none;">
+      <div id="subCategoryModal" class="case-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="subcatModalTitle">
         <div class="subcat-modal-card">
           <div class="subcat-modal-header">
             <div class="subcat-modal-title-box">
@@ -1112,7 +1120,17 @@
                 <p class="subcat-modal-sub" id="subcatModalSub">演習する論点・小カテゴリを選択してください</p>
               </div>
             </div>
-            <button class="modal-close-btn" id="btnCloseSubcatModal">×</button>
+            <button class="modal-close-btn" id="btnCloseSubcatModal" aria-label="閉じる">×</button>
+          </div>
+
+          <!-- Question Count in modal -->
+          <div class="modal-order-toggle-box">
+            <span class="m-order-label">演習問数:</span>
+            <div class="order-pills-row" id="modalCountPills">
+              <button class="order-pill-btn" data-count="10">⚡ 10問特訓</button>
+              <button class="order-pill-btn" data-count="20">🔥 20問強化</button>
+              <button class="order-pill-btn active" data-count="all">📚 全問コンプリート</button>
+            </div>
           </div>
 
           <!-- Order mode toggle in modal -->
@@ -1132,7 +1150,7 @@
       </div>
 
       <!-- MBA Sub-Category Selection Modal (初級編: MBA論点・小カテゴリ選択ダイアログ) -->
-      <div id="mbaSubCategoryModal" class="case-modal-overlay" style="display: none;">
+      <div id="mbaSubCategoryModal" class="case-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="mbaSubcatModalTitle">
         <div class="subcat-modal-card">
           <div class="subcat-modal-header">
             <div class="subcat-modal-title-box">
@@ -1142,7 +1160,7 @@
                 <p class="subcat-modal-sub" id="mbaSubcatModalSub">演習する論点・小カテゴリを選択してください</p>
               </div>
             </div>
-            <button class="modal-close-btn" id="btnCloseMbaSubcatModal">×</button>
+            <button class="modal-close-btn" id="btnCloseMbaSubcatModal" aria-label="閉じる">×</button>
           </div>
 
           <!-- Question Count in modal -->
@@ -1172,14 +1190,14 @@
       </div>
 
       <!-- ☕️ 試験当日・休憩時間専用 直前ファイナルチャージ モーダル -->
-      <div id="examBreakModal" class="case-modal-overlay" style="display: none;">
+      <div id="examBreakModal" class="case-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="bmSubjectTitle">
         <div class="break-modal-card">
           <div class="break-modal-header">
             <div class="bm-header-titles">
               <span class="bm-tag">☕️ 当日休憩時間専用（直前10分で総ざらい）</span>
               <h2 class="bm-title" id="bmSubjectTitle">📊 経済学・経済政策 ファイナルチャージ</h2>
             </div>
-            <button class="modal-close-btn" id="btnCloseBreakModal">×</button>
+            <button class="modal-close-btn" id="btnCloseBreakModal" aria-label="閉じる">×</button>
           </div>
 
           <!-- 科目選択タブ (親指スワイプ) -->
@@ -1224,7 +1242,7 @@
       </div>
 
       <!-- Legal Documents Modal (特定商取引法・利用規約・プライバシーポリシー) -->
-      <div id="legalModal" class="case-modal-overlay" style="display: none;">
+      <div id="legalModal" class="case-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-label="法的情報">
         <div class="legal-modal-card">
           <div class="legal-modal-header">
             <div class="legal-tab-nav" id="legalTabNav">
@@ -1232,7 +1250,7 @@
               <button class="legal-tab-btn" data-legal="terms">利用規約</button>
               <button class="legal-tab-btn" data-legal="privacy">プライバシー</button>
             </div>
-            <button class="modal-close-btn" id="btnCloseLegalModal">×</button>
+            <button class="modal-close-btn" id="btnCloseLegalModal" aria-label="閉じる">×</button>
           </div>
           <div class="legal-modal-body" id="legalModalBody">
             <!-- Populated by JS -->
@@ -1291,7 +1309,7 @@
     </nav>
 
     <!-- Toast Notification -->
-    <div id="toastNotification" class="toast-popup"></div>
+    <div id="toastNotification" class="toast-popup" role="status" aria-live="polite"></div>
 
     <!-- Celebration Confetti Canvas (NEW: 達成演出) -->
     <canvas id="confettiCanvas" class="confetti-canvas" style="display: none;"></canvas>

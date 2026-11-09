@@ -130,45 +130,92 @@ const SUBJECT_SUBCATEGORIES = {
   ]
 };
 
-// 各問題の小カテゴリ判定関数
+// 各問題の小カテゴリ判定（キーワード・スコアリング方式）
+// 旧方式は「最初にマッチした広い正規表現へ全て吸着」して偏りが大きかったため、
+// 分類ごとにキーワードのヒット数を数え、最も証拠の多い分類を選ぶ方式に変更。
+// category 欄のヒットは強いシグナルとして重み3、問題文・解説のヒットは重み1。
+// 同点の場合は具体性の高い分類（SUBCATEGORY_PRIORITY の先にある方）を優先する。
+const SUBCATEGORY_KEYWORDS = {
+  management: {
+    marketing: ['マーケティング', 'ブランド', 'チャネル', '価格戦略', 'プロモーション', 'STP', '4P', '顧客', '広告', '消費者', 'セグメンテーション', 'マーケット・リサーチ', '市場調査', 'D2C', 'LTV', 'EC', 'コトラー', '製品ライフサイクル', '購買'],
+    strategy: ['戦略', 'ドメイン', 'イノベーション', '事業展開', 'ケイパビリティ', '全社', 'M&A', 'シナジー', '競争優位', 'ポジショニング', '成長マトリクス', '多角化', 'コア・コンピタンス', 'コアコンピタンス', 'VRIO', '3C', 'ファイブフォース', '5F', 'バリューチェーン', '価値連鎖', 'PPM', '知の探索', '知識創造', 'SECI'],
+    organization: ['組織', '動機づけ', 'モチベーション', 'リーダーシップ', '人事', '労務', '労働', '雇用', '賃金', '評価制度', 'コミュニケーション', '集団', 'モラール', '官僚制', '事業部制', '機能別組織', 'マトリクス組織', '心理的安全性', 'チーム', 'キャリア', '人材育成']
+  },
+  finance: {
+    corporate_finance: ['ファイナンス', '投資意思決定', '投資決定', 'DCF', 'NPV', 'IRR', 'WACC', 'CAPM', '資本コスト', '企業価値', '配当政策', 'MM理論', 'オプション', '株式価値', 'レバレッジ', 'ポートフォリオ'],
+    analysis_cvp: ['CVP', '損益分岐点', '安全余裕率', '限界利益', '比率分析', '財務分析', 'ROE', 'ROA', '回転期間', '原価計算', '操業度', '貢献利益'],
+    statements_bookkeeping: ['財務諸表', '損益計算書', '貸借対照表', 'キャッシュフロー', 'キャッシュ・フロー', '簿記', '仕訳', '減価償却', '引当金', 'リース', '収益認識', '連結', '税効果', 'のれん', '棚卸']
+  },
+  operations: {
+    store_retail: ['店舗', '商業', 'まちづくり', '立地', '売場', 'レイアウト', 'ディスプレイ', 'POS', 'バーコード', 'マーチャンダイジング', '買回り', '最寄り', 'SCM', '物流', '包装', '配送', '商店街', '小売'],
+    production: ['生産', '工程', 'IE', 'JIT', 'かんばん', '設備', '在庫', '品質', 'TQM', 'セル生産', '段取り', 'リードタイム', 'ライン', '治具', '稼働率', '標準時間', '作業測定']
+  },
+  economics: {
+    macro: ['マクロ', 'GDP', '国民経済', '国民所得', 'IS-LM', 'IS曲線', 'LM曲線', 'AD-AS', '総需要', '総供給', 'ケインズ', '古典派', 'インフレ', 'デフレ', '中央銀行', '金融政策', '財政政策', '乗数効果', '乗数', 'マンデル・フレミング', 'マンデルフレミング', '有効需要'],
+    micro: ['ミクロ', '需要曲線', '供給曲線', '価格弾力性', '弾力性', '消費者余剰', '生産者余剰', '独占', '寡占', 'ゲーム理論', '市場の失敗', '外部性', '公共財', '限界効用', '無差別曲線', '生産関数', '費用曲線', '完全競争', '情報の非対称性', 'モラルハザード']
+  },
+  law: {
+    ip_law: ['特許', '意匠', '商標', '著作権', '不正競争', '実用新案', 'パリ条約', '知財', '知的財産', '工業所有権'],
+    civil_other_law: ['民法', '契約', '債権', '担保', '抵当権', '不法行為', '破産', '民事再生', '倒産', '個人情報', '消費者契約', '相続', '物権'],
+    corp_law: ['株式会社', '会社法', '取締役', '株主総会', '株主', '株式', '合併', '会社分割', '事業譲渡', '監査役', '定款', '資本金', '新株', '社債', '機関設計', '組織再編']
+  },
+  it: {
+    software_security: ['セキュリティ', '暗号', '認証', '攻撃', 'ウイルス', 'マルウェア', 'ゼロトラスト', 'SSL', 'TLS', 'ファイアウォール', 'クラウド', 'SaaS', 'PaaS', 'IaaS', '公開鍵'],
+    management_dx: ['DX', 'IT戦略', '情報システム戦略', 'アジャイル', 'スクラム', 'DevOps', 'ERP', 'ウォーターフォール', '開発手法', 'EA', 'ITガバナンス', 'データ分析', 'AI', '機械学習', 'IoT', 'ビッグデータ', 'SLCP', 'IT投資', 'システム化計画'],
+    it_foundation: ['コンピュータ', 'CPU', 'ネットワーク', 'TCP/IP', 'LAN', 'データベース', 'SQL', '正規化', 'トランザクション', 'RAID', 'RASIS', '稼働率', 'OS', 'プロトコル', '2進数', '論理回路']
+  },
+  policy: {
+    policy_support: ['補助金', '支援施策', '支援策', '金融支援', '信用保証', '経営者保証', '保証改革', '基本法', '公庫', '税制', '共済', '下請', '取引適正化', 'フリーランス', '融資', '助成金', '経営革新計画', '認定支援機関', 'インボイス'],
+    whitepaper: ['白書', '統計', '動向', '実態', '開業率', '廃業率', '倒産', '従業者', '付加価値', '労働生産性', '人手不足', '事業承継', '業況', '景況', '調査結果', '売上高の推移']
+  }
+};
+
+// 同点時の優先順（具体的な分類を先に、デフォルト分類を最後に）
+const SUBCATEGORY_PRIORITY = {
+  management: ['marketing', 'strategy', 'organization'],
+  finance: ['corporate_finance', 'analysis_cvp', 'statements_bookkeeping'],
+  operations: ['store_retail', 'production'],
+  economics: ['macro', 'micro'],
+  law: ['ip_law', 'civil_other_law', 'corp_law'],
+  it: ['software_security', 'management_dx', 'it_foundation'],
+  policy: ['policy_support', 'whitepaper']
+};
+
+// スコアが全て0の場合のデフォルト分類（従来のフォールバックと同じ）
+const SUBCATEGORY_DEFAULTS = {
+  management: 'organization',
+  finance: 'statements_bookkeeping',
+  operations: 'production',
+  economics: 'micro',
+  law: 'corp_law',
+  it: 'it_foundation',
+  policy: 'whitepaper'
+};
+
 function getQuestionSubCategory(q) {
   if (!q) return "all";
   const sub = q.subject;
-  const cat = (q.category || "") + " " + (q.question || "") + " " + (q.explanation || "");
+  const table = SUBCATEGORY_KEYWORDS[sub];
+  if (!table) return "all";
 
-  if (sub === "management") {
-    if (/マーケティング|ブランド|チャネル|価格|プロモーション|STP|4P|顧客行動|広告|消費者|セグメンテーション|リサーチ|D2C|LTV|EC|コトラー|製品ライフサイクル/i.test(cat)) return "marketing";
-    if (/戦略|ドメイン|イノベーション|事業展開|ケイパビリティ|全社|M&A|シナジー|競争優位|ポジショニング|成長マトリクス|多角化|コア・コンピタンス|VRIO|3C|5F|バリューチェーン|PPM|知の探索/i.test(cat)) return "strategy";
-    return "organization";
+  const catField = (q.category || '').toLowerCase();
+  const body = ((q.question || '') + ' ' + (q.explanation || '')).toLowerCase();
+
+  let best = SUBCATEGORY_DEFAULTS[sub];
+  let bestScore = 0;
+  for (const subId of SUBCATEGORY_PRIORITY[sub]) {
+    let score = 0;
+    for (const kw of table[subId]) {
+      const needle = kw.toLowerCase();
+      if (catField.includes(needle)) score += 3;
+      if (body.includes(needle)) score += 1;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = subId;
+    }
   }
-  if (sub === "finance") {
-    if (/ファイナンス|投資意思決定|DCF|NPV|IRR|WACC|CAPM|資本コスト|企業価値|配当政策|MM理論|オプション|株式価値|レバレッジ効果|ポートフォリオ/i.test(cat)) return "corporate_finance";
-    if (/CVP|損益分岐点|安全余裕率|限界利益|比率分析|財務分析|ROE|ROA|回転期間|原価計算|操業度/i.test(cat)) return "analysis_cvp";
-    return "statements_bookkeeping";
-  }
-  if (sub === "operations") {
-    if (/店舗|商業|まちづくり|立地|売場|レイアウト|ディスプレイ|POS|バーコード|マーチャンダイジング|買回り|最寄り|SCM|物流|包装|配送/i.test(cat)) return "store_retail";
-    return "production";
-  }
-  if (sub === "economics") {
-    if (/マクロ|GDP|国民経済|IS-LM|IS曲線|LM曲線|AD-AS|総需要|総供給|ケインズ|古典派|インフレ|デフレ|中央銀行|金融政策|財政政策|乗数効果|マンデル・フレミング/i.test(cat)) return "macro";
-    return "micro";
-  }
-  if (sub === "law") {
-    if (/特許|意匠|商標|著作権|不正競争|実用新案|パリ条約|知財|工業所有権/i.test(cat)) return "ip_law";
-    if (/民法|契約|債権|担保|不法行為|破産|民事再生|個人情報|消費者契約/i.test(cat)) return "civil_other_law";
-    return "corp_law";
-  }
-  if (sub === "it") {
-    if (/セキュリティ|暗号|認証|攻撃|ウイルス|マルウェア|ゼロトラスト|SSL|TLS|ファイアウォール|クラウド|SaaS|PaaS|IaaS/i.test(cat)) return "software_security";
-    if (/DX|戦略|開発|アジャイル|スクラム|ERP|ウォーターフォール|EA|ITガバナンス|データ分析|AI|機械学習|IoT/i.test(cat)) return "management_dx";
-    return "it_foundation";
-  }
-  if (sub === "policy") {
-    if (/法律|政策|支援|施策|補助金|保証|基本法|公庫|信用保証協会|税制|計画|共済|診断士|産業競争力|下請/i.test(cat)) return "policy_support";
-    return "whitepaper";
-  }
-  return "all";
+  return best;
 }
 
 // 本番基準パラメータ

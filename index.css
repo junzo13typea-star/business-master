@@ -44,7 +44,7 @@
   /* Text Colors */
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --text-dim: #8494b5;
 
   /* Metrics & Scales */
   --radius-xs: 6px;
@@ -156,8 +156,8 @@ html, body {
 }
 
 .icon-btn-round {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-subtle);
@@ -913,6 +913,11 @@ html, body {
   border: none;
   color: var(--text-muted);
   padding: 0.2rem 0.45rem;
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
@@ -926,8 +931,8 @@ html, body {
   background: transparent;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1111,7 +1116,7 @@ html, body {
   border: 1px solid var(--border-subtle);
   color: var(--text-dim);
   border-radius: var(--radius-sm);
-  width: 36px;
+  width: 40px;
   height: 44px;
   display: flex;
   align-items: center;
@@ -1207,7 +1212,7 @@ html, body {
 }
 
 .keypoint-body {
-  font-size: 0.95rem;
+  font-size: calc(var(--font-scale) * 0.95);
   font-weight: 600;
   color: #fef3c7;
   line-height: 1.55;
@@ -1235,7 +1240,7 @@ html, body {
 }
 
 .breakdown-item {
-  font-size: 0.88rem;
+  font-size: calc(var(--font-scale) * 0.88);
   line-height: 1.5;
   padding: 0.5rem 0.65rem;
   border-radius: var(--radius-xs);
@@ -1266,7 +1271,7 @@ html, body {
 }
 
 .gen-body {
-  font-size: 0.9rem;
+  font-size: calc(var(--font-scale) * 0.9);
   line-height: 1.65;
   white-space: pre-wrap;
   color: var(--text-main);
@@ -2320,7 +2325,7 @@ html, body {
 
 .story-para {
   line-height: 1.85;
-  font-size: 0.95rem;
+  font-size: calc(var(--font-scale) * 0.95);
   color: #e2e8f0;
   position: relative;
   padding-left: 2.8rem;
@@ -2463,7 +2468,7 @@ html, body {
   border-left: 3px solid #f59e0b;
   padding: 0.8rem 1rem;
   border-radius: 0 10px 10px 0;
-  font-size: 0.92rem;
+  font-size: calc(var(--font-scale) * 0.92);
   color: #e2e8f0;
   line-height: 1.65;
 }
@@ -2639,6 +2644,11 @@ html, body {
   color: var(--text-muted);
   cursor: pointer;
   padding: 0 0.5rem;
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-body {
@@ -3190,7 +3200,7 @@ html, body {
 }
 
 .mba-q-text {
-  font-size: 1.25rem;
+  font-size: calc(var(--font-scale) * 1.25);
   font-weight: 700;
   color: #fff;
   line-height: 1.6;
@@ -3278,7 +3288,7 @@ html, body {
 }
 
 .fb-explanation {
-  font-size: 0.92rem;
+  font-size: calc(var(--font-scale) * 0.92);
   color: #cbd5e1;
   line-height: 1.7;
 }
@@ -5143,7 +5153,7 @@ html, body {
   }
 
   .question-text-area {
-    font-size: 0.92rem !important;
+    font-size: calc(var(--font-scale) * 0.92) !important;
     line-height: 1.6 !important;
     margin: 0.8rem 0 !important;
   }
@@ -5154,8 +5164,10 @@ html, body {
     margin-bottom: 0.5rem !important;
   }
 
-  .option-text {
-    font-size: 0.86rem !important;
+  /* 実クラス名は .option-content-text（旧指定 .option-text は生成HTMLと
+     一致せず無音だったため、実在クラスへ付け替えて有効化） */
+  .option-content-text {
+    font-size: calc(var(--font-scale) * 0.86) !important;
     line-height: 1.45 !important;
   }
 
@@ -5169,7 +5181,7 @@ html, body {
   }
 
   .exp-body {
-    font-size: 0.85rem !important;
+    font-size: calc(var(--font-scale) * 0.85) !important;
     line-height: 1.6 !important;
   }
 
@@ -5360,7 +5372,7 @@ html, body {
 
   .q-desc-box {
     padding: 0.65rem 0.75rem !important;
-    font-size: 0.84rem !important;
+    font-size: calc(var(--font-scale) * 0.84) !important;
     line-height: 1.55 !important;
   }
 
@@ -5616,8 +5628,8 @@ html, body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6488,4 +6500,49 @@ select:focus-visible,
     padding: 1rem 0.85rem !important;
     border-radius: 14px !important;
   }
+}
+
+/* ==========================================================================
+   UI改善 (2026-11-09): ローディング表示 & ホーム画面の重複表示の間引き
+   - クイズ開始時の「問題文読み込み中...」をCSSスピナーつき表示にする
+   - ホーム表示中は、ヒーロー（合格判定）と習慣化カード（連続日数）が
+     主表示のため、ヘッダー側の同一数値の重複表示を隠す。
+     他画面ではヘッダー表示が戻る（機能・更新処理自体は従来どおり）。
+     切替は app.js の switchView() が body.on-home-view を付け外しする。
+   ========================================================================== */
+
+/* クイズ読み込み中スピナー */
+.quiz-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-muted);
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--color-primary);
+  animation: quiz-spinner-spin 0.8s linear infinite;
+}
+
+@keyframes quiz-spinner-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+/* ホーム表示中はヘッダーの重複数値を間引く
+   （合格判定: #passProbMeter / #headerPassStatusPill、連続日数: #streakBadge） */
+body.on-home-view #passProbMeter,
+body.on-home-view #headerPassStatusPill,
+body.on-home-view #streakBadge {
+  display: none !important;
 }

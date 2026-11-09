@@ -30,6 +30,7 @@ let state = {
   selectedYear: 'all',
   quizOrderMode: 'smart_random', // 'smart_random' (未演習・均等優先) | 'sequential' (順番に解く)
   selectedSubCategory: 'all',
+  modalQuestionCount: 'all', // 科目別モーダルの演習問数 ('all' = 全問がデフォルトで従来動作)
   mbaModalCategoryId: 'strategy',
   mbaModalQuestionCount: 10,
   mbaOrderMode: 'smart_random',
@@ -273,6 +274,7 @@ const ui = {
   btnCloseSubcatModal: document.getElementById('btnCloseSubcatModal'),
   mBtnOrderRandom: document.getElementById('mBtnOrderRandom'),
   mBtnOrderSeq: document.getElementById('mBtnOrderSeq'),
+  modalCountPills: document.getElementById('modalCountPills'),
   subcatModalList: document.getElementById('subcatModalList'),
 
   // MBA Sub-Category Selection Modal (初級編: MBA論点選択モーダル)
@@ -368,6 +370,7 @@ const ui = {
 
 function init() {
   bindEventListeners();
+  restoreFontScale();
   verifyDailyStreak();
   if (ui.mockQuestionCountText && typeof MOCK_EXAM_CONFIG !== 'undefined') {
     ui.mockQuestionCountText.textContent = `${MOCK_EXAM_CONFIG.questionIds.length} 問`;
@@ -383,13 +386,32 @@ function init() {
   initMbaVocab();
 }
 
+/**
+ * ローカルタイムゾーン基準の 'YYYY-MM-DD' を返す
+ * (new Date().toISOString() は UTC 基準のため、日本時間では朝9時に日付が切り替わってしまう)
+ */
+function getLocalDateString(date = new Date()) {
+  const d = date instanceof Date ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function loadHistoryData() {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateString();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (typeof parsed.playerExp !== 'number') parsed.playerExp = 0;
+      // items が欠けた保存データ（破損・旧形式）でも後段が例外にならないよう補完
+      if (!parsed.items || typeof parsed.items !== 'object' || Array.isArray(parsed.items)) {
+        parsed.items = {};
+      }
+      if (typeof parsed.playerExp !== 'number') {
+        // 旧インポート形式 (player.exp) で保存されたデータからの移行
+        parsed.playerExp = (parsed.player && typeof parsed.player.exp === 'number') ? parsed.player.exp : 0;
+      }
       if (!parsed.studyTime) {
         parsed.studyTime = {
           todaySeconds: 0,
@@ -460,7 +482,7 @@ function saveHistoryData() {
 }
 
 function verifyDailyStreak() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateString();
   const st = state.history.studyTime || { todaySeconds: 0, totalSeconds: 0, lastActiveDate: today, dailyHistory: {} };
 
   if (!state.history.lastActiveDate) {
@@ -506,6 +528,33 @@ function escapeHtml(str) {
 
 function getAllQuestions() {
   return typeof VOCAB_QUESTIONS !== 'undefined' ? [...QUESTIONS, ...VOCAB_QUESTIONS] : QUESTIONS;
+}
+
+// 文字サイズ設定の永続化（キー命名は既存の shindanshi_*_v1 形式に倣う）
+const FONT_SCALE_KEY = 'shindanshi_font_scale_v1';
+
+function applyFontScale(scale, persist = true) {
+  const clamped = Math.min(1.3, Math.max(0.85, scale));
+  state.fontScale = Math.round(clamped * 100) / 100;
+  document.documentElement.style.setProperty('--font-scale', `${state.fontScale}rem`);
+  if (persist) {
+    try {
+      localStorage.setItem(FONT_SCALE_KEY, String(state.fontScale));
+    } catch (e) {
+      console.warn('Font scale save error', e);
+    }
+  }
+}
+
+function restoreFontScale() {
+  try {
+    const saved = parseFloat(localStorage.getItem(FONT_SCALE_KEY));
+    if (Number.isFinite(saved)) {
+      applyFontScale(saved, false);
+    }
+  } catch (e) {
+    console.warn('Font scale restore error', e);
+  }
 }
 
 const BENCHMARK_COUNT = 150; // 本番問題数（約225問）に準拠した正式判定基準
@@ -774,7 +823,11 @@ function getDueReviewQuestions() {
 function getWeaknessQuestions() {
   return getAllQuestions().filter(q => {
     const item = state.history.items[q.id];
-    return item && item.wrongCount > 0;
+    if (!item || !(item.wrongCount > 0)) return false;
+    // 卒業条件: 直近の挑戦で正解した問題は「克服済み」として弱点リストから外す
+    // (lastResult は本体が 'correct'/'wrong'、MBA側が true/false の2形式があるため両対応)
+    const lastCorrect = item.lastResult === 'correct' || item.lastResult === true;
+    return !lastCorrect;
   });
 }
 
@@ -909,6 +962,14 @@ function openSubCategoryModal(subjectId) {
     ui.mBtnOrderSeq.classList.toggle('active', state.quizOrderMode === 'sequential');
   }
 
+  // Update question count pills state inside modal
+  if (ui.modalCountPills) {
+    ui.modalCountPills.querySelectorAll('.order-pill-btn').forEach(btn => {
+      const c = btn.getAttribute('data-count');
+      btn.classList.toggle('active', c === String(state.modalQuestionCount));
+    });
+  }
+
   // Populate sub-categories list
   if (ui.subcatModalList && typeof SUBJECT_SUBCATEGORIES !== 'undefined') {
     const subCats = SUBJECT_SUBCATEGORIES[subjectId] || [];
@@ -946,6 +1007,7 @@ function openSubCategoryModal(subjectId) {
 
   if (ui.subCategoryModal) {
     ui.subCategoryModal.style.display = 'flex';
+    focusModalDialog(ui.subCategoryModal);
   }
 }
 
@@ -958,7 +1020,7 @@ function closeSubCategoryModal() {
 function selectSubCategoryAndStart(subjectId, subCategoryId) {
   closeSubCategoryModal();
   const mode = state.practiceMode === 'vocab' ? 'vocab' : 'subject';
-  startQuizSession(mode, subjectId, subCategoryId);
+  startQuizSession(mode, subjectId, subCategoryId, state.modalQuestionCount);
 }
 
 // ==========================================================================
@@ -1037,6 +1099,7 @@ function openMbaSubCategoryModal(categoryId) {
 
   if (ui.mbaSubCategoryModal) {
     ui.mbaSubCategoryModal.style.display = 'flex';
+    focusModalDialog(ui.mbaSubCategoryModal);
   }
 }
 
@@ -1149,7 +1212,7 @@ function sortQuestionsByOrder(questions, orderMode = 'smart_random') {
   });
 }
 
-function startQuizSession(mode, subjectId = null, subCategoryId = 'all') {
+function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questionCount = 'all') {
   // Clear any existing timer
   if (state.session.timerId) clearInterval(state.session.timerId);
 
@@ -1191,7 +1254,12 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all') {
     }
 
     // 出題順序の適用（スマート均等ランダム または 順番に解く）
-    state.session.questions = sortQuestionsByOrder(qList, state.quizOrderMode);
+    let ordered = sortQuestionsByOrder(qList, state.quizOrderMode);
+    // 問数選択の適用（数値指定時のみ先頭から切り取る。'all' は従来どおり全問）
+    if (typeof questionCount === 'number' && questionCount > 0) {
+      ordered = ordered.slice(0, questionCount);
+    }
+    state.session.questions = ordered;
 
     const yearSuffix = state.selectedYear === 'all' ? '' : ` (${state.selectedYear})`;
     let subCatSuffix = '';
@@ -1200,14 +1268,20 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all') {
       if (scObj) subCatSuffix = ` • ${scObj.name}`;
     }
     const orderSuffix = state.quizOrderMode === 'sequential' ? ' [通し番号順]' : ' [均等ランダム]';
+    const countSuffix = typeof questionCount === 'number' ? ` • ${state.session.questions.length}問` : '';
 
-    ui.quizModePill.textContent = `科目別演習${yearSuffix}${subCatSuffix}${orderSuffix}`;
+    ui.quizModePill.textContent = `科目別演習${yearSuffix}${subCatSuffix}${orderSuffix}${countSuffix}`;
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'vocab') {
     let vList = (typeof VOCAB_QUESTIONS !== 'undefined' ? VOCAB_QUESTIONS : []).filter(q => q.subject === subjectId);
-    state.session.questions = sortQuestionsByOrder(vList, state.quizOrderMode);
+    let orderedVocab = sortQuestionsByOrder(vList, state.quizOrderMode);
+    if (typeof questionCount === 'number' && questionCount > 0) {
+      orderedVocab = orderedVocab.slice(0, questionCount);
+    }
+    state.session.questions = orderedVocab;
     const orderSuffix = state.quizOrderMode === 'sequential' ? ' [通し番号順]' : ' [均等ランダム]';
-    ui.quizModePill.textContent = `⚡ スピード用語マスター${orderSuffix}`;
+    const countSuffix = typeof questionCount === 'number' ? ` • ${state.session.questions.length}問` : '';
+    ui.quizModePill.textContent = `⚡ スピード用語マスター${orderSuffix}${countSuffix}`;
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'mock') {
     // 予想模擬試験: MOCK_EXAM_CONFIG から厳選出題
@@ -1332,9 +1406,9 @@ function renderOptions(q) {
       <div class="option-row" id="opt-row-${i}">
         <button class="option-card" data-opt-idx="${i}">
           <span class="option-index-badge">${markers[i] || i + 1}</span>
-          <span class="option-content-text">${opt}</span>
+          <span class="option-content-text">${escapeHtml(opt)}</span>
         </button>
-        <button class="btn-eliminate" data-opt-idx="${i}" title="消去線（取り消し線）を引く">
+        <button class="btn-eliminate" data-opt-idx="${i}" title="消去線（取り消し線）を引く" aria-label="この選択肢を消去法で除外する">
           ✕
         </button>
       </div>
@@ -1402,7 +1476,8 @@ function handleOptionChoice(chosenIndex) {
       lastResult: null,
       intervalDays: 1,
       easeFactor: 2.5,
-      nextDueDate: new Date().getTime(),
+      // 初回の復習期限は翌日（即時 due にすると解いた全問が復習待ちに膨らむため）
+      nextDueDate: new Date().getTime() + 24 * 60 * 60 * 1000,
       bookmarked: false
     };
     state.history.items[q.id] = record;
@@ -1455,10 +1530,10 @@ function handleOptionChoice(chosenIndex) {
   if (q.optionsExplanation && q.optionsExplanation.length > 0) {
     ui.optionsBreakdownList.innerHTML = q.optionsExplanation.map((exp, i) => {
       const isTarget = (i === q.answerIndex);
-      return `<div class="breakdown-item ${isTarget ? 'is-correct-opt' : 'is-wrong-opt'}">${exp}</div>`;
+      return `<div class="breakdown-item ${isTarget ? 'is-correct-opt' : 'is-wrong-opt'}">${escapeHtml(exp)}</div>`;
     }).join('');
   } else {
-    ui.optionsBreakdownList.innerHTML = `<div class="breakdown-item">${q.explanation}</div>`;
+    ui.optionsBreakdownList.innerHTML = `<div class="breakdown-item">${escapeHtml(q.explanation)}</div>`;
   }
 
   ui.generalExplanationBody.textContent = q.explanation || '';
@@ -1610,6 +1685,9 @@ function switchView(viewId) {
   const target = document.getElementById(viewId);
   if (target) target.classList.add('active');
 
+  // ホーム表示中はヘッダーの重複数値（合格判定・連続日数）を間引くための目印
+  document.body.classList.toggle('on-home-view', viewId === 'viewHome');
+
   // Back button visibility
   ui.btnHeaderBack.style.display = (viewId === 'viewHome') ? 'none' : 'flex';
 
@@ -1637,6 +1715,18 @@ function switchView(viewId) {
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/**
+ * モーダルを開いた直後に、モーダル内の最初の操作要素へ初期フォーカスを移す
+ * （キーボード/支援技術ユーザーがモーダル内から操作を始められるようにする）
+ */
+function focusModalDialog(modalEl) {
+  if (!modalEl) return;
+  const target = modalEl.querySelector(
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  );
+  if (target) target.focus({ preventScroll: true });
 }
 
 function showToast(msg) {
@@ -1747,6 +1837,16 @@ function bindEventListeners() {
     ui.btnOrderSequential?.classList.add('active');
     ui.btnOrderSmartRandom?.classList.remove('active');
     showToast('📋 出題順: 通し番号順（第1問〜）');
+  });
+
+  // Modal Question Count Pills (科目別演習の問数選択: MBAモーダルと同パターン)
+  ui.modalCountPills?.querySelectorAll('.order-pill-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = btn.getAttribute('data-count');
+      state.modalQuestionCount = c === 'all' ? 'all' : parseInt(c, 10);
+      ui.modalCountPills.querySelectorAll('.order-pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
   });
 
   // Modal Close Button
@@ -1862,13 +1962,11 @@ function bindEventListeners() {
 
   // Font Size Controls
   ui.btnFontIncrease?.addEventListener('click', () => {
-    state.fontScale = Math.min(1.3, state.fontScale + 0.1);
-    document.documentElement.style.setProperty('--font-scale', `${state.fontScale}rem`);
+    applyFontScale(state.fontScale + 0.1);
     showToast(`文字サイズ: ${Math.round(state.fontScale * 100)}%`);
   });
   ui.btnFontDecrease?.addEventListener('click', () => {
-    state.fontScale = Math.max(0.85, state.fontScale - 0.1);
-    document.documentElement.style.setProperty('--font-scale', `${state.fontScale}rem`);
+    applyFontScale(state.fontScale - 0.1);
     showToast(`文字サイズ: ${Math.round(state.fontScale * 100)}%`);
   });
 
@@ -2127,13 +2225,13 @@ function closeCaseWorkspace() {
 function startCaseTimer() {
   stopCaseTimer();
   state.caseExam.timerRunning = true;
-  updateTimerDisplay();
+  updateCaseTimerDisplay();
 
   state.caseExam.timerInterval = setInterval(() => {
     if (!state.caseExam.timerRunning) return;
     if (state.caseExam.timerSeconds > 0) {
       state.caseExam.timerSeconds--;
-      updateTimerDisplay();
+      updateCaseTimerDisplay();
       if (state.caseExam.timerSeconds === 10 * 60) {
         showToast('⚠️ 残り時間 10分 です！見直しを行いましょう。');
       }
@@ -2164,7 +2262,7 @@ function toggleCaseTimer() {
   }
 }
 
-function updateTimerDisplay() {
+function updateCaseTimerDisplay() {
   if (!ui.caseTimerDisplay) return;
   const totalSec = state.caseExam.timerSeconds;
   const m = Math.floor(totalSec / 60);
@@ -2532,6 +2630,7 @@ function scoreCaseQuestion(qIndex) {
 
   ui.modalResultBody.innerHTML = bodyHtml;
   ui.caseResultModal.style.display = 'flex';
+  focusModalDialog(ui.caseResultModal);
 }
 
 function closeCaseResultModal() {
@@ -2645,6 +2744,7 @@ function triggerLevelUpModal(lvlInfo) {
     }
   }
   ui.levelUpModal.style.display = 'flex';
+  focusModalDialog(ui.levelUpModal);
 }
 
 function closeLevelUpModal() {
@@ -2972,7 +3072,7 @@ function handleMbaOptionChoice(chosenIndex) {
   // Save history
   let rec = state.history.items[q.id];
   if (!rec) {
-    rec = { count: 0, correctCount: 0, wrongCount: 0, lastResult: null, intervalDays: 1, easeFactor: 2.5, nextDueDate: Date.now() };
+    rec = { count: 0, correctCount: 0, wrongCount: 0, lastResult: null, intervalDays: 1, easeFactor: 2.5, nextDueDate: Date.now() + 24 * 60 * 60 * 1000 };
     state.history.items[q.id] = rec;
   }
   rec.count++;
@@ -3050,7 +3150,7 @@ function initStudyTracker() {
       return;
     }
 
-    const st = state.history.studyTime || { todaySeconds: 0, totalSeconds: 0, lastActiveDate: new Date().toISOString().slice(0, 10), dailyHistory: {} };
+    const st = state.history.studyTime || { todaySeconds: 0, totalSeconds: 0, lastActiveDate: getLocalDateString(), dailyHistory: {} };
     st.todaySeconds = (st.todaySeconds || 0) + 1;
     st.totalSeconds = (st.totalSeconds || 0) + 1;
     state.history.studyTime = st;
@@ -3159,6 +3259,7 @@ function initProModal() {
 function openProModal() {
   if (ui.proModal) {
     ui.proModal.style.display = 'flex';
+    focusModalDialog(ui.proModal);
   } else {
     showToast('✨ 現在すべての機能・問題を完全無料で無制限にご利用いただけます！');
   }
@@ -3270,7 +3371,10 @@ function initLegalModal() {
 function openLegalModal(docType = 'tokusho') {
   activeLegalTab = docType;
   renderLegalDoc(docType);
-  if (ui.legalModal) ui.legalModal.style.display = 'flex';
+  if (ui.legalModal) {
+    ui.legalModal.style.display = 'flex';
+    focusModalDialog(ui.legalModal);
+  }
 }
 
 function closeLegalModal() {
@@ -3369,7 +3473,7 @@ function initHabitTracker() {
 function renderDailyChallengeStatus() {
   const badge = document.getElementById('dailyChallengeStatusBadge');
   if (!badge) return;
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateString();
   const m = state.history.dailyMissions;
   const isCleared = (m && m.date === todayStr && m.questions >= 1);
 
@@ -3398,7 +3502,7 @@ function handleDailyChallengeClick() {
   if (unAnswered.length === 0) unAnswered = allQs;
 
   // 日替わりのシード値に基づいて今日の1問を決定
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateString();
   let hash = 0;
   for (let i = 0; i < todayStr.length; i++) hash = (hash * 31 + todayStr.charCodeAt(i)) >>> 0;
   const pickedQ = unAnswered[hash % unAnswered.length];
@@ -3433,7 +3537,7 @@ function renderWeeklyStreak() {
   if (ui.habitStreakNum) ui.habitStreakNum.textContent = streakCount;
 
   // 今日のミッション進捗に応じた応援メッセージ
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateString();
   const m = state.history.dailyMissions || { date: todayStr, questions: 0 };
   const qCount = m.questions || 0;
 
@@ -3459,7 +3563,7 @@ function renderWeeklyStreak() {
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(today.getDate() - i);
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = getLocalDateString(d);
     const isToday = (i === 0);
     const dayOfWeek = dayNames[d.getDay()];
 
@@ -3618,6 +3722,7 @@ function openBreakModal() {
   if (typeof SoundFX !== 'undefined') SoundFX.playTap();
   if (!ui.examBreakModal) return;
   ui.examBreakModal.style.display = 'flex';
+  focusModalDialog(ui.examBreakModal);
   renderBreakSubject(activeBreakSubKey);
 }
 
@@ -3725,7 +3830,7 @@ function handleBreakOxChoice(qIndex, userChoice) {
 window.handleBreakOxChoice = handleBreakOxChoice;
 
 function renderDailyMissionCard() {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateString();
   const m = state.history.dailyMissions || { date: todayStr, questions: 0, timeMinutes: 0, ankiCleared: false, claimed: [] };
 
   const qCount = m.questions || 0;
@@ -3776,7 +3881,7 @@ function renderDailyMissionCard() {
 }
 
 function updateDailyMissions(type, val = 1) {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateString();
   let m = state.history.dailyMissions;
   if (!m || m.date !== todayStr) {
     m = { date: todayStr, questions: 0, timeMinutes: 0, ankiCleared: false, claimed: [] };
@@ -3860,7 +3965,7 @@ function exportLearningData() {
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const dateStr = getLocalDateString().replace(/-/g, '');
     a.href = url;
     a.download = `business_expert_backup_${dateStr}.json`;
     document.body.appendChild(a);
@@ -3873,6 +3978,135 @@ function exportLearningData() {
     console.error('Export error', err);
     alert('バックアップのエクスポートに失敗しました。');
   }
+}
+
+/**
+ * インポート用サニタイザ: 学習履歴をアプリの実スキーマに合わせて正規化する
+ * 実スキーマ (loadHistoryData / handleOptionChoice / handleMbaOptionChoice):
+ *   items[qId] = { count, correctCount, wrongCount, lastResult, intervalDays, easeFactor, nextDueDate, bookmarked }
+ *   streak / lastActiveDate / playerExp / studyTime / dailyMissions / unlockedBadges
+ * 旧形式のフィールド名 (timesTested / nextReviewDate / starred / player.exp) も可能な範囲で読み替える。
+ */
+function sanitizeImportedHistory(importedHistory) {
+  const todayStr = getLocalDateString();
+  const cleanHistory = {
+    items: {},
+    streak: 0,
+    lastActiveDate: null,
+    playerExp: 0,
+    studyTime: {
+      todaySeconds: 0,
+      totalSeconds: 0,
+      lastActiveDate: todayStr,
+      dailyHistory: {}
+    },
+    dailyMissions: {
+      date: todayStr,
+      questions: 0,
+      timeMinutes: 0,
+      ankiCleared: false,
+      claimed: []
+    },
+    unlockedBadges: []
+  };
+  if (!importedHistory || typeof importedHistory !== 'object') return cleanHistory;
+
+  // Items のサニタイズ（実スキーマのフィールドを保持）
+  if (importedHistory.items && typeof importedHistory.items === 'object') {
+    Object.keys(importedHistory.items).forEach(k => {
+      if (!/^[a-zA-Z0-9_\-]+$/.test(k)) return;
+      const item = importedHistory.items[k];
+      if (!item || typeof item !== 'object') return;
+
+      let nextDue = Number(item.nextDueDate);
+      if (!Number.isFinite(nextDue)) {
+        // 旧形式: nextReviewDate (日付文字列) を読み替え
+        const parsedDate = typeof item.nextReviewDate === 'string' ? Date.parse(item.nextReviewDate) : NaN;
+        nextDue = Number.isFinite(parsedDate) ? parsedDate : 0;
+      }
+      const lastResult = (item.lastResult === 'correct' || item.lastResult === 'wrong' || item.lastResult === true || item.lastResult === false)
+        ? item.lastResult
+        : null;
+      const ease = Number(item.easeFactor);
+      const interval = Number(item.intervalDays);
+      cleanHistory.items[k] = {
+        count: Math.max(0, Math.floor(Number(item.count != null ? item.count : item.timesTested) || 0)),
+        correctCount: Math.max(0, Math.floor(Number(item.correctCount != null ? item.correctCount : item.timesCorrect) || 0)),
+        wrongCount: Math.max(0, Math.floor(Number(item.wrongCount) || 0)),
+        lastResult: lastResult,
+        intervalDays: Number.isFinite(interval) && interval > 0 ? Math.min(3650, interval) : 1,
+        easeFactor: Number.isFinite(ease) ? Math.min(3.0, Math.max(1.3, ease)) : 2.5,
+        nextDueDate: nextDue,
+        bookmarked: Boolean(item.bookmarked != null ? item.bookmarked : item.starred)
+      };
+    });
+  }
+
+  // Streak / 最終学習日 のサニタイズ
+  const streakNum = Number(importedHistory.streak);
+  cleanHistory.streak = Number.isFinite(streakNum) ? Math.max(0, Math.floor(streakNum)) : 0;
+  if (typeof importedHistory.lastActiveDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(importedHistory.lastActiveDate)) {
+    cleanHistory.lastActiveDate = importedHistory.lastActiveDate;
+  }
+
+  // EXP のサニタイズ（実スキーマは history.playerExp。旧形式の player.exp も読み替え）
+  const expRaw = importedHistory.playerExp !== undefined
+    ? importedHistory.playerExp
+    : (importedHistory.player && typeof importedHistory.player === 'object' ? importedHistory.player.exp : undefined);
+  cleanHistory.playerExp = Math.max(0, Math.min(10000000, Math.floor(Number(expRaw) || 0)));
+
+  // StudyTime のサニタイズ
+  if (importedHistory.studyTime && typeof importedHistory.studyTime === 'object') {
+    cleanHistory.studyTime.totalSeconds = Math.max(0, Number(importedHistory.studyTime.totalSeconds) || 0);
+    cleanHistory.studyTime.todaySeconds = Math.max(0, Number(importedHistory.studyTime.todaySeconds) || 0);
+    cleanHistory.studyTime.lastActiveDate = String(importedHistory.studyTime.lastActiveDate || '').slice(0, 10);
+    if (importedHistory.studyTime.dailyHistory && typeof importedHistory.studyTime.dailyHistory === 'object') {
+      Object.keys(importedHistory.studyTime.dailyHistory).slice(0, 90).forEach(dk => {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) {
+          cleanHistory.studyTime.dailyHistory[dk] = Math.max(0, Number(importedHistory.studyTime.dailyHistory[dk]) || 0);
+        }
+      });
+    }
+  }
+
+  // Daily Missions のサニタイズ
+  if (importedHistory.dailyMissions && typeof importedHistory.dailyMissions === 'object') {
+    cleanHistory.dailyMissions.date = String(importedHistory.dailyMissions.date || '').slice(0, 10);
+    cleanHistory.dailyMissions.questions = Math.max(0, Number(importedHistory.dailyMissions.questions) || 0);
+    cleanHistory.dailyMissions.timeMinutes = Math.max(0, Number(importedHistory.dailyMissions.timeMinutes) || 0);
+    cleanHistory.dailyMissions.ankiCleared = Boolean(importedHistory.dailyMissions.ankiCleared);
+    if (Array.isArray(importedHistory.dailyMissions.claimed)) {
+      cleanHistory.dailyMissions.claimed = importedHistory.dailyMissions.claimed.filter(c => typeof c === 'string');
+    }
+  }
+
+  // Unlocked Badges のサニタイズ
+  if (Array.isArray(importedHistory.unlockedBadges)) {
+    cleanHistory.unlockedBadges = importedHistory.unlockedBadges.filter(b => typeof b === 'string' && /^[a-zA-Z0-9_\-]+$/.test(b));
+  }
+
+  return cleanHistory;
+}
+
+/**
+ * インポート用サニタイザ: 事例の下書き { caseId: { fieldKey: text } } の入れ子構造を保持して正規化する
+ */
+function sanitizeImportedDrafts(rawDrafts) {
+  const cleanDrafts = {};
+  if (!rawDrafts || typeof rawDrafts !== 'object') return cleanDrafts;
+  Object.keys(rawDrafts).slice(0, 50).forEach(ck => {
+    if (!/^[a-zA-Z0-9_\-]+$/.test(ck)) return;
+    const fields = rawDrafts[ck];
+    if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return;
+    const cleanFields = {};
+    Object.keys(fields).slice(0, 50).forEach(fk => {
+      if (/^[a-zA-Z0-9_\-]+$/.test(fk)) {
+        cleanFields[fk] = String(fields[fk]).slice(0, 5000);
+      }
+    });
+    cleanDrafts[ck] = cleanFields;
+  });
+  return cleanDrafts;
 }
 
 function importLearningData(e) {
@@ -3907,90 +4141,12 @@ function importLearningData(e) {
       }
 
       if (confirm('現在の学習データを上書きしてバックアップから復元しますか？')) {
-        // 安全なスキーマ正規化
-        const cleanHistory = {
-          items: {},
-          player: { exp: 0, level: 1 },
-          studyTime: {
-            todaySeconds: 0,
-            totalSeconds: 0,
-            lastActiveDate: new Date().toISOString().slice(0, 10),
-            dailyHistory: {}
-          },
-          dailyMissions: {
-            date: new Date().toISOString().slice(0, 10),
-            questions: 0,
-            timeMinutes: 0,
-            ankiCleared: false,
-            claimed: []
-          },
-          unlockedBadges: []
-        };
+        // 安全なスキーマ正規化（アプリの実スキーマに合わせたサニタイザを使用）
+        const cleanHistory = sanitizeImportedHistory(importedHistory);
 
-        // Items のサニタイズ（ホワイトリスト検証）
-        if (importedHistory.items && typeof importedHistory.items === 'object') {
-          Object.keys(importedHistory.items).forEach(k => {
-            if (/^[a-zA-Z0-9_\-]+$/.test(k)) {
-              const item = importedHistory.items[k];
-              if (item && typeof item === 'object') {
-                cleanHistory.items[k] = {
-                  timesTested: Number(item.timesTested) || 0,
-                  timesCorrect: Number(item.timesCorrect) || 0,
-                  correctStreak: Number(item.correctStreak) || 0,
-                  lastTested: typeof item.lastTested === 'string' ? item.lastTested.slice(0, 30) : null,
-                  nextReviewDate: typeof item.nextReviewDate === 'string' ? item.nextReviewDate.slice(0, 30) : null,
-                  intervalDays: Number(item.intervalDays) || 1,
-                  starred: Boolean(item.starred)
-                };
-              }
-            }
-          });
-        }
-
-        // Player (EXP, Level) のサニタイズ
-        if (importedHistory.player && typeof importedHistory.player === 'object') {
-          cleanHistory.player.exp = Math.max(0, Math.min(10000000, Number(importedHistory.player.exp) || 0));
-          cleanHistory.player.level = Math.max(1, Math.min(99, Number(importedHistory.player.level) || 1));
-        }
-
-        // StudyTime のサニタイズ
-        if (importedHistory.studyTime && typeof importedHistory.studyTime === 'object') {
-          cleanHistory.studyTime.totalSeconds = Math.max(0, Number(importedHistory.studyTime.totalSeconds) || 0);
-          cleanHistory.studyTime.todaySeconds = Math.max(0, Number(importedHistory.studyTime.todaySeconds) || 0);
-          cleanHistory.studyTime.lastActiveDate = String(importedHistory.studyTime.lastActiveDate || '').slice(0, 10);
-          if (importedHistory.studyTime.dailyHistory && typeof importedHistory.studyTime.dailyHistory === 'object') {
-            Object.keys(importedHistory.studyTime.dailyHistory).slice(0, 90).forEach(dk => {
-              if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) {
-                cleanHistory.studyTime.dailyHistory[dk] = Math.max(0, Number(importedHistory.studyTime.dailyHistory[dk]) || 0);
-              }
-            });
-          }
-        }
-
-        // Daily Missions のサニタイズ
-        if (importedHistory.dailyMissions && typeof importedHistory.dailyMissions === 'object') {
-          cleanHistory.dailyMissions.date = String(importedHistory.dailyMissions.date || '').slice(0, 10);
-          cleanHistory.dailyMissions.questions = Math.max(0, Number(importedHistory.dailyMissions.questions) || 0);
-          cleanHistory.dailyMissions.timeMinutes = Math.max(0, Number(importedHistory.dailyMissions.timeMinutes) || 0);
-          cleanHistory.dailyMissions.ankiCleared = Boolean(importedHistory.dailyMissions.ankiCleared);
-          if (Array.isArray(importedHistory.dailyMissions.claimed)) {
-            cleanHistory.dailyMissions.claimed = importedHistory.dailyMissions.claimed.filter(c => typeof c === 'string');
-          }
-        }
-
-        // Unlocked Badges のサニタイズ
-        if (Array.isArray(importedHistory.unlockedBadges)) {
-          cleanHistory.unlockedBadges = importedHistory.unlockedBadges.filter(b => typeof b === 'string' && /^[a-zA-Z0-9_\-]+$/.test(b));
-        }
-
-        // Case Drafts のサニタイズ
+        // Case Drafts のサニタイズ（{ caseId: { fieldKey: text } } の入れ子構造を保持）
         if (parsed.caseDrafts && typeof parsed.caseDrafts === 'object') {
-          const cleanDrafts = {};
-          Object.keys(parsed.caseDrafts).slice(0, 50).forEach(ck => {
-            if (/^[a-zA-Z0-9_\-]+$/.test(ck)) {
-              cleanDrafts[ck] = String(parsed.caseDrafts[ck]).slice(0, 5000);
-            }
-          });
+          const cleanDrafts = sanitizeImportedDrafts(parsed.caseDrafts);
           state.caseExam.drafts = cleanDrafts;
           try {
             localStorage.setItem('shindanshi_case_drafts_v1', JSON.stringify(cleanDrafts));

@@ -44,7 +44,7 @@
   /* Text Colors */
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --text-dim: #8494b5;
 
   /* Metrics & Scales */
   --radius-xs: 6px;
@@ -156,8 +156,8 @@ html, body {
 }
 
 .icon-btn-round {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-subtle);
@@ -913,6 +913,11 @@ html, body {
   border: none;
   color: var(--text-muted);
   padding: 0.2rem 0.45rem;
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
@@ -926,8 +931,8 @@ html, body {
   background: transparent;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1111,7 +1116,7 @@ html, body {
   border: 1px solid var(--border-subtle);
   color: var(--text-dim);
   border-radius: var(--radius-sm);
-  width: 36px;
+  width: 40px;
   height: 44px;
   display: flex;
   align-items: center;
@@ -1207,7 +1212,7 @@ html, body {
 }
 
 .keypoint-body {
-  font-size: 0.95rem;
+  font-size: calc(var(--font-scale) * 0.95);
   font-weight: 600;
   color: #fef3c7;
   line-height: 1.55;
@@ -1235,7 +1240,7 @@ html, body {
 }
 
 .breakdown-item {
-  font-size: 0.88rem;
+  font-size: calc(var(--font-scale) * 0.88);
   line-height: 1.5;
   padding: 0.5rem 0.65rem;
   border-radius: var(--radius-xs);
@@ -1266,7 +1271,7 @@ html, body {
 }
 
 .gen-body {
-  font-size: 0.9rem;
+  font-size: calc(var(--font-scale) * 0.9);
   line-height: 1.65;
   white-space: pre-wrap;
   color: var(--text-main);
@@ -2320,7 +2325,7 @@ html, body {
 
 .story-para {
   line-height: 1.85;
-  font-size: 0.95rem;
+  font-size: calc(var(--font-scale) * 0.95);
   color: #e2e8f0;
   position: relative;
   padding-left: 2.8rem;
@@ -2463,7 +2468,7 @@ html, body {
   border-left: 3px solid #f59e0b;
   padding: 0.8rem 1rem;
   border-radius: 0 10px 10px 0;
-  font-size: 0.92rem;
+  font-size: calc(var(--font-scale) * 0.92);
   color: #e2e8f0;
   line-height: 1.65;
 }
@@ -2639,6 +2644,11 @@ html, body {
   color: var(--text-muted);
   cursor: pointer;
   padding: 0 0.5rem;
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-body {
@@ -3190,7 +3200,7 @@ html, body {
 }
 
 .mba-q-text {
-  font-size: 1.25rem;
+  font-size: calc(var(--font-scale) * 1.25);
   font-weight: 700;
   color: #fff;
   line-height: 1.6;
@@ -3278,7 +3288,7 @@ html, body {
 }
 
 .fb-explanation {
-  font-size: 0.92rem;
+  font-size: calc(var(--font-scale) * 0.92);
   color: #cbd5e1;
   line-height: 1.7;
 }
@@ -5143,7 +5153,7 @@ html, body {
   }
 
   .question-text-area {
-    font-size: 0.92rem !important;
+    font-size: calc(var(--font-scale) * 0.92) !important;
     line-height: 1.6 !important;
     margin: 0.8rem 0 !important;
   }
@@ -5154,8 +5164,10 @@ html, body {
     margin-bottom: 0.5rem !important;
   }
 
-  .option-text {
-    font-size: 0.86rem !important;
+  /* 実クラス名は .option-content-text（旧指定 .option-text は生成HTMLと
+     一致せず無音だったため、実在クラスへ付け替えて有効化） */
+  .option-content-text {
+    font-size: calc(var(--font-scale) * 0.86) !important;
     line-height: 1.45 !important;
   }
 
@@ -5169,7 +5181,7 @@ html, body {
   }
 
   .exp-body {
-    font-size: 0.85rem !important;
+    font-size: calc(var(--font-scale) * 0.85) !important;
     line-height: 1.6 !important;
   }
 
@@ -5360,7 +5372,7 @@ html, body {
 
   .q-desc-box {
     padding: 0.65rem 0.75rem !important;
-    font-size: 0.84rem !important;
+    font-size: calc(var(--font-scale) * 0.84) !important;
     line-height: 1.55 !important;
   }
 
@@ -5616,8 +5628,8 @@ html, body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6106,4 +6118,431 @@ html, body {
     font-size: 0.74rem;
     padding: 0.5rem 0.2rem;
   }
+}
+
+
+/* ===================================================
+   UIリファインメント層 (2026-11-09 Muse)
+   日本語フォント統一・長文の可読性・操作感の底上げ
+   =================================================== */
+
+/* 日本語は Noto Sans JP で統一（従来は端末フォント任せだった） */
+:root {
+  --font-display: 'Outfit', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.45);
+  color: #ffffff;
+}
+
+/* 長文問題の可読性アップ（行間と字間を広げて読み疲れを軽減） */
+.question-text-area {
+  line-height: 1.85;
+  letter-spacing: 0.02em;
+}
+
+.mba-q-text {
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+}
+
+.fb-explanation {
+  line-height: 1.8;
+}
+
+/* キーボード操作時のフォーカス表示 */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* ナビタブ: 横スクロールのバーを隠してスッキリ見せる */
+.app-nav-tabs {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.app-nav-tabs .nav-tab {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+/* 全体のスクロールバーをテーマに合わせて細く */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 数字の桁揃え（タイマー・確率・EXPなど） */
+.timer-digits,
+.prob-rate,
+.gauge-value,
+.p-stat-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* モーション軽減設定への配慮 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01s !important;
+  }
+}
+
+
+/* ===================================================
+   テーマv2「Calm Learning OS」 (2026-11-09 Muse)
+   光と色の主張を抑え、面と余白で整える落ち着いた学習画面に
+   =================================================== */
+
+/* 背景のグローは控えめに */
+.bg-orb {
+  opacity: 0.45;
+}
+
+/* トップバー: ガラス面＋細い境界線 */
+.app-top-bar {
+  background: rgba(7, 10, 19, 0.86);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+/* ナビタブ: ピル型に統一し、選択中はインディゴの面で示す */
+.app-nav-tabs {
+  gap: 0.45rem;
+  border-bottom: none;
+  padding-bottom: 0.25rem;
+}
+
+.app-nav-tabs .nav-tab {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 999px;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.app-nav-tabs .nav-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+}
+
+.app-nav-tabs .nav-tab.active {
+  background: linear-gradient(135deg, #6366f1 0%, #5457e8 60%, #7c6cf0 130%);
+  border-color: rgba(129, 140, 248, 0.6);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+}
+
+/* 主要カード: 面と影を静かなトーンに統一 */
+.buddy-welcome-card,
+.exam-break-banner,
+.habit-streak-card,
+.daily-mission-card,
+.prediction-hero-card,
+.exam-year-selector-card,
+.order-mode-selector-card,
+.mock-intro-card,
+.weakness-intro-card,
+.question-sheet-card,
+.mba-hero-card,
+.mba-player-card,
+.mba-question-card,
+.mba-result-card,
+.weakness-intro-card {
+  background: linear-gradient(180deg, rgba(21, 30, 52, 0.82) 0%, rgba(13, 20, 38, 0.9) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  border-radius: 20px;
+}
+
+/* ボタン: 主ボタンはインディゴの柔らかいグラデーション */
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #5457e8 55%, #7c6cf0 135%);
+  border: 1px solid rgba(129, 140, 248, 0.55);
+  border-radius: 13px;
+  box-shadow: 0 8px 22px rgba(99, 102, 241, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 13px;
+  box-shadow: none;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 13px;
+}
+
+/* モード切替バー: 沈んだ面にピルを浮かせる */
+.mode-switcher-bar {
+  background: rgba(2, 6, 17, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 16px;
+  padding: 5px;
+}
+
+.mode-tab-btn {
+  border-radius: 12px;
+}
+
+.mode-tab-btn.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(84, 87, 232, 0.9));
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+}
+
+/* 年・出題順のピル: 選択中だけ静かに光る */
+.year-pill,
+.order-pill-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.year-pill.active,
+.order-pill-btn.active {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: rgba(129, 140, 248, 0.55);
+  color: #e0e7ff;
+}
+
+/* セクション見出し: 字間を整えて端正に */
+.title-text {
+  letter-spacing: 0.03em;
+}
+
+.title-sub {
+  line-height: 1.6;
+}
+
+/* 問題シート: 内側の余白を広げ、読みの呼吸を作る */
+.question-sheet-card {
+  padding: 1.6rem;
+}
+
+@media (max-width: 600px) {
+  .question-sheet-card {
+    padding: 1.1rem;
+  }
+}
+
+/* ==========================================================================
+   [夜間改善 2026-11-09 03:32] クイズ選択肢ボタンの見た目整備（項目5）
+   対象: app.js が生成する .option-card（通常クイズ）と
+         .mba-opt-btn（MBAクイズ）。追記のみ・既存ルールは不変。
+   備考: 「選択中」状態はJSに存在しない（クリック＝即回答のため）。
+   選択の瞬間は .correct-flash / .incorrect-flash のアニメーションが担う。
+   ========================================================================== */
+
+/* 回答後: 選ばれなかった選択肢を薄くし、正解に視線を集める */
+.option-card:disabled:not(.correct):not(.wrong):not(.eliminated),
+.mba-opt-btn:disabled:not(.correct):not(.wrong) {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* 回答後も正解・不正解はくっきり残す */
+.option-card:disabled.correct,
+.option-card:disabled.wrong,
+.mba-opt-btn:disabled.correct,
+.mba-opt-btn:disabled.wrong {
+  opacity: 1;
+}
+
+/* 正解・不正解にうっすら光を足す（フラッシュ無しの正解表示にも効く） */
+.option-card.correct {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.35), 0 6px 18px rgba(16, 185, 129, 0.18);
+}
+.option-card.wrong {
+  box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.35), 0 6px 18px rgba(244, 63, 94, 0.15);
+}
+.mba-opt-btn.correct {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.35), 0 6px 18px rgba(16, 185, 129, 0.18);
+}
+.mba-opt-btn.wrong {
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35), 0 6px 18px rgba(239, 68, 68, 0.15);
+}
+
+/* 正解・不正解の印を右端に（JS・HTMLを触らずCSSだけで表示） */
+.option-card.correct::after,
+.mba-opt-btn.correct::after {
+  content: "✓";
+  margin-left: auto;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--color-emerald);
+  flex-shrink: 0;
+}
+.option-card.wrong::after,
+.mba-opt-btn.wrong::after {
+  content: "✕";
+  margin-left: auto;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--color-rose);
+  flex-shrink: 0;
+}
+
+/* MBAクイズ: JSが付けるフラッシュ用クラスにアニメーションを結び付ける
+   （従来は .option-card 用の定義しかなく、MBA側では無音だった） */
+.mba-opt-btn.correct-flash {
+  animation: correctPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.mba-opt-btn.incorrect-flash {
+  animation: shakeHorizontal 0.35s ease-in-out;
+}
+
+/* MBAクイズ: ホバー時の持ち上がり（通常クイズと揃える） */
+.mba-opt-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+/* ==========================================================================
+   [夜間改善 2026-11-09 #6] 科目カード・MBAカテゴリカードの整備
+   （index.css 末尾への追記のみ。JS・既存ルールは不変）
+   クラス名は app.js より特定:
+   - 科目カード: renderDashboard() が生成する .subject-tile
+     （.tile-top / .tile-icon-title / .tile-icon / .tile-title /
+      .tile-questions-count / .tile-grade-badge（.grade-a/b/c/e） /
+      .tile-desc / .tile-stat-bar / .tile-bottom-action /
+      .tile-btn-subcat / .tile-btn-train）
+   - MBAカテゴリカード: renderMbaCategories() が生成する .mba-cat-card
+     （.cat-card-top / .cat-card-icon / .cat-card-title / .cat-card-desc /
+      .cat-card-bottom / .cat-stat-info / .cat-card-btn-group /
+      .cat-btn-subcat / .cat-btn-train）
+   - タイル全体・カード全体は <article>/<div> に onclick のため
+     キーボードフォーカス不可（:focus-visible は付けられない）。
+     キーボード操作対応はJS側の変更が必要なため今回は対象外。
+   ========================================================================== */
+
+/* (1) 科目カード: バッジが潰れて折り返さないようにする。
+   「A判定 (82%)」などが狭いタイルで2行になるのを防ぐ */
+.tile-grade-badge {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* (2) 科目カード: タイトル部とバッジの間隔を確保する */
+.tile-top {
+  gap: 0.6rem;
+}
+
+/* (3) 科目カード: ボタン群をカード下端に揃える。
+   グリッドの行内で高さが違うカードでもボタン位置が揃う。
+   （flex の gap 0.75rem が残るため、内容が詰まっていても間隔は保たれる） */
+.subject-tile .tile-bottom-action {
+  margin-top: auto;
+}
+
+/* (4) MBAカテゴリカード: 下部（進捗表示＋ボタン群）が狭い幅で
+   はみ出さず折り返すようにする */
+.cat-card-bottom {
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+/* (5) モバイル（max-width: 680px）: 既存のモバイル最適化ブロック内に
+   旧クラス名のまま残っていた指定を、正しいクラス名で有効化する。
+   旧指定は .subjects-grid / .subject-card / .mba-category-card で、
+   app.js が生成する .subjects-mosaic / .subject-tile / .mba-cat-card
+   と一致せず無音になっていた（.mba-categories-grid だけは正しく、
+   既に 1カラム化されている）。
+   元の指定と同じ内容（1カラム・余白 1rem 0.85rem・角丸 14px）で、
+   既存ブロックは残したまま末尾で上書きする。 */
+@media (max-width: 680px) {
+  .subjects-mosaic {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .subject-tile,
+  .mba-cat-card {
+    padding: 1rem 0.85rem !important;
+    border-radius: 14px !important;
+  }
+}
+
+/* ==========================================================================
+   UI改善 (2026-11-09): ローディング表示 & ホーム画面の重複表示の間引き
+   - クイズ開始時の「問題文読み込み中...」をCSSスピナーつき表示にする
+   - ホーム表示中は、ヒーロー（合格判定）と習慣化カード（連続日数）が
+     主表示のため、ヘッダー側の同一数値の重複表示を隠す。
+     他画面ではヘッダー表示が戻る（機能・更新処理自体は従来どおり）。
+     切替は app.js の switchView() が body.on-home-view を付け外しする。
+   ========================================================================== */
+
+/* クイズ読み込み中スピナー */
+.quiz-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-muted);
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--color-primary);
+  animation: quiz-spinner-spin 0.8s linear infinite;
+}
+
+@keyframes quiz-spinner-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+/* ホーム表示中はヘッダーの重複数値を間引く
+   （合格判定: #passProbMeter / #headerPassStatusPill、連続日数: #streakBadge） */
+body.on-home-view #passProbMeter,
+body.on-home-view #headerPassStatusPill,
+body.on-home-view #streakBadge {
+  display: none !important;
 }
