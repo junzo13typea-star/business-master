@@ -39,9 +39,11 @@ let state = {
     combo: 0
   },
   session: {
-    mode: 'subject', // 'subject' | 'vocab' | 'mock' | 'weakness' | 'anki'
+    mode: 'subject', // 'subject' | 'vocab' | 'mock' | 'weakness' | 'anki' | 'bookmark' | 'list'
     subjectId: null,
     subCategoryId: 'all',
+    customList: null,   // mode 'list' (検索結果など) で使う明示の問題列
+    customLabel: '',    // mode 'list' の表示ラベル
     questions: [],
     currentIndex: 0,
     score: 0,
@@ -304,6 +306,14 @@ const ui = {
   weaknessActionArea: document.getElementById('weaknessActionArea'),
   btnStartWeaknessDrill: document.getElementById('btnStartWeaknessDrill'),
   btnEmptyGoSubjects: document.getElementById('btnEmptyGoSubjects'),
+
+  // Bookmark Drill & Question Search (Home)
+  btnStartBookmarkDrill: document.getElementById('btnStartBookmarkDrill'),
+  bookmarkDrillCount: document.getElementById('bookmarkDrillCount'),
+  bookmarkDrillHint: document.getElementById('bookmarkDrillHint'),
+  questionSearchInput: document.getElementById('questionSearchInput'),
+  btnQuestionSearch: document.getElementById('btnQuestionSearch'),
+  questionSearchResults: document.getElementById('questionSearchResults'),
 
   // Quiz Workspace
   quizSubIcon: document.getElementById('quizSubIcon'),
@@ -792,6 +802,15 @@ function updatePassMetricsUI() {
   const dueCount = getDueReviewQuestions().length;
   const weakCount = getWeaknessQuestions().length;
 
+  // Bookmark Drill Counter (0件ならボタン無効 + 案内表示)
+  const bookmarkCount = getBookmarkedQuestions().length;
+  if (ui.bookmarkDrillCount) ui.bookmarkDrillCount.textContent = `${bookmarkCount}問`;
+  if (ui.btnStartBookmarkDrill) {
+    ui.btnStartBookmarkDrill.disabled = bookmarkCount === 0;
+    ui.btnStartBookmarkDrill.style.opacity = bookmarkCount === 0 ? '0.55' : '';
+  }
+  if (ui.bookmarkDrillHint) ui.bookmarkDrillHint.style.display = bookmarkCount === 0 ? 'block' : 'none';
+
   if (ui.heroAnkiDueCount) ui.heroAnkiDueCount.textContent = `${dueCount}問`;
   if (ui.weaknessCountPill) ui.weaknessCountPill.textContent = weakCount;
   if (ui.weaknessBigCount) ui.weaknessBigCount.textContent = `${weakCount}問`;
@@ -829,6 +848,81 @@ function getWeaknessQuestions() {
     const lastCorrect = item.lastResult === 'correct' || item.lastResult === true;
     return !lastCorrect;
   });
+}
+
+// ブックマーク済み問題の抽出 (純粋関数: 単体検証用に引数で受ける)
+function filterBookmarkedQuestions(questions, items) {
+  return questions.filter(q => {
+    const item = items ? items[q.id] : null;
+    return !!(item && item.bookmarked);
+  });
+}
+
+function getBookmarkedQuestions() {
+  return filterBookmarkedQuestions(getAllQuestions(), state.history.items);
+}
+
+// キーワード検索 (純粋関数): 空白区切りの全語が、問題文・用語・カテゴリ・
+// 科目名・キーポイント・解説・選択肢のいずれかに含まれれば一致 (AND検索)
+function searchQuestionsByKeyword(questions, keyword) {
+  const terms = String(keyword || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return [];
+  return questions.filter(q => {
+    const hay = [
+      q.question || '', q.term || '', q.category || '', q.subjectName || '',
+      q.keyPoint || '', q.explanation || '', (q.options || []).join(' ')
+    ].join(' ').toLowerCase();
+    return terms.every(t => hay.includes(t));
+  });
+}
+
+// 明示の問題列でセッションを開始する (検索結果からの演習入口)
+function startListSession(questions, label) {
+  if (!questions || questions.length === 0) {
+    showToast('問題が見つかりませんでした');
+    return;
+  }
+  state.session.customList = questions;
+  state.session.customLabel = label;
+  startQuizSession('list');
+}
+
+// ホームの問題検索を実行し、結果リストを描画する (タップでその問題の演習へ)
+function runQuestionSearch() {
+  const box = ui.questionSearchResults;
+  if (!box) return;
+  const kw = ui.questionSearchInput ? ui.questionSearchInput.value : '';
+  if (!kw.trim()) { box.innerHTML = ''; return; }
+  const results = searchQuestionsByKeyword(getAllQuestions(), kw);
+  if (results.length === 0) {
+    box.innerHTML = `<p class="search-note">「${escapeHtml(kw.trim())}」に一致する問題は見つかりませんでした</p>`;
+    return;
+  }
+  const MAX = 30;
+  const itemsHtml = results.slice(0, MAX).map(q => {
+    const item = state.history.items[q.id];
+    const star = item && item.bookmarked ? '★ ' : '';
+    const title = q.term ? `⚡ ${escapeHtml(q.term)}` : escapeHtml(q.subjectName || q.subject || '');
+    const meta = [q.year || '', q.questionNumber || '', q.category || ''].filter(Boolean).join(' ');
+    const snippet = escapeHtml(String(q.question || '').slice(0, 90));
+    return `<button type="button" class="search-result-item" data-qid="${escapeHtml(String(q.id))}">
+      <span class="search-result-head">${star}${title}${meta ? ` <span class="search-result-meta">${escapeHtml(meta)}</span>` : ''}</span>
+      <span class="search-result-snippet">${snippet}…</span>
+    </button>`;
+  }).join('');
+  const moreNote = results.length > MAX
+    ? `<p class="search-note">ほか ${results.length - MAX} 件あります。キーワードを絞ってください</p>` : '';
+  const allBtn = results.length > 1
+    ? `<button type="button" class="btn btn-primary btn-block" id="btnSearchDrillAll">🔍 検索結果 ${results.length}問すべてを演習する</button>` : '';
+  box.innerHTML = `<p class="search-note">${results.length}件見つかりました。タップでその問題から演習できます</p>${itemsHtml}${moreNote}${allBtn}`;
+  box.querySelectorAll('.search-result-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const q = getAllQuestions().find(x => String(x.id) === el.getAttribute('data-qid'));
+      if (q) startListSession([q], '🔍 検索から演習');
+    });
+  });
+  const all = box.querySelector('#btnSearchDrillAll');
+  if (all) all.addEventListener('click', () => startListSession(results, `🔍 「${kw.trim()}」の検索結果`));
 }
 
 // ==========================================================================
@@ -1303,6 +1397,15 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questio
   } else if (mode === 'weakness') {
     state.session.questions = sortQuestionsByOrder(getWeaknessQuestions(), state.quizOrderMode);
     ui.quizModePill.textContent = '⚠️ 弱点克服';
+    ui.examTimerBox.style.display = 'none';
+  } else if (mode === 'bookmark') {
+    state.session.questions = sortQuestionsByOrder(getBookmarkedQuestions(), state.quizOrderMode);
+    ui.quizModePill.textContent = '★ ブックマーク演習';
+    ui.examTimerBox.style.display = 'none';
+  } else if (mode === 'list') {
+    // 検索結果など、明示的に渡された問題列でセッションを開始する
+    state.session.questions = Array.isArray(state.session.customList) ? state.session.customList : [];
+    ui.quizModePill.textContent = state.session.customLabel || '🔍 問題検索';
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'anki') {
     const due = getDueReviewQuestions();
@@ -1959,6 +2062,21 @@ function bindEventListeners() {
   // Weakness Drill
   ui.btnStartWeaknessDrill?.addEventListener('click', () => startQuizSession('weakness'));
   ui.btnEmptyGoSubjects?.addEventListener('click', () => switchView('viewHome'));
+
+  // Bookmark Drill
+  ui.btnStartBookmarkDrill?.addEventListener('click', () => {
+    if (getBookmarkedQuestions().length === 0) {
+      showToast('ブックマークがまだありません。問題画面の ☆ から登録できます');
+      return;
+    }
+    startQuizSession('bookmark');
+  });
+
+  // Question Search
+  ui.btnQuestionSearch?.addEventListener('click', runQuestionSearch);
+  ui.questionSearchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); runQuestionSearch(); }
+  });
 
   // Quiz Next
   ui.btnQuizNext?.addEventListener('click', advanceNext);

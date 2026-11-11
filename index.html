@@ -472,6 +472,20 @@
               <span>⏱ 過去問傾向 模擬試験</span>
             </button>
           </div>
+
+          <!-- Bookmark Drill & Question Search -->
+          <div class="bookmark-search-card">
+            <button class="btn btn-secondary" id="btnStartBookmarkDrill">
+              <span>★ ブックマーク演習</span>
+              <span class="badge-bubble" id="bookmarkDrillCount">0問</span>
+            </button>
+            <p class="bookmark-drill-hint" id="bookmarkDrillHint">まだブックマークがありません。問題画面の ☆ を押すと、ここからまとめて演習できます。</p>
+            <div class="question-search-box">
+              <input type="search" id="questionSearchInput" placeholder="🔍 キーワードで問題を検索 (例: ソロー、SWOT)" aria-label="キーワードで問題を検索">
+              <button class="btn btn-outline" id="btnQuestionSearch">検索</button>
+            </div>
+            <div id="questionSearchResults" class="question-search-results"></div>
+          </div>
         </div>
 
         <!-- Section: Practice Mode Switcher (実戦過去問 vs スピード用語マスター) -->

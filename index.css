@@ -617,6 +617,81 @@ html, body {
   flex-wrap: wrap;
 }
 
+/* Bookmark Drill & Question Search (Top5-⑤) */
+.bookmark-search-card {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.bookmark-search-card .btn {
+  align-self: flex-start;
+}
+.bookmark-search-card .btn:disabled {
+  cursor: not-allowed;
+}
+.bookmark-drill-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin: 0;
+}
+.question-search-box {
+  display: flex;
+  gap: 0.5rem;
+}
+.question-search-box input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-medium);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+.question-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.search-note {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin: 0;
+}
+.search-result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-medium);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.search-result-item:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+.search-result-head {
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+.search-result-meta {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.search-result-snippet {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
 /* Buttons System */
 .btn {
   display: inline-flex;
