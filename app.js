@@ -17,8 +17,8 @@ const CONFIG_OPERATOR = {
   phone: '請求があったら遅滞なく開示します（特定商取引法規定に基づき省略）',
   url: 'https://junzo13typea-star.github.io/business-master/',
   stripePaymentLinks: {
-    yearly: '',  // Stripe Payment Link URL (年額プラン: ¥9,800/年)
-    monthly: '' // Stripe Payment Link URL (月額プラン: ¥980/月)
+    lifetime: '', // Stripe Payment Link URL (買い切りプラン: ¥3,000 永久)
+    monthly: ''   // Stripe Payment Link URL (月額プラン: ¥500/月)
   }
 };
 
@@ -3352,14 +3352,14 @@ function updateStudyTimeUI() {
 // PROプラン (マネタイズ機能) モジュール
 // ==========================================================================
 
-let selectedProPlan = 'yearly';
+let selectedProPlan = 'lifetime';
 
 function initProModal() {
   ui.btnOpenProModal?.addEventListener('click', openProModal);
   ui.btnCloseProModal?.addEventListener('click', closeProModal);
 
   ui.btnPlanYearly?.addEventListener('click', () => {
-    selectedProPlan = 'yearly';
+    selectedProPlan = 'lifetime';
     ui.btnPlanYearly.classList.add('active');
     ui.btnPlanMonthly.classList.remove('active');
   });
@@ -3382,7 +3382,7 @@ function initProModal() {
     }
 
     // デモ・シミュレーションモード
-    showToast(`🎉 7日間のPRO無料トライアルを開始しました！（${selectedProPlan === 'yearly' ? '年額プラン' : '月額プラン'}）`);
+    showToast(`🎉 7日間のPRO無料トライアルを開始しました！（${selectedProPlan === 'lifetime' ? '買い切りプラン' : '月額プラン'}）`);
     closeProModal();
     if (ui.btnOpenProModal) {
       ui.btnOpenProModal.textContent = '👑 PRO会員';
@@ -3426,12 +3426,12 @@ const LEGAL_DOCS = {
           <tr><th>連絡先電話番号</th><td>${escapeHtml(CONFIG_OPERATOR.phone)}</td></tr>
           <tr><th>販売URL</th><td><a href="${CONFIG_OPERATOR.url}" target="_blank" rel="noopener">${CONFIG_OPERATOR.url}</a></td></tr>
           <tr><th>販売価格</th><td>
-            <strong>年額プラン：</strong>9,800円（税込）/ 年<br>
-            <strong>月額プラン：</strong>980円（税込）/ 月
+            <strong>買い切りプラン：</strong>3,000円（税込）/ 永久（追加料金なし）<br>
+            <strong>月額プラン：</strong>500円（税込）/ 月
           </td></tr>
           <tr><th>商品代金以外の必要料金</th><td>インターネット接続料金、パケット通信料はお客様のご負担となります。</td></tr>
           <tr><th>お支払い方法</th><td>クレジットカード決済（Visa, Mastercard, JCB, American Express 等）</td></tr>
-          <tr><th>代金の支払時期</th><td>初回登録時に即時決済。以後、各プラン期間ごとに自動更新されます。</td></tr>
+          <tr><th>代金の支払時期</th><td>買い切りプランは購入時に即時決済（1回のみ、自動更新なし）。月額プランは初回登録時に即時決済、以後は解約まで毎月自動更新されます。</td></tr>
           <tr><th>サービスの提供時期</th><td>クレジットカード決済完了後、即時に全機能がご利用いただけます。</td></tr>
           <tr><th>返品・キャンセルについて</th><td>デジタルコンテンツの性質上、購入・決済完了後の返品および返金はお受けしておりません。<br>定期購読の解約はいつでも設定より即時手続きが可能で、次回更新日以降の請求は発生いたしません。</td></tr>
           <tr><th>動作環境</th><td>最新版の Google Chrome, Safari, Microsoft Edge, Firefox（iOS, Android, macOS, Windows）</td></tr>
@@ -3455,8 +3455,8 @@ const LEGAL_DOCS = {
         <p>本サービスを構成するテキスト、問題文、解説、画像、プログラムコード等の著作権その他の知的財産権は当事務局に帰属します。無断で複製、転載、改変、公衆送信、二次配布等を行うことを固く禁止します。</p>
 
         <h4>第4条（有料プランおよび料金支払）</h4>
-        <p>1. 利用者は所定の料金（年額9,800円または月額980円）を支払うことでPRO機能を利用できます。<br>
-        2. 有料プランは所定の解約手続きを行わない限り同一期間・同一料金で自動更新されます。<br>
+        <p>1. 利用者は所定の料金（買い切り3,000円または月額500円）を支払うことでPRO機能を利用できます。買い切りプランは一度の支払いで永続的に利用できます。<br>
+        2. 月額プランは所定の解約手続きを行わない限り同一料金で毎月自動更新されます。<br>
         3. 決済完了後の返金・キャンセル・日割り精算は行われません。</p>
 
         <h4>第5条（準拠法および管轄）</h4>
