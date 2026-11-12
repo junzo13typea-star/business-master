@@ -7107,3 +7107,69 @@ textarea {
 .prediction-hero-card.is-locked .gauge-sub {
   color: rgba(255, 249, 236, 0.75);
 }
+
+
+/* Soft Owl Theme 追補8 (2026-11-12): ヒーローを淡い色合いにし、上の余白とブックマーク枠の角丸を整える */
+.prediction-hero-card {
+  background: linear-gradient(150deg, #f2f1fa 0%, #faf6ea 100%);
+  border: 1px solid rgba(103, 107, 179, 0.18);
+  box-shadow: 0 10px 26px -12px rgba(87, 83, 160, 0.18);
+  margin-top: 1.5rem;
+  --text-main: #38385c;
+  --text-muted: #6f6f8c;
+  --text-dim: #8b8ba3;
+  --border-subtle: rgba(58, 58, 94, 0.1);
+  --border-medium: rgba(58, 58, 94, 0.18);
+}
+.prediction-hero-card .hero-eyebrow {
+  color: var(--color-primary);
+}
+.prediction-hero-card .benchmark-progress-box {
+  background: rgba(103, 107, 179, 0.08);
+  border: 1px solid rgba(103, 107, 179, 0.14);
+  border-radius: 16px;
+}
+.prediction-hero-card .hero-gauge-circle {
+  border-color: rgba(103, 107, 179, 0.45);
+  background: radial-gradient(circle, rgba(103, 107, 179, 0.1) 0%, transparent 70%);
+  box-shadow: none;
+}
+.prediction-hero-card .gauge-value {
+  color: var(--text-main);
+}
+.prediction-hero-card .gauge-sub {
+  color: var(--text-muted);
+}
+.prediction-hero-card .btn-outline {
+  background: #ffffff;
+  border: 1px solid rgba(103, 107, 179, 0.35);
+  color: var(--color-primary);
+}
+.prediction-hero-card .btn-outline:hover {
+  background: #f2f1fa;
+}
+.prediction-hero-card .bookmark-search-card {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(103, 107, 179, 0.18);
+  border-radius: 20px;
+  padding: 0.9rem 1rem;
+}
+.prediction-hero-card .question-search-box input {
+  background: #ffffff;
+  border: 1px solid rgba(103, 107, 179, 0.25);
+  color: #38385c;
+}
+.prediction-hero-card.is-locked .highlight-grade {
+  color: #8a87c4;
+}
+.prediction-hero-card.is-locked .hero-gauge-circle {
+  border-color: rgba(103, 107, 179, 0.3);
+  background: radial-gradient(circle, rgba(103, 107, 179, 0.06) 0%, transparent 70%);
+  box-shadow: none;
+}
+.prediction-hero-card.is-locked .gauge-value {
+  color: var(--text-main);
+}
+.prediction-hero-card.is-locked .gauge-sub {
+  color: var(--text-muted);
+}
