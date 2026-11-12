@@ -1,17 +1,1 @@
-{
-  "name": "ビズロギア | MBA実務用語・中小企業診断士 総合学習OS",
-  "short_name": "ビズロギア",
-  "description": "初級編MBA専門用語から中級編診断士1次試験、上級編2次筆記ケーススタディまで、ビジネス戦闘力を極める総合学習プラットフォーム",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#070a13",
-  "theme_color": "#f59e0b",
-  "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
-}
+{"background_color":"#070a13","description":"初級編MBA専門用語から中級編診断士1次試験、上級編2次筆記ケーススタディまで、ビジネス戦闘力を極める総合学習プラットフォーム","display":"standalone","icons":[{"purpose":"any","sizes":"192x192","src":"icon-192.png","type":"image/png"},{"purpose":"any","sizes":"512x512","src":"icon-512.png","type":"image/png"},{"purpose":"maskable","sizes":"512x512","src":"icon-512.png","type":"image/png"}],"name":"ビズロギア | MBA実務用語・中小企業診断士 総合学習OS","short_name":"ビズロギア","start_url":"./index.html","theme_color":"#f59e0b"}
