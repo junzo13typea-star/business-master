@@ -12,10 +12,10 @@ const STORAGE_KEY = 'shindanshi_passpro_store_v2';
 const CONFIG_OPERATOR = {
   sellerName: 'ビズロギア 運営事務局',
   representative: '野津 純三',
-  address: '〒150-0043 東京都渋谷区道玄坂1-10-8 渋谷道玄坂東急ビル2F-C',
-  email: 'support@business-master.example.com',
+  address: '大阪市中央区上町1-28-60',
+  email: 'support@kichiworks.com',
   phone: '請求があったら遅滞なく開示します（特定商取引法規定に基づき省略）',
-  url: 'https://junzo13typea-star.github.io/business-master/',
+  url: 'https://bizlogia.kichiworks.com/',
   stripePaymentLinks: {
     lifetime: '', // Stripe Payment Link URL (買い切りプラン: ¥3,000 永久)
     monthly: ''   // Stripe Payment Link URL (月額プラン: ¥500/月)
