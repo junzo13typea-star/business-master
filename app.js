@@ -773,10 +773,12 @@ function updatePassMetricsUI() {
   }
 
   // Hero Card
+  const heroCardEl = document.getElementById('predictionHeroCard');
+  if (heroCardEl) heroCardEl.classList.toggle('is-locked', !metrics.isUnlocked);
   if (ui.heroHeadlineText) {
     ui.heroHeadlineText.innerHTML = metrics.isUnlocked
       ? `正式合格判定: <span class="highlight-grade" id="heroPassGrade">${metrics.grade} 判定 (${metrics.passProbability}%)</span>`
-      : `AI合格判定: <span class="highlight-grade" id="heroPassGrade" style="color: #60a5fa;">${metrics.gradeLabel}</span>`;
+      : `AI合格判定: <span class="highlight-grade" id="heroPassGrade">${metrics.gradeLabel}</span>`;
   }
   if (ui.heroPassProbPct) {
     ui.heroPassProbPct.textContent = `${metrics.passProbability}%`;

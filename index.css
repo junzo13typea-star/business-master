@@ -7085,3 +7085,25 @@ textarea {
   border: 1px solid rgba(103, 107, 179, 0.35);
   color: #5555a6;
 }
+
+
+/* Soft Owl Theme 追補7 (2026-11-12): データ蓄積中の合格判定ヒーローは静かな表示に */
+.prediction-hero-card.is-locked .hero-headline {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.prediction-hero-card.is-locked .highlight-grade {
+  color: #d9d6f5;
+}
+.prediction-hero-card.is-locked .hero-gauge-circle {
+  border-color: rgba(254, 235, 198, 0.55);
+  background: radial-gradient(circle, rgba(254, 235, 198, 0.12) 0%, transparent 70%);
+  box-shadow: none;
+}
+.prediction-hero-card.is-locked .gauge-value {
+  font-size: 1.5rem;
+  color: #fff9ec;
+}
+.prediction-hero-card.is-locked .gauge-sub {
+  color: rgba(255, 249, 236, 0.75);
+}
