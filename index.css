@@ -7244,3 +7244,13 @@ textarea {
 .hero-tag {
   color: #ffedb8;
 }
+
+
+/* Soft Owl Theme 追補10 (2026-11-12): 上部タブが右端で切れないよう折り返しを許可 */
+.app-nav-tabs {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+.app-nav-tabs .nav-tab {
+  padding: 0.5rem 0.85rem;
+}
