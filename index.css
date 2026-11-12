@@ -5,57 +5,57 @@
    ========================================================================== */
 
 :root {
-  /* Surface & Base Colors */
-  --bg-deep: #060911;
-  --bg-surface: #0c1220;
-  --bg-card: rgba(16, 24, 42, 0.75);
-  --bg-card-hover: rgba(24, 35, 60, 0.88);
-  --bg-card-elevated: #131c31;
+  /* Surface & Base Colors — Soft Owl Theme (ロゴのペリウィンクル #676BB3 とクリーム #FEEBC6 が基調) */
+  --bg-deep: #f8f5ee;
+  --bg-surface: #fffdf8;
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --bg-card-hover: #ffffff;
+  --bg-card-elevated: #ffffff;
 
   /* Borders & Dividers */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.15);
-  --border-accent: rgba(99, 102, 241, 0.4);
+  --border-subtle: rgba(58, 58, 94, 0.10);
+  --border-medium: rgba(58, 58, 94, 0.18);
+  --border-accent: rgba(103, 107, 179, 0.45);
 
   /* Brand Accents */
-  --color-primary: #6366f1;
-  --color-primary-glow: rgba(99, 102, 241, 0.35);
-  --color-emerald: #10b981;
-  --color-emerald-glow: rgba(16, 185, 129, 0.3);
-  --color-rose: #f43f5e;
-  --color-rose-glow: rgba(244, 63, 94, 0.3);
-  --color-amber: #f59e0b;
-  --color-cyan: #06b6d4;
-  --color-purple: #8b5cf6;
+  --color-primary: #676bb3;
+  --color-primary-glow: rgba(103, 107, 179, 0.28);
+  --color-emerald: #0e9f6e;
+  --color-emerald-glow: rgba(14, 159, 110, 0.25);
+  --color-rose: #e8496b;
+  --color-rose-glow: rgba(232, 73, 107, 0.25);
+  --color-amber: #dd8a0b;
+  --color-cyan: #0891b2;
+  --color-purple: #7c5cd6;
 
   /* Pass Grades Palette */
-  --grade-s: #a855f7;
-  --grade-a: #10b981;
-  --grade-b: #06b6d4;
-  --grade-c: #f59e0b;
-  --grade-d: #f97316;
-  --grade-e: #ef4444;
+  --grade-s: #9333ea;
+  --grade-a: #0e9f6e;
+  --grade-b: #0284c7;
+  --grade-c: #d97706;
+  --grade-d: #ea580c;
+  --grade-e: #dc2626;
 
   /* Typography */
-  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'M PLUS Rounded 1c', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Text Colors */
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-dim: #8494b5;
+  --text-main: #38385c;
+  --text-muted: #6f6f8c;
+  --text-dim: #9a9ab0;
 
   /* Metrics & Scales */
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 26px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+  --shadow-sm: 0 3px 8px -2px rgba(103, 107, 179, 0.14);
+  --shadow-md: 0 10px 24px -8px rgba(103, 107, 179, 0.20);
+  --shadow-lg: 0 22px 44px -12px rgba(103, 107, 179, 0.28);
 
   --transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   --font-scale: 1rem;
@@ -6631,4 +6631,237 @@ body.on-home-view #passProbMeter,
 body.on-home-view #headerPassStatusPill,
 body.on-home-view #streakBadge {
   display: none !important;
+}
+
+
+/* ==========================================================================
+   Soft Owl Theme (2026-11-12) — ロゴ「本を読むフクロウ」に合わせた全面リテーマ
+   基調: ペリウィンクル #676BB3 / クリーム #FEEBC6 / 温かみのある紙色の背景
+   既存ルールの後に置くことで、主要サーフェスをライトで柔らかい質感へ寄せる。
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+}
+
+::selection {
+  background: rgba(103, 107, 179, 0.25);
+}
+
+/* 背景のグローはクリームとラベンダーで柔らかく */
+.bg-orb {
+  opacity: 0.5;
+}
+.orb-emerald {
+  background: radial-gradient(circle, #f7dfa7 0%, transparent 70%);
+}
+
+/* ヘッダー: 紙色の半透明バー */
+.app-top-bar {
+  background: rgba(248, 245, 238, 0.92);
+}
+
+/* ロゴタイプ: 角丸フォント＋ロゴ色のグラデーション */
+.brand-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--text-main);
+}
+.gradient-text {
+  background: linear-gradient(120deg, #676bb3, #9a97d9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.compliance-tag {
+  background: #feebc6;
+  color: #97792b;
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+/* プレイヤーバッジまわり */
+.lvl-bar-track {
+  background: rgba(58, 58, 94, 0.10);
+}
+.lvl-bar-fill {
+  background: linear-gradient(90deg, #f2b880, #676bb3);
+}
+.lvl-avatar-icon {
+  background: #feebc6;
+  border-radius: var(--radius-full);
+}
+.icon-btn-round {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+}
+.sound-toggle-btn {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.header-refresh-pill,
+.header-status-pill {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
+/* ナビゲーション (PCタブ / モバイル下部タブ) */
+.nav-tab:hover {
+  background: rgba(103, 107, 179, 0.08);
+  color: var(--text-main);
+}
+.nav-tab.active {
+  background: var(--color-primary);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(103, 107, 179, 0.35);
+}
+.mobile-bottom-tabs {
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: 0 -6px 20px rgba(103, 107, 179, 0.10);
+}
+.m-tab.active {
+  color: var(--color-primary);
+}
+.c-mob-tab.active {
+  color: var(--color-primary);
+}
+
+/* ヒーローカード: ロゴと同じペリウィンクルの島 (中だけ明るい文字色に切替) */
+.prediction-hero-card {
+  background: linear-gradient(135deg, #7678c4, #9a97d9);
+  border: none;
+  box-shadow: 0 16px 32px -12px rgba(103, 107, 179, 0.45);
+  --text-main: #fff9ec;
+  --text-muted: rgba(255, 249, 236, 0.88);
+  --text-dim: rgba(255, 249, 236, 0.72);
+  --border-subtle: rgba(255, 249, 236, 0.35);
+  --border-medium: rgba(255, 249, 236, 0.5);
+}
+.case-hero-banner {
+  --text-main: #fff9ec;
+  --text-muted: rgba(255, 249, 236, 0.88);
+  --text-dim: rgba(255, 249, 236, 0.72);
+}
+
+/* ボタン */
+.btn-primary {
+  background: linear-gradient(135deg, #676bb3, #8b87cc);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(103, 107, 179, 0.35);
+}
+.btn-primary:hover {
+  box-shadow: 0 8px 24px rgba(103, 107, 179, 0.45);
+}
+.btn-secondary {
+  background: #fff3d6;
+  border: 1px solid #f0d48a;
+  color: #97792b;
+}
+.btn-secondary:hover {
+  background: #feebc6;
+}
+.btn-outline {
+  background: #ffffff;
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+}
+.btn-outline:hover {
+  background: #f3f1ea;
+}
+.btn-resume {
+  background: linear-gradient(135deg, #676bb3, #8b87cc);
+  color: #ffffff;
+}
+
+/* ピル・バッジ類 */
+.counter-pill {
+  background: rgba(232, 73, 107, 0.12);
+  color: #d6336c;
+}
+.badge-bubble {
+  background: rgba(103, 107, 179, 0.14);
+  color: var(--text-main);
+}
+.badge-count-pill {
+  background: #feebc6;
+  color: #97792b;
+}
+
+/* カード類の影と輪郭を柔らかく (地色は変数側で反転済み) */
+.daily-mission-card,
+.habit-streak-card,
+.buddy-welcome-card,
+.diag-card,
+.data-backup-card,
+.bookmark-search-card,
+.mock-intro-card,
+.cheat-card,
+.mba-question-card,
+.keypoint-flashcard,
+.achieve-badge-card,
+.mastery-bar-card,
+.empty-state-box,
+.exam-year-selector-card,
+.case-card,
+.mba-cat-card,
+.mba-hero-card,
+.mba-result-card,
+.analytics-dashboard,
+.daily-one-box,
+.cutoff-alert-banner {
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+/* バディ (ホウ助) の吹き出し */
+.avatar-speech-bubble,
+.buddy-speech-col {
+  color: var(--text-main);
+}
+.bb-avatar {
+  background: #feebc6;
+  border-radius: var(--radius-full);
+}
+
+/* 入力欄 */
+.case-answer-textarea,
+input[type="text"],
+input[type="search"],
+textarea {
+  color-scheme: light;
+}
+.case-answer-textarea {
+  background: #ffffff;
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+}
+
+/* メーター・進捗バー */
+.meter-track,
+.bench-track {
+  background: rgba(58, 58, 94, 0.10);
+}
+
+/* モーダルカード */
+.legal-modal-card,
+.break-modal-card,
+.level-up-modal-card,
+.case-modal-content {
+  background: #fffdf8;
+  color: var(--text-main);
+  box-shadow: var(--shadow-lg);
+}
+
+/* フッター */
+.app-site-footer {
+  border-top: 1px solid var(--border-subtle);
+}
+.f-logo {
+  font-family: var(--font-display);
+  color: var(--text-main);
 }
