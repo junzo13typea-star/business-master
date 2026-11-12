@@ -7173,3 +7173,74 @@ textarea {
 .prediction-hero-card.is-locked .gauge-sub {
   color: var(--text-muted);
 }
+
+
+/* Soft Owl Theme 追補9 (2026-11-12): 淡色文字の一括是正2（習慣化トラッカーの曜日ほか） */
+.w-day-box.completed .w-day-name {
+  color: #b45309;
+}
+.w-day-box.today {
+  outline-color: var(--color-primary);
+}
+.bb-quote {
+  color: #97792b;
+}
+.ox-q-text,
+.q-desc-box,
+.story-para,
+.user-ans-preview,
+.ws-case-title,
+.subcat-modal-title,
+.subcat-item-name,
+.subcat-fast-title,
+.pro-modal-title,
+.p-plan-name,
+.p-plan-price,
+.p-stat-num,
+.p-level-val,
+.order-title,
+.sf-chip-name {
+  color: var(--text-main);
+}
+.perk-item strong {
+  color: var(--text-main);
+}
+.ox-fb-exp,
+.subcat-chip-btn,
+.tokusho-table td,
+.qr-desc {
+  color: var(--text-muted);
+}
+.tokusho-table th {
+  color: var(--text-main);
+}
+.p-rank-title,
+.pro-crown-badge,
+.sec-heading,
+.lvl-title,
+.new-title-text {
+  color: #dd8a0b;
+}
+.q-points-badge,
+.para-num-badge {
+  color: #b45309;
+}
+.timer-val {
+  color: #d97706;
+}
+.category-chip,
+.hub-link-chip {
+  color: #5555a6;
+}
+.revision-notice-banner {
+  color: #97792b;
+}
+.sf-tab:hover {
+  color: var(--color-primary);
+}
+.fb-exp-gain {
+  color: #0e9f6e;
+}
+.hero-tag {
+  color: #ffedb8;
+}
