@@ -7254,3 +7254,42 @@ textarea {
 .app-nav-tabs .nav-tab {
   padding: 0.5rem 0.85rem;
 }
+
+
+/* Soft Owl Theme 追補11 (2026-11-12): 選択中ピル・タブの文字色是正（年度ピルほか） */
+.year-pill.active {
+  background: linear-gradient(135deg, #7678c4, #676bb3);
+  border-color: transparent;
+  color: #fff9ec;
+  box-shadow: 0 6px 16px -6px rgba(103, 107, 179, 0.55);
+}
+.year-tag {
+  color: var(--color-primary);
+}
+.legal-tab-btn.active {
+  background: rgba(103, 107, 179, 0.14);
+  border-color: rgba(103, 107, 179, 0.45);
+  color: #5555a6;
+}
+.bs-tab.active {
+  background: rgba(245, 158, 11, 0.22);
+  color: #b45309;
+}
+.bss-tab.active {
+  background: rgba(103, 107, 179, 0.14);
+  color: #5555a6;
+}
+.case-filter-btn.active,
+.case-q-nav-btn.active {
+  color: #7c2d12;
+}
+.bookmark-btn.active {
+  color: #dd8a0b;
+}
+
+
+/* Soft Owl Theme 追補12 (2026-11-12): 年度ピル行も折り返して全年度を見せる */
+.year-pills-row {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
