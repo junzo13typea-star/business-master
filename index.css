@@ -6865,3 +6865,223 @@ textarea {
   font-family: var(--font-display);
   color: var(--text-main);
 }
+
+
+/* Soft Owl Theme 追補 (2026-11-12): ハードコードされた濃色サーフェスの置き換え */
+.buddy-welcome-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fbf7ea 100%);
+}
+.avatar-speech-bubble {
+  background: #fff3d6;
+  color: var(--text-main);
+}
+.bubble-arrow {
+  background: #fff3d6;
+}
+.daily-mission-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fdfbf7 100%);
+}
+.exam-break-banner {
+  background: linear-gradient(135deg, #fff3d6 0%, #feebc6 100%);
+}
+.mba-hero-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f4f3fa 100%);
+}
+.case-hero-banner {
+  background: linear-gradient(135deg, #7678c4, #9a97d9);
+  border: none;
+}
+.weakness-intro-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fdfbf7 100%);
+}
+.subcat-fast-panel {
+  background: #ffffff;
+}
+.subcat-modal-card {
+  background: #fffdf8;
+  color: var(--text-main);
+}
+.anki-spaced-box {
+  background: #f3f1ea;
+}
+.achieve-badge-card.unlocked {
+  background: linear-gradient(135deg, #fff8e6, #feebc6);
+}
+.app-site-footer {
+  background: rgba(255, 253, 248, 0.7);
+}
+.legal-modal-header {
+  background: #f3f1ea;
+}
+.break-modal-header,
+.break-modal-footer {
+  background: #f8f5ee;
+}
+.level-up-modal-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f3efff 100%);
+  color: var(--text-main);
+}
+.pro-modal-card {
+  background: linear-gradient(145deg, #ffffff 0%, #fff6e0 100%);
+  color: var(--text-main);
+}
+.mode-switcher-bar {
+  background: rgba(255, 255, 255, 0.78);
+}
+.habit-cheer,
+.mission-circle-wrap,
+.weekly-streak-strip {
+  background: rgba(103, 107, 179, 0.08);
+}
+.m-reward {
+  color: #97792b;
+}
+.toast-popup {
+  background: rgba(56, 56, 92, 0.96);
+  --text-main: #fff9ec;
+  --text-muted: rgba(255, 249, 236, 0.85);
+  color: #fff9ec;
+}
+.p-exp-fill {
+  background: linear-gradient(90deg, #f2b880, #676bb3);
+}
+.order-pill-btn.active,
+.sf-tab.active,
+.subcat-item-start-btn {
+  background: linear-gradient(135deg, #676bb3, #8b87cc);
+}
+
+
+/* Soft Owl Theme 追補2 (2026-11-12): 旧テーマ層で濃色にされていた主要カードと文字色の是正 */
+.habit-streak-card {
+  background: linear-gradient(135deg, #fff8e6 0%, #ffffff 100%);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.exam-year-selector-card,
+.order-mode-selector-card,
+.mock-intro-card,
+.question-sheet-card,
+.mba-player-card,
+.mba-question-card,
+.mba-result-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fdfbf7 100%);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.buddy-greeting {
+  color: var(--text-main);
+}
+.buddy-sub {
+  color: var(--text-muted);
+}
+.eb-title {
+  color: var(--text-main);
+}
+.eb-desc {
+  color: var(--text-muted);
+}
+.habit-title {
+  color: var(--text-main);
+}
+.streak-highlight {
+  color: #dd8a0b;
+}
+
+
+/* Soft Owl Theme 追補3 (2026-11-12): 明るい地に対して白・淡色だった文字色の是正 */
+.habit-cheer {
+  color: #97792b;
+}
+.d1-title {
+  color: var(--text-main);
+}
+.d1-sub {
+  color: var(--color-cyan);
+}
+.resume-target {
+  color: var(--text-main);
+}
+
+
+/* Soft Owl Theme 追補4 (2026-11-12): ペリウィンクルのヒーロー内ボタンの視認性 */
+.prediction-hero-card .btn-outline {
+  background: rgba(255, 249, 236, 0.14);
+  border: 1px solid rgba(255, 249, 236, 0.55);
+  color: #fff9ec;
+}
+.prediction-hero-card .btn-outline:hover {
+  background: rgba(255, 249, 236, 0.26);
+}
+.prediction-hero-card .bookmark-search-card {
+  background: rgba(255, 249, 236, 0.12);
+  border: 1px solid rgba(255, 249, 236, 0.30);
+  box-shadow: none;
+}
+.prediction-hero-card .question-search-box input {
+  background: rgba(255, 253, 248, 0.92);
+  border: 1px solid rgba(255, 249, 236, 0.4);
+  color: #38385c;
+}
+
+
+/* Soft Owl Theme 追補5 (2026-11-12): 白カード上で白・淡色だった本文系の文字色を一括是正 */
+.question-text-area,
+.mba-q-text,
+.case-card-title,
+.company-name,
+.cat-card-title,
+.achieve-title,
+.backup-title,
+.bm-title,
+.diag-big-number,
+.legal-doc-title,
+.modal-title,
+.mission-title,
+.lvl-up-headline,
+.q-title {
+  color: var(--text-main);
+}
+.mba-opt-btn {
+  color: var(--text-main);
+}
+.fb-explanation,
+.legal-modal-body,
+.breakdown-item.is-wrong-opt,
+.sub-q-title {
+  color: var(--text-muted);
+}
+.legal-content-section h4 {
+  color: var(--text-main);
+}
+.cheat-card-list li {
+  color: var(--text-main);
+}
+.cheat-card-title,
+.bm-tag,
+.kw-item-row.missed,
+.mba-quiz-streak-pill,
+.mba-term-pill,
+.badge-case2 {
+  color: #dd8a0b;
+}
+.modal-eyebrow,
+.c-stat-num,
+.lvl-up-number-badge,
+.lvl-up-sparkle {
+  color: var(--color-amber);
+}
+.exam-timer-box {
+  color: #e11d48;
+}
+.cutoff-alert-banner {
+  color: #dc2626;
+}
+
+
+/* Soft Owl Theme 追補6 (2026-11-12): 用語バッジの淡色是正 */
+.term-highlight-badge {
+  background: rgba(103, 107, 179, 0.12);
+  border: 1px solid rgba(103, 107, 179, 0.35);
+  color: #5555a6;
+}

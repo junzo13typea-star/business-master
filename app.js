@@ -1489,7 +1489,7 @@ function loadQuestionInWorkspace(index) {
 
   // Question text
   if (q.term) {
-    ui.questionTextArea.innerHTML = `<span class="term-highlight-badge">対象用語</span><strong style="color:#e2e8f0;font-size:1.08em;">【${escapeHtml(q.term)}】</strong><br><br>${escapeHtml(q.question)}`;
+    ui.questionTextArea.innerHTML = `<span class="term-highlight-badge">対象用語</span><strong style="color:#38385c;font-size:1.08em;">【${escapeHtml(q.term)}】</strong><br><br>${escapeHtml(q.question)}`;
   } else {
     ui.questionTextArea.textContent = q.question;
   }
@@ -2212,7 +2212,7 @@ function saveCaseDraft(caseId, fieldKey, text) {
     localStorage.setItem(CASE_DRAFT_KEY, JSON.stringify(state.caseExam.drafts));
     if (ui.caseDraftIndicator) {
       ui.caseDraftIndicator.textContent = '💾 自動保存済';
-      ui.caseDraftIndicator.style.color = '#10b981';
+      ui.caseDraftIndicator.style.color = '#0e9f6e';
     }
   } catch (e) {
     console.error('Failed to save draft', e);
@@ -2398,7 +2398,7 @@ function updateCaseTimerDisplay() {
   if (totalSec <= 10 * 60) {
     ui.caseTimerDisplay.style.color = '#ef4444';
   } else {
-    ui.caseTimerDisplay.style.color = '#fbbf24';
+    ui.caseTimerDisplay.style.color = '#d97706';
   }
 }
 
@@ -3682,10 +3682,10 @@ function renderWeeklyStreak() {
   if (ui.habitCheerText) {
     if (qCount >= 10) {
       ui.habitCheerText.textContent = '🌟 本日のデイリー目標達成！素晴らしい！';
-      ui.habitCheerText.style.color = '#34d399';
+      ui.habitCheerText.style.color = '#0e9f6e';
     } else {
       ui.habitCheerText.textContent = `🔥 あと ${10 - qCount} 問で本日の目標達成！`;
-      ui.habitCheerText.style.color = '#fde68a';
+      ui.habitCheerText.style.color = '#dd8a0b';
     }
   }
 
