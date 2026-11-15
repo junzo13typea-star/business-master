@@ -390,6 +390,7 @@ function init() {
   initStudyTracker();
   initProModal();
   initLegalModal();
+  initGuideModal();
   initLtvFeatures();
   renderHomeScreen();
   initCaseExam();
@@ -3540,7 +3541,41 @@ function renderLegalDoc(docType) {
   }
 }
 
+// ==========================================================================
+// 初回ガイド（使い方）モーダル — 初回起動時のみ自動表示、フッターから再表示可
+// ==========================================================================
+const GUIDE_SEEN_KEY = 'bizlogia_guide_seen_v1';
+
+function openGuideModal() {
+  const modal = document.getElementById('guideModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  focusModalDialog(modal);
+}
+
+function closeGuideModal() {
+  const modal = document.getElementById('guideModal');
+  if (modal) modal.style.display = 'none';
+  try { localStorage.setItem(GUIDE_SEEN_KEY, '1'); } catch (e) { /* 保存できなくても閉じる */ }
+}
+
+function initGuideModal() {
+  const modal = document.getElementById('guideModal');
+  if (!modal) return;
+  document.getElementById('btnCloseGuideModal')?.addEventListener('click', closeGuideModal);
+  document.getElementById('btnStartGuide')?.addEventListener('click', closeGuideModal);
+  document.getElementById('btnLaterGuide')?.addEventListener('click', closeGuideModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeGuideModal(); });
+  let seen = null;
+  try { seen = localStorage.getItem(GUIDE_SEEN_KEY); } catch (e) { seen = '1'; }
+  if (!seen) {
+    setTimeout(openGuideModal, 700);
+  }
+}
+
 // Global scope bindings for inline HTML handlers
+window.openGuideModal = openGuideModal;
+window.closeGuideModal = closeGuideModal;
 window.openLegalModal = openLegalModal;
 window.closeLegalModal = closeLegalModal;
 window.openProModal = openProModal;

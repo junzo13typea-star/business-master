@@ -1,5 +1,5 @@
 // Service Worker for ビズロギア (PWA / オフライン動作対応)
-const CACHE_NAME = 'shindanshi-master-v42';
+const CACHE_NAME = 'shindanshi-master-v43';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

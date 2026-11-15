@@ -1286,6 +1286,8 @@
             <span>•</span>
             <a href="javascript:void(0)" onclick="openLegalModal('privacy')">プライバシーポリシー</a>
             <span>•</span>
+            <a href="javascript:void(0)" onclick="openGuideModal()">使い方ガイド</a>
+            <span>•</span>
             <a href="javascript:void(0)" onclick="openProModal()">👑 PROプラン</a>
           </div>
           <p class="footer-copy">© 2026 ビズロギア 運営事務局. All rights reserved.</p>
@@ -1321,6 +1323,54 @@
         <span class="m-label">分析</span>
       </button>
     </nav>
+
+    <!-- First-run Guide Modal -->
+    <div id="guideModal" class="case-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="guideModalTitle">
+      <div class="guide-modal-card">
+        <div class="modal-header">
+          <div>
+            <span class="modal-eyebrow">🦉 ホウ助からのご案内</span>
+            <h3 class="modal-title" id="guideModalTitle">ビズロギアの使い方</h3>
+          </div>
+          <button class="modal-close-btn" id="btnCloseGuideModal" aria-label="閉じる">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="guide-lead">ようこそ！ビズロギアは中小企業診断士の総合学習アプリです。ホウ助と一緒に、ムリなく続けられる学習を始めましょう。</p>
+          <ol class="guide-steps">
+            <li>
+              <span class="guide-step-icon">📚</span>
+              <div><strong>1次科目で演習</strong>
+              <p>科目と年度を選んで過去問を解きます。間違えた問題は自動で記録されます。</p></div>
+            </li>
+            <li>
+              <span class="guide-step-icon">⏱</span>
+              <div><strong>模試で本番形式</strong>
+              <p>タイマー付きの模擬試験で、時間配分と足切りラインをチェックできます。</p></div>
+            </li>
+            <li>
+              <span class="guide-step-icon">🧠</span>
+              <div><strong>忘却曲線で復習</strong>
+              <p>忘れかけた頃に問題が再出題されます。「弱点」タブからいつでも復習できます。</p></div>
+            </li>
+            <li>
+              <span class="guide-step-icon">★</span>
+              <div><strong>ブックマーク＆検索</strong>
+              <p>気になる問題は☆で登録。キーワード検索で全問題から探せます。</p></div>
+            </li>
+            <li>
+              <span class="guide-step-icon">✍️</span>
+              <div><strong>2次筆記とMBA語彙も</strong>
+              <p>2次試験の答案練習（下書きは自動保存）と、MBA専門用語の学習もできます。</p></div>
+            </li>
+          </ol>
+          <p class="guide-note">学習記録はこの端末の中にだけ保存されます。このガイドは画面下の「使い方ガイド」からいつでも開けます。</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btnLaterGuide">あとで</button>
+          <button class="btn btn-primary" id="btnStartGuide">さっそく始める</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Toast Notification -->
     <div id="toastNotification" class="toast-popup" role="status" aria-live="polite"></div>
