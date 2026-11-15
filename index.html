@@ -1336,6 +1336,42 @@
       </button>
     </nav>
 
+    <!-- PRO Plan Modal (Phase 1-3) -->
+    <div id="proModal" class="case-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="proModalTitle">
+      <div class="pro-modal-card">
+        <div class="pro-modal-header">
+          <span class="pro-crown-badge">👑 BIZLOGIA PRO</span>
+          <button class="modal-close-btn" id="btnCloseProModal" aria-label="閉じる">×</button>
+        </div>
+        <h3 class="pro-modal-title" id="proModalTitle">PROプランで全機能を解放</h3>
+        <p class="pro-modal-desc">無料プランでは科目ごとに一部の問題まで。PROプランなら学習機能がすべて使い放題になります。現在は公開準備中です。</p>
+        <div class="pro-plan-toggle-row">
+          <button class="pro-plan-btn active" id="btnPlanYearly" type="button">
+            <span class="p-rec-tag">おすすめ</span>
+            <span class="p-plan-name">買い切りプラン</span>
+            <span class="p-plan-price">¥3,000</span>
+            <span class="p-period">一度の支払いでずっと使える</span>
+          </button>
+          <button class="pro-plan-btn" id="btnPlanMonthly" type="button">
+            <span class="p-plan-name">月額プラン</span>
+            <span class="p-plan-price">¥500</span>
+            <span class="p-period">/ 月（いつでも解約可）</span>
+          </button>
+        </div>
+        <div class="pro-perks-list">
+          <div class="perk-item"><span class="perk-check">✅</span><div><strong>全1,666問を解放</strong><p>1次試験の過去問とMBA用語の全問題にアクセスできます</p></div></div>
+          <div class="perk-item"><span class="perk-check">✅</span><div><strong>本番形式の模擬試験</strong><p>タイマー付き模試で時間配分と足切りラインをチェック</p></div></div>
+          <div class="perk-item"><span class="perk-check">✅</span><div><strong>忘却曲線レビュー（SRS）</strong><p>忘れかけた頃に自動で再出題。弱点だけを効率よく復習</p></div></div>
+          <div class="perk-item"><span class="perk-check">✅</span><div><strong>ブックマーク演習＆キーワード検索</strong><p>☆を付けた問題だけの演習と、全問題からの横断検索</p></div></div>
+          <div class="perk-item"><span class="perk-check">✅</span><div><strong>弱点分析レポート</strong><p>科目・分野ごとの正答率から、伸ばすべきポイントが見えます</p></div></div>
+        </div>
+        <div class="pro-modal-footer">
+          <button class="btn btn-primary btn-lg" id="btnStartTrial" type="button">📩 公開をメールで知らせる</button>
+          <p class="trial-note" id="proModalNote">公開時にご案内メールをお送りします。登録は無料です。</p>
+        </div>
+      </div>
+    </div>
+
     <!-- First-run Guide Modal -->
     <div id="guideModal" class="case-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="guideModalTitle">
       <div class="guide-modal-card">

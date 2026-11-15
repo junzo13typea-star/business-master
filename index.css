@@ -6973,7 +6973,22 @@ textarea {
 .pro-modal-card {
   background: linear-gradient(145deg, #ffffff 0%, #fff6e0 100%);
   color: var(--text-main);
+  border-color: #f0d48a;
+  box-shadow: 0 25px 60px rgba(56, 56, 92, 0.35);
 }
+.pro-modal-title { color: var(--text-main); }
+.pro-plan-btn { background: #ffffff; border-color: #ddd8ee; }
+.pro-plan-btn:hover { background: #f7f5ff; border-color: #9a97d9; }
+.pro-plan-btn.active {
+  background: #eef0ff;
+  border-color: #676bb3;
+  box-shadow: 0 0 0 2px rgba(103, 107, 179, 0.22);
+}
+.p-plan-name { color: var(--text-main); }
+.p-plan-price { color: #38385c; }
+.pro-perks-list { background: #fdfbf7; border-color: #eee7d8; }
+.perk-item strong { color: var(--text-main); }
+.pro-crown-badge { background: #feebc6; color: #92600a; border-color: #f0d48a; }
 .mode-switcher-bar {
   background: rgba(255, 255, 255, 0.78);
 }

@@ -3365,12 +3365,14 @@ function initProModal() {
     selectedProPlan = 'lifetime';
     ui.btnPlanYearly.classList.add('active');
     ui.btnPlanMonthly.classList.remove('active');
+    updateProCta();
   });
 
   ui.btnPlanMonthly?.addEventListener('click', () => {
     selectedProPlan = 'monthly';
     ui.btnPlanMonthly.classList.add('active');
     ui.btnPlanYearly.classList.remove('active');
+    updateProCta();
   });
 
   ui.btnStartTrial?.addEventListener('click', () => {
@@ -3384,12 +3386,12 @@ function initProModal() {
       return;
     }
 
-    // デモ・シミュレーションモード
-    showToast(`🎉 7日間のPRO無料トライアルを開始しました！（${selectedProPlan === 'lifetime' ? '買い切りプラン' : '月額プラン'}）`);
-    closeProModal();
-    if (ui.btnOpenProModal) {
-      ui.btnOpenProModal.textContent = '👑 PRO会員';
-      ui.btnOpenProModal.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    // 決済リンク未設定（公開準備中）：先行案内メール登録フォームを開く
+    const formUrl = CONFIG_OPERATOR.proNotifyFormUrl;
+    if (formUrl) {
+      window.open(formUrl, '_blank', 'noopener');
+    } else {
+      showToast('PROプランは現在公開準備中です。もうしばらくお待ちください。');
     }
   });
 
@@ -3399,8 +3401,24 @@ function initProModal() {
   });
 }
 
+// 選択中プランの決済リンク有無でCTAの文言を切り替える
+function updateProCta() {
+  const btn = ui.btnStartTrial;
+  if (!btn) return;
+  const link = CONFIG_OPERATOR.stripePaymentLinks[selectedProPlan];
+  const note = document.getElementById('proModalNote');
+  if (link && link.startsWith('http')) {
+    btn.textContent = '👑 PROプランを購入する';
+    if (note) note.textContent = '決済はStripeの安全なページで行われます。';
+  } else {
+    btn.textContent = '📩 公開をメールで知らせる';
+    if (note) note.textContent = '公開時にご案内メールをお送りします。登録は無料です。';
+  }
+}
+
 function openProModal() {
   if (ui.proModal) {
+    updateProCta();
     ui.proModal.style.display = 'flex';
     focusModalDialog(ui.proModal);
   } else {
