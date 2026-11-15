@@ -29,7 +29,7 @@
   <link rel="apple-touch-icon" href="icon-180.png">
 
   <!-- Security Headers: CSP, No-Sniff, Referrer -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://cloudflareinsights.com;">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -45,6 +45,9 @@
   </script>
 
   <link rel="stylesheet" href="index.css?v=22">
+
+  <!-- Cloudflare Web Analytics -->
+  <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "29d32818479341df9684a5dca334569a"}'></script>
 </head>
 <body class="theme-dark on-home-view">
   <!-- Dynamic Glow Backgrounds -->
