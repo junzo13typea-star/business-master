@@ -5793,6 +5793,55 @@ html, body {
    ========================================================================= */
 
 /* ホーム画面のバナー */
+/* 👑 PROプラン予告バナー (Phase 1-2) */
+.pro-teaser-banner {
+  background: linear-gradient(135deg, #7678c4, #9a97d9);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 8px 24px rgba(103, 107, 179, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  color: #ffffff;
+}
+.pro-teaser-text { flex: 1; min-width: 0; }
+.pro-teaser-tag {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #38385c;
+  background: #feebc6;
+  padding: 2px 9px;
+  border-radius: 12px;
+  margin-bottom: 0.4rem;
+}
+.pro-teaser-desc { font-size: 0.86rem; line-height: 1.55; margin: 0; }
+.pro-teaser-actions { display: flex; align-items: flex-start; gap: 0.5rem; flex-shrink: 0; }
+.pro-teaser-btn {
+  white-space: nowrap;
+  text-decoration: none;
+  background: #feebc6;
+  color: #38385c;
+}
+.pro-teaser-close {
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  color: #fff;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .pro-teaser-banner { flex-direction: column; align-items: stretch; }
+  .pro-teaser-actions { justify-content: space-between; }
+}
+
 .exam-break-banner {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%);
   border: 1.5px solid rgba(245, 158, 11, 0.45);

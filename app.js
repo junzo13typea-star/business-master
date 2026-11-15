@@ -19,7 +19,8 @@ const CONFIG_OPERATOR = {
   stripePaymentLinks: {
     lifetime: '', // Stripe Payment Link URL (買い切りプラン: ¥3,000 永久)
     monthly: ''   // Stripe Payment Link URL (月額プラン: ¥500/月)
-  }
+  },
+  proNotifyFormUrl: 'https://forms.gle/9pbGxvjpxEGBDymY9' // PROプラン先行案内メール登録 (Googleフォーム)
 };
 
 // Application State
@@ -391,6 +392,7 @@ function init() {
   initProModal();
   initLegalModal();
   initGuideModal();
+  initProTeaserBanner();
   initLtvFeatures();
   renderHomeScreen();
   initCaseExam();
@@ -3582,6 +3584,28 @@ function initGuideModal() {
   if (!seen) {
     setTimeout(openGuideModal, 700);
   }
+}
+
+// ==========================================================================
+// PROプラン予告バナー (Phase 1-2) — フォームURL未設定 or 閉じた後は表示しない
+// ==========================================================================
+const PRO_BANNER_DISMISSED_KEY = 'bizlogia_pro_banner_dismissed_v1';
+
+function initProTeaserBanner() {
+  const banner = document.getElementById('proTeaserBanner');
+  if (!banner) return;
+  const url = CONFIG_OPERATOR.proNotifyFormUrl;
+  if (!url) return;
+  let dismissed = null;
+  try { dismissed = localStorage.getItem(PRO_BANNER_DISMISSED_KEY); } catch (e) { dismissed = '1'; }
+  if (dismissed) return;
+  const btn = document.getElementById('proTeaserRegisterBtn');
+  if (btn) btn.href = url;
+  banner.style.display = 'flex';
+  document.getElementById('proTeaserCloseBtn')?.addEventListener('click', () => {
+    banner.style.display = 'none';
+    try { localStorage.setItem(PRO_BANNER_DISMISSED_KEY, '1'); } catch (e) { /* 保存できなくても閉じる */ }
+  });
 }
 
 // Global scope bindings for inline HTML handlers
