@@ -20,7 +20,16 @@ const CONFIG_OPERATOR = {
     lifetime: '', // Stripe Payment Link URL (買い切りプラン: ¥3,000 永久)
     monthly: ''   // Stripe Payment Link URL (月額プラン: ¥500/月)
   },
-  proNotifyFormUrl: 'https://forms.gle/9pbGxvjpxEGBDymY9' // PROプラン先行案内メール登録 (Googleフォーム)
+  proNotifyFormUrl: 'https://forms.gle/9pbGxvjpxEGBDymY9', // PROプラン先行案内メール登録 (Googleフォーム)
+  // 解放コードの SHA-256 ハッシュ（平文は運営台帳のみに保管。Phase 1-5）
+  unlockCodeHashes: [
+    'c70d3d27283a9d8be57c1bf53d81e1814ee70a109dacf2e0a0900c23f651c415',
+    'aa54fd5548d24dfb3fa9e4230b6df44a79c022836efa99cbd4e1f5662f2dcf7e',
+    '6bfba33c87671ffdb88d7d6dc99ee6c2eff6f2ad0396b2bfd7ae1f9c98932f94',
+    '77605170f5484a8801e40e182b50059a93aafe10bacb6d825a9273f58fa31c1c',
+    '2210b6dfa84cb15c680549a9393656f82afd8472f7a973bf4e5d6339b596639e',
+    '97bbd186469d176048c03ed7638592f66b5efa8e016cecf94ba9c3d551c696ec'
+  ]
 };
 
 // Application State
@@ -1324,6 +1333,14 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questio
   // Clear any existing timer
   if (state.session.timerId) clearInterval(state.session.timerId);
 
+  // === PROゲーティング (Phase 1-4): 模試・SRS復習・弱点・ブックマーク演習・検索はPRO専用 ===
+  if (!isProUser() && ['mock', 'weakness', 'bookmark', 'list', 'anki'].includes(mode)) {
+    showToast('この機能はPROプランで解放されます');
+    openProModal();
+    return;
+  }
+  let freeCapped = false;
+
   // 習慣化: セッションを直近学習として保存
   if (subjectId) {
     const subObj = SUBJECTS[subjectId];
@@ -1359,6 +1376,19 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questio
     // 小カテゴリ絞り込み（全範囲以外の場合）
     if (subCategoryId && subCategoryId !== 'all' && typeof getQuestionSubCategory === 'function') {
       qList = qList.filter(q => getQuestionSubCategory(q) === subCategoryId);
+    }
+
+    // 無料プランは科目ごとに直近2年分まで (Phase 1-4)
+    if (!isProUser()) {
+      const freeYears = getFreeYearsForSubject(subjectId);
+      const freeFiltered = qList.filter(q => freeYears.includes(q.year));
+      if (freeFiltered.length === 0) {
+        showToast('選択した年度はPROプランで解放されます');
+        openProModal();
+        return;
+      }
+      freeCapped = freeFiltered.length < qList.length;
+      qList = freeFiltered;
     }
 
     // 出題順序の適用（スマート均等ランダム または 順番に解く）
@@ -1434,6 +1464,9 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questio
 
   switchView('viewQuiz');
   loadQuestionInWorkspace(0);
+  if (freeCapped) {
+    showToast('無料プランでは直近2年分が対象です（全年度はPROで解放）');
+  }
 }
 
 function startMockTimer(seconds) {
@@ -1793,6 +1826,12 @@ function finalizeQuizSession() {
 // ==========================================================================
 
 function switchView(viewId) {
+  // PROゲーティング (Phase 1-4): 弱点・分析ビューはPRO専用
+  if ((viewId === 'viewWeakness' || viewId === 'viewAnalytics') && !isProUser()) {
+    showToast('この機能はPROプランで解放されます');
+    openProModal();
+    return;
+  }
   state.currentView = viewId;
   const allViews = [ui.viewHome, ui.viewMockExam, ui.viewWeakness, ui.viewQuiz, ui.viewResult, ui.viewAnalytics, ui.viewCaseExam, ui.viewMba];
   allViews.forEach(v => {
@@ -2987,6 +3026,8 @@ function renderMbaTopScreen() {
 }
 
 function startMbaQuiz(categoryId = null, count = 10, subCategoryId = 'all') {
+  // PROゲーティング (Phase 1-4): MBA語彙ドリルはPRO専用（用語の閲覧は無料のまま）
+  if (!requirePro()) return;
   // 習慣化: セッションを直近学習として保存
   if (categoryId) {
     const cat = (window.MBA_CATEGORIES || []).find(c => c.id === categoryId);
@@ -3069,6 +3110,8 @@ function startMbaQuiz(categoryId = null, count = 10, subCategoryId = 'all') {
 }
 
 function startMbaWeakQuiz(count = 10) {
+  // PROゲーティング (Phase 1-4)
+  if (!requirePro()) return;
   const allQs = window.MBA_VOCAB_QUESTIONS || [];
   const historyItems = state.history.items || {};
 
@@ -3355,6 +3398,38 @@ function updateStudyTimeUI() {
 // PROプラン (マネタイズ機能) モジュール
 // ==========================================================================
 
+const PRO_ENTITLEMENT_KEY = 'bizlogia_pro_entitlement_v1';
+
+// 解放コードで解放済みかどうか（端末内保存）
+function isProUser() {
+  try { return !!localStorage.getItem(PRO_ENTITLEMENT_KEY); } catch (e) { return false; }
+}
+
+// PRO専用機能の入口ガード: 未解放ならPROモーダルへ誘導
+function requirePro() {
+  if (isProUser()) return true;
+  showToast('この機能はPROプランで解放されます');
+  openProModal();
+  return false;
+}
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 無料プランで演習できる年度（科目ごとに直近2年分）
+function getFreeYearsForSubject(subjectId) {
+  // 年度は「令和8年度」形式。元年を1として数値化し、新しい順に並べる
+  const yearKey = (y) => {
+    const m = String(y).replace('元', '1').match(/\d+/);
+    return m ? parseInt(m[0], 10) : 0;
+  };
+  const years = [...new Set(QUESTIONS.filter(q => q.subject === subjectId).map(q => q.year))];
+  years.sort((a, b) => yearKey(b) - yearKey(a));
+  return years.slice(0, 2);
+}
+
 let selectedProPlan = 'lifetime';
 
 function initProModal() {
@@ -3375,7 +3450,29 @@ function initProModal() {
     updateProCta();
   });
 
+  // 解放コードの適用 (Phase 1-5)
+  document.getElementById('btnApplyUnlockCode')?.addEventListener('click', async () => {
+    const input = document.getElementById('proUnlockInput');
+    const msg = document.getElementById('proUnlockMsg');
+    const code = (input?.value || '').trim().toUpperCase();
+    if (!code) {
+      if (msg) msg.textContent = 'コードを入力してください';
+      return;
+    }
+    let hash = '';
+    try { hash = await sha256Hex(code); } catch (e) { /* 検証できない環境では未解放扱い */ }
+    if (hash && (CONFIG_OPERATOR.unlockCodeHashes || []).includes(hash)) {
+      try { localStorage.setItem(PRO_ENTITLEMENT_KEY, 'lifetime'); } catch (e) { /* 保存できなくても当面は閉じる */ }
+      if (msg) msg.textContent = '✅ PROプランを解放しました！';
+      showToast('🎉 PROプランが解放されました！');
+      setTimeout(closeProModal, 900);
+    } else {
+      if (msg) msg.textContent = 'コードが正しくありません。ご確認ください。';
+    }
+  });
+
   ui.btnStartTrial?.addEventListener('click', () => {
+    if (isProUser()) { closeProModal(); return; }
     const link = CONFIG_OPERATOR.stripePaymentLinks[selectedProPlan];
     if (link && link.startsWith('http')) {
       // 本番Stripe決済リンクへリダイレクト
@@ -3405,8 +3502,13 @@ function initProModal() {
 function updateProCta() {
   const btn = ui.btnStartTrial;
   if (!btn) return;
-  const link = CONFIG_OPERATOR.stripePaymentLinks[selectedProPlan];
   const note = document.getElementById('proModalNote');
+  if (isProUser()) {
+    btn.textContent = '✅ PROプラン解放済みです';
+    if (note) note.textContent = 'すべての機能をご利用いただけます。ありがとうございます！';
+    return;
+  }
+  const link = CONFIG_OPERATOR.stripePaymentLinks[selectedProPlan];
   if (link && link.startsWith('http')) {
     btn.textContent = '👑 PROプランを購入する';
     if (note) note.textContent = '決済はStripeの安全なページで行われます。';

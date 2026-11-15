@@ -1344,7 +1344,7 @@
           <button class="modal-close-btn" id="btnCloseProModal" aria-label="閉じる">×</button>
         </div>
         <h3 class="pro-modal-title" id="proModalTitle">PROプランで全機能を解放</h3>
-        <p class="pro-modal-desc">無料プランでは科目ごとに一部の問題まで。PROプランなら学習機能がすべて使い放題になります。現在は公開準備中です。</p>
+        <p class="pro-modal-desc">無料プランでは各科目の直近2年分まで。PROプランなら全年度・全機能が使い放題になります。現在は公開準備中です。</p>
         <div class="pro-plan-toggle-row">
           <button class="pro-plan-btn active" id="btnPlanYearly" type="button">
             <span class="p-rec-tag">おすすめ</span>
@@ -1368,6 +1368,14 @@
         <div class="pro-modal-footer">
           <button class="btn btn-primary btn-lg" id="btnStartTrial" type="button">📩 公開をメールで知らせる</button>
           <p class="trial-note" id="proModalNote">公開時にご案内メールをお送りします。登録は無料です。</p>
+        </div>
+        <div class="pro-unlock-row">
+          <p class="pro-unlock-label">🔑 解放コードをお持ちの方</p>
+          <div class="pro-unlock-form">
+            <input type="text" id="proUnlockInput" placeholder="コードを入力" autocomplete="off" spellcheck="false">
+            <button class="btn btn-secondary" id="btnApplyUnlockCode" type="button">解放する</button>
+          </div>
+          <p class="pro-unlock-msg" id="proUnlockMsg"></p>
         </div>
       </div>
     </div>

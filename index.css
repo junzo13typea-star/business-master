@@ -6989,6 +6989,29 @@ textarea {
 .pro-perks-list { background: #fdfbf7; border-color: #eee7d8; }
 .perk-item strong { color: var(--text-main); }
 .pro-crown-badge { background: #feebc6; color: #92600a; border-color: #f0d48a; }
+
+/* 解放コード入力 (Phase 1-5) */
+.pro-unlock-row {
+  border-top: 1px dashed #ddd8ee;
+  padding-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.pro-unlock-label { font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin: 0; }
+.pro-unlock-form { display: flex; gap: 0.5rem; }
+.pro-unlock-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1.5px solid #ddd8ee;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  background: #fff;
+  color: var(--text-main);
+}
+.pro-unlock-msg { font-size: 0.78rem; margin: 0; min-height: 1em; color: #059669; }
 .mode-switcher-bar {
   background: rgba(255, 255, 255, 0.78);
 }
