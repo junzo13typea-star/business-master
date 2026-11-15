@@ -1508,7 +1508,7 @@ function loadQuestionInWorkspace(index) {
   ui.quizProgressBarFill.style.width = `${pct}%`;
 
   ui.qCategoryChip.textContent = q.category || '重要論点';
-  const sourceLabel = q.term ? `⚡ 用語: ${q.term}` : (q.source || (q.year ? `${q.year}${q.questionNumber ? ' ' + q.questionNumber : ''}` : '精選過去問'));
+  const sourceLabel = q.term ? `⚡ 用語: ${q.term}` : (q.source || (q.year ? `${q.year}${q.questionNumber ? ' ' + q.questionNumber : ''}` : '精選演習問題'));
   ui.qSourceChip.textContent = sourceLabel;
   
   // Stars difficulty
@@ -2162,7 +2162,7 @@ function bindEventListeners() {
     pill.addEventListener('click', () => {
       state.selectedYear = pill.getAttribute('data-year');
       renderHomeScreen();
-      showToast(state.selectedYear === 'all' ? '全年度の精選問題を表示します' : `${state.selectedYear}の過去問に絞り込みました`);
+      showToast(state.selectedYear === 'all' ? '全年度の精選問題を表示します' : `${state.selectedYear}の演習問題に絞り込みました`);
     });
   });
 
@@ -3573,7 +3573,8 @@ const LEGAL_DOCS = {
         <h4>第2条（サービス内容および免責事項）</h4>
         <p>1. 本サービスは中小企業診断士試験およびMBA基礎知識に関する学習支援、模擬試験、用語演習、自己学習ログの提供を目的としています。<br>
         2. 当事務局は本サービスに掲載される問題、解説、シミュレーション結果の有用性に注意を払っておりますが、中小企業診断士試験の合格や特定の点数を保証するものではありません。<br>
-        3. 本サービスの利用によって利用者に生じたいかなる損害についても、当事務局に故意または重大な過失がある場合を除き責任を負いません。</p>
+        3. 本サービスの利用によって利用者に生じたいかなる損害についても、当事務局に故意または重大な過失がある場合を除き責任を負いません。<br>
+        4. 本サービスに収録する問題は、中小企業診断士試験の出題範囲および出題傾向をもとに当事務局が作成したオリジナルの演習問題であり、本試験問題そのものではありません。</p>
 
         <h4>第3条（知的財産権の帰属）</h4>
         <p>本サービスを構成するテキスト、問題文、解説、画像、プログラムコード等の著作権その他の知的財産権は当事務局に帰属します。無断で複製、転載、改変、公衆送信、二次配布等を行うことを固く禁止します。</p>
