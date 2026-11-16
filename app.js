@@ -17,8 +17,8 @@ const CONFIG_OPERATOR = {
   phone: '消費者からの請求があった場合には、遅滞なく電子メール等にて開示いたします。',
   url: 'https://bizlogia.kichiworks.com/',
   stripePaymentLinks: {
-    lifetime: '', // Stripe Payment Link URL (買い切りプラン: ¥3,000 永久)
-    monthly: ''   // Stripe Payment Link URL (月額プラン: ¥500/月)
+    lifetime: 'https://buy.stripe.com/3cI7sK1LybUq5cX6E9bo400', // Stripe Payment Link URL (買い切りプラン: ¥3,000 永久)
+    monthly: 'https://buy.stripe.com/fZu14m9e01fM7l5e6Bbo401'   // Stripe Payment Link URL (月額プラン: ¥500/月)
   },
   proNotifyFormUrl: 'https://forms.gle/9pbGxvjpxEGBDymY9', // PROプラン先行案内メール登録 (Googleフォーム)
   // 解放コードの SHA-256 ハッシュ（平文は運営台帳のみに保管。Phase 1-5）
@@ -3556,7 +3556,7 @@ const LEGAL_DOCS = {
           <tr><th>お支払い方法</th><td>クレジットカード決済（Visa, Mastercard, JCB, American Express 等）</td></tr>
           <tr><th>代金の支払時期</th><td>買い切りプランは購入時に即時決済（1回のみ、自動更新なし）。月額プランは初回登録時に即時決済、以後は解約手続きが完了するまで毎月自動更新されます。</td></tr>
           <tr><th>サービスの提供時期</th><td>クレジットカード決済完了後、即時に全機能がご利用いただけます。</td></tr>
-          <tr><th>返品・キャンセル・解約について</th><td>デジタルコンテンツの性質上、決済完了後の返品・キャンセルおよび日割り精算による返金はお受けしておりません（当事務局の責めに帰すべき事由によりサービスが利用できない場合を除きます）。<br>月額プランの解約は、次回更新日の前日までに、購入完了メールに記載の方法または support@kichiworks.com へのご連絡によりいつでも手続きが可能です。解約後、次回更新日以降の請求は発生せず、現在の契約期間満了日までは引き続きPRO機能をご利用いただけます。</td></tr>
+          <tr><th>返品・キャンセル・解約について</th><td>デジタルコンテンツの性質上、決済完了後の返品・キャンセルおよび日割り精算による返金はお受けしておりません（当事務局の責めに帰すべき事由によりサービスが利用できない場合を除きます）。<br>月額プランの解約は、次回更新日の前日までに、support@kichiworks.com へメールでご連絡いただくことでいつでも手続きが可能です（アプリ内に解約画面はありません）。解約後、次回更新日以降の請求は発生せず、現在の契約期間満了日までは引き続きPRO機能をご利用いただけます。</td></tr>
           <tr><th>サービスの変更・終了について</th><td>機能の追加・変更、問題データの更新等により、サービス内容が変更される場合があります。本サービスの提供を終了する場合は、原則として終了日の30日前までに本サイト上で告知します。なお、変更・終了に伴う返金は行いません。</td></tr>
           <tr><th>動作環境</th><td>最新版の Google Chrome, Safari, Microsoft Edge, Firefox（iOS, Android, macOS, Windows）</td></tr>
         </table>
@@ -3741,13 +3741,30 @@ const PRO_BANNER_DISMISSED_KEY = 'bizlogia_pro_banner_dismissed_v1';
 function initProTeaserBanner() {
   const banner = document.getElementById('proTeaserBanner');
   if (!banner) return;
-  const url = CONFIG_OPERATOR.proNotifyFormUrl;
-  if (!url) return;
   let dismissed = null;
   try { dismissed = localStorage.getItem(PRO_BANNER_DISMISSED_KEY); } catch (e) { dismissed = '1'; }
   if (dismissed) return;
   const btn = document.getElementById('proTeaserRegisterBtn');
-  if (btn) btn.href = url;
+  const links = CONFIG_OPERATOR.stripePaymentLinks || {};
+  const salesLive = [links.lifetime, links.monthly].some((l) => typeof l === 'string' && l.startsWith('http'));
+  if (salesLive) {
+    // 販売開始後: 予告ではなく購入導線に切り替える（PRO解放済みのユーザーには表示しない）
+    if (typeof isProUser === 'function' && isProUser()) return;
+    const tag = banner.querySelector('.pro-teaser-tag');
+    if (tag) tag.textContent = '👑 PROプラン販売中';
+    const desc = banner.querySelector('.pro-teaser-desc');
+    if (desc) desc.textContent = '全1,666問・模試・復習機能が使い放題に。月額¥500／買い切り¥3,000。';
+    if (btn) {
+      btn.textContent = '👑 PROプランを見る';
+      btn.removeAttribute('href');
+      btn.removeAttribute('target');
+      btn.addEventListener('click', (e) => { e.preventDefault(); openProModal(); });
+    }
+  } else {
+    const url = CONFIG_OPERATOR.proNotifyFormUrl;
+    if (!url) return;
+    if (btn) btn.href = url;
+  }
   banner.style.display = 'flex';
   document.getElementById('proTeaserCloseBtn')?.addEventListener('click', () => {
     banner.style.display = 'none';
