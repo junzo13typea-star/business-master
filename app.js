@@ -1368,6 +1368,7 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questio
   state.session.answered = false;
   state.session.eliminated.clear();
   state.session.subjectResults = {};
+  state.session.mockSubjectId = null;
 
   if (mode === 'subject') {
     let qList = QUESTIONS.filter(q => q.subject === subjectId);
@@ -1426,16 +1427,30 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questio
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'mock') {
     // 完全予想模擬試験: 予測作問220問（MOCK_PREDICTED_QUESTIONS）を優先し、なければ従来のID厳選にフォールバック
-    if (typeof MOCK_PREDICTED_QUESTIONS !== 'undefined' && MOCK_PREDICTED_QUESTIONS.length) {
-      state.session.questions = MOCK_PREDICTED_QUESTIONS.slice();
+    const predicted = (typeof MOCK_PREDICTED_QUESTIONS !== 'undefined' && MOCK_PREDICTED_QUESTIONS.length)
+      ? MOCK_PREDICTED_QUESTIONS : null;
+    const subjectExam = (predicted && subjectId && typeof MOCK_SUBJECT_EXAMS !== 'undefined')
+      ? MOCK_SUBJECT_EXAMS.find(e => e.subject === subjectId) : null;
+    if (subjectExam) {
+      // 科目別模試: その科目の予想問題だけを、本試験と同じ科目別制限時間で実施
+      state.session.questions = predicted.filter(q => q.subject === subjectId);
+      state.session.mockSubjectId = subjectId;
+      ui.quizModePill.textContent = `⏱ 予想模試（科目別）: ${SUBJECTS[subjectId].name}`;
+      ui.examTimerBox.style.display = 'flex';
+      startMockTimer(subjectExam.minutes * 60);
+    } else if (predicted) {
+      state.session.questions = predicted.slice();
+      ui.quizModePill.textContent = '⏱ 2027年度 完全予想模擬試験';
+      ui.examTimerBox.style.display = 'flex';
+      startMockTimer(MOCK_EXAM_CONFIG.timeLimitMinutes * 60);
     } else {
       state.session.questions = MOCK_EXAM_CONFIG.questionIds
         .map(id => QUESTIONS.find(q => q.id === id))
         .filter(Boolean);
+      ui.quizModePill.textContent = '⏱ 2027年度 完全予想模擬試験';
+      ui.examTimerBox.style.display = 'flex';
+      startMockTimer(MOCK_EXAM_CONFIG.timeLimitMinutes * 60);
     }
-    ui.quizModePill.textContent = '⏱ 2027年度 完全予想模擬試験';
-    ui.examTimerBox.style.display = 'flex';
-    startMockTimer(MOCK_EXAM_CONFIG.timeLimitMinutes * 60);
   } else if (mode === 'weakness') {
     state.session.questions = sortQuestionsByOrder(getWeaknessQuestions(), state.quizOrderMode);
     ui.quizModePill.textContent = '⚠️ 弱点克服';
@@ -1798,6 +1813,24 @@ function finalizeQuizSession() {
     ui.resultCutoffStatus.style.color = 'var(--color-rose)';
   }
 
+  // 科目別模試では判定文言をその科目の基準に合わせる
+  if (state.session.mockSubjectId) {
+    const subName = (SUBJECTS[state.session.mockSubjectId] || {}).name || 'この科目';
+    if (passed) {
+      ui.resultBadgeVerdict.textContent = '🎉 科目別模試 合格ライン達成！';
+      ui.resultHeadline.textContent = `${subName}: ${overallPct >= 80 ? 'A' : 'B'} 判定`;
+      ui.resultSubDesc.textContent = `${subName}は本試験の合格ライン（60%以上、足切り40%未満なし）を満たしています！`;
+      ui.resultCutoffStatus.textContent = '基準クリア (この科目)';
+    } else {
+      ui.resultBadgeVerdict.textContent = '⚠️ 科目別模試 合格ライン未到達';
+      ui.resultHeadline.textContent = `${subName}: 合格基準 未到達`;
+      ui.resultSubDesc.textContent = hasCutoff
+        ? `${subName}が足切りライン（40%）を下回っています。本試験では他科目が高得点でも不合格になるため、底上げが最優先です。`
+        : `${subName}は合格ライン（60%）に届きませんでした。要点暗記と問題演習を継続しましょう。`;
+      ui.resultCutoffStatus.textContent = hasCutoff ? `足切りあり (${subName})` : 'なし (この科目の得点不足)';
+    }
+  }
+
   // Render subject breakdown table
   if (ui.resultSubjectScoresList) {
     ui.resultSubjectScoresList.innerHTML = Object.keys(state.session.subjectResults).map(subKey => {
@@ -2109,6 +2142,9 @@ function bindEventListeners() {
 
   // Mock Exam
   ui.btnStartMockExam?.addEventListener('click', () => startQuizSession('mock'));
+  document.querySelectorAll('.mock-subject-btn').forEach(btn => {
+    btn.addEventListener('click', () => startQuizSession('mock', btn.dataset.subject));
+  });
 
   // Weakness Drill
   ui.btnStartWeaknessDrill?.addEventListener('click', () => startQuizSession('weakness'));

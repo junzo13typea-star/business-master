@@ -645,3 +645,15 @@ const MOCK_EXAM_CONFIG = {
     return picked;
   })()
 };
+
+// 科目別模試: 本試験の科目別制限時間（分）。問題は MOCK_PREDICTED_QUESTIONS を科目で絞り込む。
+// 収録順は本試験の実施順（合計 510 分 = 全科目模試と一致）。
+const MOCK_SUBJECT_EXAMS = [
+  { subject: 'economics', minutes: 60 },
+  { subject: 'finance', minutes: 60 },
+  { subject: 'management', minutes: 90 },
+  { subject: 'operations', minutes: 90 },
+  { subject: 'law', minutes: 60 },
+  { subject: 'it', minutes: 60 },
+  { subject: 'policy', minutes: 90 }
+];
