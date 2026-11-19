@@ -581,21 +581,21 @@
            =================================================================== -->
       <section id="viewMockExam" class="stage-view">
         <div class="mock-intro-card">
-          <div class="mock-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">🌟 2026/2027年度 最新本試験完全予想</div>
-          <h2 class="mock-title">2026/2027年度 中小企業診断士1次試験 最新予想模擬試験</h2>
+          <div class="mock-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">🌟 2027年度 本試験完全予想</div>
+          <h2 class="mock-title">2027年度 中小企業診断士1次試験 完全予想模擬試験</h2>
           <p class="mock-desc">
-            来年の診断士本試験の出題傾向を徹底分析。全7科目から合否を分ける超頻出テーマ（両利きの経営・人的資本経営・新リース会計・東証PBR改革・スマートファクトリー・ゼロトラストセキュリティ・意匠商標法改正・生成AI等）を各科目4問、計28問厳選。
+            過去8年分の出題傾向を分析し、次回本試験の出題内容を予測して全問を新規作問。本試験と同じ科目別問題数（経済学・財務・会計・経営法務・経営情報システム＝25問、企業経営理論・運営管理・中小企業経営・政策＝40問）の全220問で、定番論点に加え新リース会計・フリーランス新法・生成AIと著作権・賃上げ促進税制などの最新テーマを織り込んでいます。
             本番同様の緊張感で、全体得点と各科目の「足切りリスク（40%未満）」を精密に測定します。
           </p>
 
           <div class="mock-params-grid">
             <div class="param-card">
               <span class="param-label">出題数</span>
-              <span class="param-val" id="mockQuestionCountText">28 問</span>
+              <span class="param-val" id="mockQuestionCountText">220 問</span>
             </div>
             <div class="param-card">
               <span class="param-label">制限時間</span>
-              <span class="param-val">60 分</span>
+              <span class="param-val">510 分</span>
             </div>
             <div class="param-card">
               <span class="param-label">合格基準</span>
@@ -608,7 +608,7 @@
           </div>
 
           <div class="mock-compliance-info">
-            <strong>🛡️ 法改正保証:</strong> 本模擬試験は、令和元年会社法改正、意匠法改正（出願25年）、現行中小企業基本法基準に完全対応しています。法改正による誤った知識の定着を防ぎます。
+            <strong>🛡️ 法改正対応:</strong> 本模擬試験は、施行済みの最新の法制度（新リース会計基準、フリーランス・事業者間取引適正化等法、相続登記の義務化、改正商標法のコンセント制度など）を前提に作問しています。法改正による誤った知識の定着を防ぎます。
           </div>
 
           <button id="btnStartMockExam" class="btn btn-primary btn-lg btn-block pulse-btn">
@@ -1468,6 +1468,9 @@
 
   <!-- Exam Break Modules (当日の休憩時間専用 直前ファイナルチャージ) -->
   <script src="data/exam_break_data.js"></script>
+
+  <!-- Predicted Mock Exam (完全予想模擬試験 全220問) -->
+  <script src="data/mock_predicted.js"></script>
 
   <!-- Character & Sound Engines (AI感払拭・Duolingo風インタラクション) -->
   <script src="sound.js?v=22"></script>

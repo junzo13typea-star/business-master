@@ -393,7 +393,10 @@ function init() {
   restoreFontScale();
   verifyDailyStreak();
   if (ui.mockQuestionCountText && typeof MOCK_EXAM_CONFIG !== 'undefined') {
-    ui.mockQuestionCountText.textContent = `${MOCK_EXAM_CONFIG.questionIds.length} 問`;
+    const mockCount = (typeof MOCK_PREDICTED_QUESTIONS !== 'undefined' && MOCK_PREDICTED_QUESTIONS.length)
+      ? MOCK_PREDICTED_QUESTIONS.length
+      : MOCK_EXAM_CONFIG.questionIds.length;
+    ui.mockQuestionCountText.textContent = `${mockCount} 問`;
   }
   updatePassMetricsUI();
   updatePlayerLevelUI();
@@ -1422,11 +1425,15 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questio
     ui.quizModePill.textContent = `⚡ スピード用語マスター${orderSuffix}${countSuffix}`;
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'mock') {
-    // 予想模擬試験: MOCK_EXAM_CONFIG から厳選出題
-    state.session.questions = MOCK_EXAM_CONFIG.questionIds
-      .map(id => QUESTIONS.find(q => q.id === id))
-      .filter(Boolean);
-    ui.quizModePill.textContent = '⏱ 2026/2027年 予想模擬試験';
+    // 完全予想模擬試験: 予測作問220問（MOCK_PREDICTED_QUESTIONS）を優先し、なければ従来のID厳選にフォールバック
+    if (typeof MOCK_PREDICTED_QUESTIONS !== 'undefined' && MOCK_PREDICTED_QUESTIONS.length) {
+      state.session.questions = MOCK_PREDICTED_QUESTIONS.slice();
+    } else {
+      state.session.questions = MOCK_EXAM_CONFIG.questionIds
+        .map(id => QUESTIONS.find(q => q.id === id))
+        .filter(Boolean);
+    }
+    ui.quizModePill.textContent = '⏱ 2027年度 完全予想模擬試験';
     ui.examTimerBox.style.display = 'flex';
     startMockTimer(MOCK_EXAM_CONFIG.timeLimitMinutes * 60);
   } else if (mode === 'weakness') {
@@ -3677,7 +3684,14 @@ const LEGAL_DOCS = {
 
         <h4>iPhoneで学習データが消えてしまう場合</h4>
         <p>iPhoneのSafariには、長期間開いていないサイトの保存データを自動的に削除する仕様があり、しばらく使わないとレベルや学習記録が初期状態に戻ることがあります。<br>
-        対策として「ホーム画面への追加」をおすすめします。Safariで本サービスを開き、共有ボタン（□に↑のマーク）から「ホーム画面に追加」を選んでください。ホーム画面から起動するアプリは自動削除の対象から外れ、全画面でも快適にご利用いただけます。</p>
+        対策として「ホーム画面への追加」をおすすめします。ホーム画面から起動するアプリは自動削除の対象から外れ、全画面でも快適にご利用いただけます。</p>
+
+        <h4>iPhoneにアイコンを追加する方法（ホーム画面に追加）</h4>
+        <p>1. Safariで本サービス（bizlogia.kichiworks.com）を開きます。<br>
+        2. 画面下部の共有ボタン（□に↑のマーク）をタップします。<br>
+        3. メニューを下にスクロールして「ホーム画面に追加」をタップします。<br>
+        4. 右上の「追加」をタップすると、ホーム画面にアイコンが追加されます。<br>
+        以後はそのアイコンから直接開けます。</p>
 
         <h4>学習データが消えるその他のケース</h4>
         <p>ブラウザの設定で「サイトデータを削除」すると、学習データも削除されます。また、プライベートブラウズ（シークレットモード）ではデータが保存されませんので、通常のモードでご利用ください。</p>
