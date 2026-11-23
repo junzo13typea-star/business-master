@@ -1551,15 +1551,16 @@
   <!-- Exam Break Modules (当日の休憩時間専用 直前ファイナルチャージ) -->
   <script src="data/exam_break_data.js"></script>
 
-  <!-- Predicted Mock Exam (完全予想模擬試験 全220問) -->
-  <script src="data/mock_predicted.js"></script>
+  <!-- Predicted Mock Exam (完全予想模擬試験 全220問): 遅延読み込み（U5）。
+       初期表示では読み込まず、模試イントロ表示時（PROのみ）に app.js の
+       ensureMockPredictedLoaded() が data/mock_predicted.js を動的追加する。 -->
 
   <!-- Character & Sound Engines (AI感払拭・Duolingo風インタラクション) -->
   <script src="sound.js?v=22"></script>
   <script src="character.js?v=22"></script>
 
   <script src="questions.js?v=22"></script>
-  <script src="app.js?v=22"></script>
+  <script src="app.js?v=23"></script>
 
   <!-- Service Worker for Offline / PWA Support & Automatic Update Flow -->
   <script>

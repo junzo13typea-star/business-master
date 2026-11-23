@@ -388,16 +388,76 @@ const ui = {
 // Initialization & LocalStorage Management
 // ==========================================================================
 
+// == MOCK_LAZY_LOAD_START ==
+// 予想模試データ（data/mock_predicted.js, 約465KB）の遅延読み込み（U5）。
+// 初期表示では読み込まず、模試イントロ表示時（PROのみ）に先読みし、
+// 開始時までに未完了なら開始処理が完了を待つ。読み込み失敗時は
+// 従来の厳選問題フォールバック（MOCK_EXAM_CONFIG.questionIds）で開始する。
+// SW は network-first + 実行時キャッシュのため、一度読み込めばオフラインでも使える。
+let mockPredictedLoadPromise = null;
+
+function isMockPredictedLoaded() {
+  return typeof MOCK_PREDICTED_QUESTIONS !== 'undefined' && MOCK_PREDICTED_QUESTIONS.length > 0;
+}
+
+function ensureMockPredictedLoaded() {
+  if (isMockPredictedLoaded()) return Promise.resolve(true);
+  if (mockPredictedLoadPromise) return mockPredictedLoadPromise;
+  mockPredictedLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'data/mock_predicted.js';
+    script.onload = () => {
+      if (isMockPredictedLoaded()) resolve(true);
+      else { mockPredictedLoadPromise = null; reject(new Error('mock data empty')); }
+    };
+    script.onerror = () => {
+      mockPredictedLoadPromise = null;
+      if (script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error('mock data load failed'));
+    };
+    document.head.appendChild(script);
+  });
+  return mockPredictedLoadPromise;
+}
+
+// 模試開始ボタンの読み込み中表示：無効化＋ラベル切替＋CSSパルス（index.css .mock-loading）
+function setMockButtonsLoading(loading) {
+  const startBtn = ui.btnStartMockExam;
+  if (startBtn) {
+    startBtn.disabled = loading;
+    startBtn.classList.toggle('mock-loading', loading);
+    const label = startBtn.querySelector('span');
+    if (label) label.textContent = loading ? '⏳ 予想問題を読み込み中…' : '⏱ 模擬試験を開始する';
+  }
+  document.querySelectorAll('.mock-subject-btn').forEach(btn => { btn.disabled = loading; });
+}
+
+// 模試イントロ表示時の先読み（PROのみ。無料ユーザーは開始時にPROモーダルが出るため読み込まない）
+function prefetchMockPredicted() {
+  if (!isProUser() || isMockPredictedLoaded()) return;
+  setMockButtonsLoading(true);
+  ensureMockPredictedLoaded().then(() => {
+    setMockButtonsLoading(false);
+    updateMockQuestionCount();
+  }).catch(() => {
+    setMockButtonsLoading(false);
+    showToast('予想問題の読み込みに失敗しました。開始時は厳選問題で実施します');
+  });
+}
+
+function updateMockQuestionCount() {
+  if (ui.mockQuestionCountText && isMockPredictedLoaded()) {
+    ui.mockQuestionCountText.textContent = `${MOCK_PREDICTED_QUESTIONS.length} 問`;
+  }
+}
+// == MOCK_LAZY_LOAD_END ==
+
 function init() {
   bindEventListeners();
   restoreFontScale();
   verifyDailyStreak();
-  if (ui.mockQuestionCountText && typeof MOCK_EXAM_CONFIG !== 'undefined') {
-    const mockCount = (typeof MOCK_PREDICTED_QUESTIONS !== 'undefined' && MOCK_PREDICTED_QUESTIONS.length)
-      ? MOCK_PREDICTED_QUESTIONS.length
-      : MOCK_EXAM_CONFIG.questionIds.length;
-    ui.mockQuestionCountText.textContent = `${mockCount} 問`;
-  }
+  // 模試の問題数は遅延読み込み完了後に updateMockQuestionCount() で反映する。
+  // それまでは index.html の静的表示「220 問」のまま（未読み込み時のフォールバック件数は表示しない）。
   updatePassMetricsUI();
   updatePlayerLevelUI();
   initStudyTracker();
@@ -1332,7 +1392,7 @@ function sortQuestionsByOrder(questions, orderMode = 'smart_random') {
   });
 }
 
-function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questionCount = 'all') {
+async function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questionCount = 'all') {
   // Clear any existing timer
   if (state.session.timerId) clearInterval(state.session.timerId);
 
@@ -1427,6 +1487,14 @@ function startQuizSession(mode, subjectId = null, subCategoryId = 'all', questio
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'mock') {
     // 完全予想模擬試験: 予測作問220問（MOCK_PREDICTED_QUESTIONS）を優先し、なければ従来のID厳選にフォールバック
+    // 予想問題データは遅延読み込みのため、未完了ならここで完了を待つ（失敗時はフォールバックで開始）。
+    if (!isMockPredictedLoaded()) {
+      setMockButtonsLoading(true);
+      showToast('予想問題を読み込んでいます…');
+      try { await ensureMockPredictedLoaded(); }
+      catch (e) { console.warn('mock data load failed, using fallback:', e); }
+      setMockButtonsLoading(false);
+    }
     const predicted = (typeof MOCK_PREDICTED_QUESTIONS !== 'undefined' && MOCK_PREDICTED_QUESTIONS.length)
       ? MOCK_PREDICTED_QUESTIONS : null;
     const subjectExam = (predicted && subjectId && typeof MOCK_SUBJECT_EXAMS !== 'undefined')
@@ -1894,6 +1962,7 @@ function switchView(viewId) {
 
   if (viewId === 'viewHome') renderHomeScreen();
   if (viewId === 'viewAnalytics') renderAnalyticsScreen();
+  if (viewId === 'viewMockExam') prefetchMockPredicted();
   if (viewId === 'viewMba') {
     if (ui.mbaQuizView.style.display !== 'none') {
       // Keep quiz in progress

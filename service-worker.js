@@ -1,5 +1,5 @@
 // Service Worker for ビズロギア (PWA / オフライン動作対応)
-const CACHE_NAME = 'shindanshi-master-v58';
+const CACHE_NAME = 'shindanshi-master-v59';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -29,8 +29,9 @@ const ASSETS_TO_CACHE = [
   './data/vocab_law.js',
   './data/vocab_it.js',
   './data/vocab_policy.js',
-  './data/cases_data.js',
-  './data/mock_predicted.js'
+  './data/cases_data.js'
+  // './data/mock_predicted.js' は遅延読み込み（U5）のため事前キャッシュしない。
+  // 動的読み込み時に SW の fetch ハンドラ（network-first）が実行時キャッシュする。
 ];
 
 // Install: すべての主要ファイルを事前キャッシュし、即時アクティベート
