@@ -7514,3 +7514,43 @@ textarea {
   color: var(--text-muted);
   white-space: nowrap;
 }
+
+/* Soft Owl Theme 追補 (2026-11-24): 解説ドロワーの淡色文字是正3（暗記ポイント本文・正解選択肢の解説） */
+.keypoint-body {
+  color: #7c4a03;
+}
+.breakdown-item.is-correct-opt {
+  color: #047857;
+}
+
+/* 購入導線の摩擦点検 (U8, 2026-11-24): 購入後の流れの明示＋解放コード入力の改善 */
+.pro-purchase-flow {
+  background: #f7f5ff;
+  border: 1px solid #e3dcf7;
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+}
+.pro-flow-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #4c4f9e;
+  margin: 0 0 0.3rem;
+}
+.pro-flow-steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--text-main);
+}
+.pro-unlock-msg.is-ok { color: #059669; }
+.pro-unlock-msg.is-error { color: #dc2626; }
+.pro-unlock-form input.is-shake { animation: proShake 0.35s ease; }
+@keyframes proShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pro-unlock-form input.is-shake { animation: none; }
+}

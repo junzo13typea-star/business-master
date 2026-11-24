@@ -1457,10 +1457,18 @@
           <button class="btn btn-primary btn-lg" id="btnStartTrial" type="button">📩 公開をメールで知らせる</button>
           <p class="trial-note" id="proModalNote">公開時にご案内メールをお送りします。登録は無料です。</p>
         </div>
+        <div class="pro-purchase-flow">
+          <p class="pro-flow-title">購入後の流れ</p>
+          <ol class="pro-flow-steps">
+            <li>「PROプランを購入する」からStripeの安全なページで決済</li>
+            <li>決済完了後、通常24時間以内に解放コードをメールでお届け</li>
+            <li>届いたコードを下の入力欄に入れて「解放する」をタップ</li>
+          </ol>
+        </div>
         <div class="pro-unlock-row">
           <p class="pro-unlock-label">🔑 解放コードをお持ちの方</p>
           <div class="pro-unlock-form">
-            <input type="text" id="proUnlockInput" placeholder="コードを入力" autocomplete="off" spellcheck="false">
+            <input type="text" id="proUnlockInput" placeholder="コードを入力" autocomplete="off" spellcheck="false" autocapitalize="characters" enterkeyhint="go">
             <button class="btn btn-secondary" id="btnApplyUnlockCode" type="button">解放する</button>
           </div>
           <p class="pro-unlock-msg" id="proUnlockMsg"></p>
@@ -1560,7 +1568,7 @@
   <script src="character.js?v=22"></script>
 
   <script src="questions.js?v=22"></script>
-  <script src="app.js?v=23"></script>
+  <script src="app.js?v=24"></script>
 
   <!-- Service Worker for Offline / PWA Support & Automatic Update Flow -->
   <script>

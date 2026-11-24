@@ -3544,6 +3544,49 @@ function getFreeYearsForSubject(subjectId) {
 
 let selectedProPlan = 'lifetime';
 
+// 解放コードの正規化: 全角英数字→半角、空白類を除去、大文字化。
+// メールからのコピペで混じる全角・改行・空白の揺れを吸収する。
+function normalizeUnlockCode(code) {
+  return String(code || '')
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/\s+/g, '')
+    .toUpperCase();
+}
+
+// 解放コードの適用 (Phase 1-5)
+// 入力そのままのハッシュを先に試し、ダメなら正規化後のハッシュも試す
+// （正規化は受付を広げるだけで、従来通るコードが通らなくなることはない）。
+async function applyUnlockCode() {
+  const input = document.getElementById('proUnlockInput');
+  const msg = document.getElementById('proUnlockMsg');
+  const raw = (input?.value || '').trim().toUpperCase();
+  if (!raw) {
+    if (msg) { msg.textContent = 'コードを入力してください'; msg.className = 'pro-unlock-msg is-error'; }
+    return;
+  }
+  const candidates = [raw, normalizeUnlockCode(raw)];
+  let ok = false;
+  for (const code of candidates) {
+    let hash = '';
+    try { hash = await sha256Hex(code); } catch (e) { /* 検証できない環境では未解放扱い */ }
+    if (hash && (CONFIG_OPERATOR.unlockCodeHashes || []).includes(hash)) { ok = true; break; }
+  }
+  if (ok) {
+    try { localStorage.setItem(PRO_ENTITLEMENT_KEY, 'lifetime'); } catch (e) { /* 保存できなくても当面は閉じる */ }
+    if (msg) { msg.textContent = '✅ PROプランを解放しました！'; msg.className = 'pro-unlock-msg is-ok'; }
+    showToast('🎉 PROプランが解放されました！');
+    setTimeout(closeProModal, 900);
+  } else {
+    if (msg) { msg.textContent = 'コードが正しくありません。ご確認ください。'; msg.className = 'pro-unlock-msg is-error'; }
+    if (input?.classList) {
+      input.classList.remove('is-shake');
+      void input.offsetWidth; // アニメーションを再発火させる
+      input.classList.add('is-shake');
+      setTimeout(() => input.classList.remove('is-shake'), 400);
+    }
+  }
+}
+
 function initProModal() {
   ui.btnOpenProModal?.addEventListener('click', openProModal);
   ui.btnCloseProModal?.addEventListener('click', closeProModal);
@@ -3562,25 +3605,10 @@ function initProModal() {
     updateProCta();
   });
 
-  // 解放コードの適用 (Phase 1-5)
-  document.getElementById('btnApplyUnlockCode')?.addEventListener('click', async () => {
-    const input = document.getElementById('proUnlockInput');
-    const msg = document.getElementById('proUnlockMsg');
-    const code = (input?.value || '').trim().toUpperCase();
-    if (!code) {
-      if (msg) msg.textContent = 'コードを入力してください';
-      return;
-    }
-    let hash = '';
-    try { hash = await sha256Hex(code); } catch (e) { /* 検証できない環境では未解放扱い */ }
-    if (hash && (CONFIG_OPERATOR.unlockCodeHashes || []).includes(hash)) {
-      try { localStorage.setItem(PRO_ENTITLEMENT_KEY, 'lifetime'); } catch (e) { /* 保存できなくても当面は閉じる */ }
-      if (msg) msg.textContent = '✅ PROプランを解放しました！';
-      showToast('🎉 PROプランが解放されました！');
-      setTimeout(closeProModal, 900);
-    } else {
-      if (msg) msg.textContent = 'コードが正しくありません。ご確認ください。';
-    }
+  // 解放コードの適用 (Phase 1-5): ボタン＋Enterキー
+  document.getElementById('btnApplyUnlockCode')?.addEventListener('click', applyUnlockCode);
+  document.getElementById('proUnlockInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); applyUnlockCode(); }
   });
 
   ui.btnStartTrial?.addEventListener('click', () => {
@@ -3588,7 +3616,7 @@ function initProModal() {
     const link = CONFIG_OPERATOR.stripePaymentLinks[selectedProPlan];
     if (link && link.startsWith('http')) {
       // 本番Stripe決済リンクへリダイレクト
-      showToast('Stripe安全決済ページへ移動します...');
+      showToast('Stripeの決済ページへ移動します。コードは決済後にメールでお届けします。');
       setTimeout(() => {
         window.location.href = link;
       }, 500);
@@ -3623,7 +3651,9 @@ function updateProCta() {
   const link = CONFIG_OPERATOR.stripePaymentLinks[selectedProPlan];
   if (link && link.startsWith('http')) {
     btn.textContent = '👑 PROプランを購入する';
-    if (note) note.textContent = '決済はStripeの安全なページで行われます。';
+    if (note) note.textContent = selectedProPlan === 'monthly'
+      ? `決済はStripeの安全なページで行われます。解約は ${CONFIG_OPERATOR.email} へのメールでいつでも可能です。`
+      : '決済はStripeの安全なページで行われます。購入後の流れは下をご覧ください。';
   } else {
     btn.textContent = '📩 公開をメールで知らせる';
     if (note) note.textContent = '公開時にご案内メールをお送りします。登録は無料です。';
