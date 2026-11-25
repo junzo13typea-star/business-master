@@ -316,6 +316,10 @@ const ui = {
   weaknessActionArea: document.getElementById('weaknessActionArea'),
   btnStartWeaknessDrill: document.getElementById('btnStartWeaknessDrill'),
   btnEmptyGoSubjects: document.getElementById('btnEmptyGoSubjects'),
+  // U9: 弱点内訳・ホウ助応援
+  weaknessSubjectBreakdown: document.getElementById('weaknessSubjectBreakdown'),
+  weakHousukeAvatar: document.getElementById('weakHousukeAvatar'),
+  weakHousukeText: document.getElementById('weakHousukeText'),
 
   // Bookmark Drill & Question Search (Home)
   btnStartBookmarkDrill: document.getElementById('btnStartBookmarkDrill'),
@@ -927,6 +931,107 @@ function getWeaknessQuestions() {
   });
 }
 
+// ==========================================================================
+// U9: 弱点内訳・ホウ助応援 (SW v62)
+// ==========================================================================
+
+// 科目別弱点集計（純粋関数）: 弱点問題リストから科目ごとの件数を数え、多い順に並べる
+function getWeaknessBreakdown(weakQuestions, subjects) {
+  const counts = {};
+  (weakQuestions || []).forEach(q => {
+    if (q && q.subject) counts[q.subject] = (counts[q.subject] || 0) + 1;
+  });
+  const total = (weakQuestions || []).length;
+  return Object.keys(counts)
+    .map(k => {
+      const s = (subjects && subjects[k]) || {};
+      return {
+        subject: k,
+        name: s.name || k,
+        icon: s.icon || '📚',
+        color: s.color || '#676BB3',
+        count: counts[k],
+        sharePct: total > 0 ? Math.round((counts[k] / total) * 100) : 0,
+      };
+    })
+    .sort((a, b) => b.count - a.count || a.subject.localeCompare(b.subject));
+}
+
+// ホウ助の弱点画面メッセージ（純粋関数）
+function getWeaknessHousukeMessage(opts) {
+  const o = opts || {};
+  const weakCount = o.weakCount || 0;
+  const weakestName = o.weakestName || '';
+  const weakestCount = o.weakestCount || 0;
+  const streak = o.streak || 0;
+  if (weakCount === 0) {
+    return streak >= 3
+      ? `「弱点ゼロ＆${streak}日連続だポ！この調子で新しい得点源を広げようポ！」`
+      : '「弱点ゼロだポ！素晴らしい理解度ポ！模試でさらなる得点源を広げようポ！」';
+  }
+  if (weakestCount >= 10) {
+    return `「${weakestName}が${weakestCount}問たまってるポ。1日5問ずつで2週間あれば片付くポ！」`;
+  }
+  if (streak >= 3) {
+    return `「${streak}日連続すごいポ！${weakestName}の${weakestCount}問から潰していこうポ！」`;
+  }
+  return `「${weakestName}の${weakestCount}問が弱点だポ。1問ずつ潰していこうポ！」`;
+}
+
+// 弱点画面の描画：科目別内訳バー＋ホウ助の一言
+function renderWeaknessBreakdown() {
+  const weakQs = getWeaknessQuestions();
+  const breakdown = getWeaknessBreakdown(weakQs, SUBJECTS);
+  const streak = (state.history && state.history.streak) || 0;
+  const weakest = breakdown[0] || null;
+
+  if (ui.weakHousukeText) {
+    ui.weakHousukeText.textContent = getWeaknessHousukeMessage({
+      weakCount: weakQs.length,
+      weakestName: weakest ? weakest.name : '',
+      weakestCount: weakest ? weakest.count : 0,
+      streak,
+    });
+  }
+  if (ui.weakHousukeAvatar && typeof window !== 'undefined' && typeof window.renderCharacterSvg === 'function') {
+    const lvl = (typeof calcPlayerLevel === 'function') ? calcPlayerLevel(state.history.playerExp || 0).level : 1;
+    const emotion = weakQs.length === 0 ? 'happy' : (streak >= 3 ? 'cheer' : 'thinking');
+    ui.weakHousukeAvatar.innerHTML = window.renderCharacterSvg(lvl, emotion, 48);
+  }
+
+  const box = ui.weaknessSubjectBreakdown;
+  if (!box) return;
+  // タップ委譲は初回描画時に一度だけ結ぶ（再描画で重複しない）
+  if (!box._wbClickBound) {
+    box.addEventListener('click', (e) => {
+      const row = e.target && e.target.closest ? e.target.closest('.wb-row') : null;
+      if (row && row.dataset && row.dataset.subject) startWeaknessDrill(row.dataset.subject);
+    });
+    box._wbClickBound = true;
+  }
+  if (breakdown.length === 0) { box.innerHTML = ''; return; }
+  const max = breakdown[0].count;
+  box.innerHTML =
+    '<h3 class="wb-title">科目別の弱点内訳</h3>' +
+    breakdown.map((row, i) => {
+      const width = Math.max(4, Math.round((row.count / max) * 100));
+      return `<button type="button" class="wb-row${i === 0 ? ' is-weakest' : ''}" data-subject="${row.subject}" aria-label="${row.name}の弱点${row.count}問だけを解く">` +
+        `<span class="wb-name">${row.icon} ${row.name}</span>` +
+        `<span class="wb-track"><span class="wb-fill" style="width:${width}%;background:${row.color}"></span></span>` +
+        `<span class="wb-count">${row.count}問</span>` +
+        (i === 0 ? '<span class="wb-tag">最弱</span>' : '') +
+        '</button>';
+    }).join('') +
+    '<p class="wb-hint">タップすると、その科目の弱点だけを解けます</p>';
+}
+
+// 科目絞り込みで弱点ドリル開始
+function startWeaknessDrill(subjectId) {
+  startQuizSession('weakness', subjectId || null);
+}
+
+// === /U9 ===
+
 // ブックマーク済み問題の抽出 (純粋関数: 単体検証用に引数で受ける)
 function filterBookmarkedQuestions(questions, items) {
   return questions.filter(q => {
@@ -1325,14 +1430,16 @@ function renderAnalyticsScreen() {
       const sub = SUBJECTS[subKey];
       const stat = metrics.subjectStats[subKey];
       const isCutoff = stat.answered > 0 && stat.accuracy < 40;
+      // U9: 未着手（0問）を 0% の足切り科目と見分けられるよう明示する
+      const isUntouched = stat.answered === 0;
 
       return `
-        <div class="mastery-bar-card">
+        <div class="mastery-bar-card${isUntouched ? ' is-untouched' : ''}">
           <div class="mb-header">
             <span>${sub.icon} ${sub.name}</span>
             <span>
-              ${isCutoff ? '<span class="mb-cutoff-warning">⚠️ 足切り危険！</span>' : ''}
-              ${stat.accuracy}% (${stat.correct}/${stat.answered}問)
+              ${isUntouched ? '<span class="mb-untouched-tag">未着手</span>' : (isCutoff ? '<span class="mb-cutoff-warning">⚠️ 足切り危険！</span>' : '')}
+              ${isUntouched ? '' : `${stat.accuracy}% (${stat.correct}/${stat.answered}問)`}
             </span>
           </div>
           <div class="meter-track">
@@ -1520,8 +1627,15 @@ async function startQuizSession(mode, subjectId = null, subCategoryId = 'all', q
       startMockTimer(MOCK_EXAM_CONFIG.timeLimitMinutes * 60);
     }
   } else if (mode === 'weakness') {
-    state.session.questions = sortQuestionsByOrder(getWeaknessQuestions(), state.quizOrderMode);
-    ui.quizModePill.textContent = '⚠️ 弱点克服';
+    // U9: 科目指定時はその科目の弱点だけに絞る
+    let weakQs = getWeaknessQuestions();
+    if (subjectId && typeof SUBJECTS !== 'undefined' && SUBJECTS[subjectId]) {
+      weakQs = weakQs.filter(q => q.subject === subjectId);
+      ui.quizModePill.textContent = `⚠️ 弱点克服 • ${SUBJECTS[subjectId].name}`;
+    } else {
+      ui.quizModePill.textContent = '⚠️ 弱点克服';
+    }
+    state.session.questions = sortQuestionsByOrder(weakQs, state.quizOrderMode);
     ui.examTimerBox.style.display = 'none';
   } else if (mode === 'bookmark') {
     state.session.questions = sortQuestionsByOrder(getBookmarkedQuestions(), state.quizOrderMode);
@@ -1962,6 +2076,7 @@ function switchView(viewId) {
 
   if (viewId === 'viewHome') renderHomeScreen();
   if (viewId === 'viewAnalytics') renderAnalyticsScreen();
+  if (viewId === 'viewWeakness') renderWeaknessBreakdown(); // U9: 科目別内訳＋ホウ助
   if (viewId === 'viewMockExam') prefetchMockPredicted();
   if (viewId === 'viewMba') {
     if (ui.mbaQuizView.style.display !== 'none') {
