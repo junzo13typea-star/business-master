@@ -2411,7 +2411,63 @@ function bindEventListeners() {
 
 const CASE_DRAFT_KEY = 'shindanshi_case_drafts_v1';
 
+// 旧スキーマの事例データ（事例 I の2件: qNum/qTitle/question/charLimit/keywords 等）を
+// 現行レンダラーの期待するスキーマへ読み込み時に変換する（data/cases_data.js は不変）。
+// 変換しないと「第undefined問 (undefined点)」表示・全設問の下書きキー衝突（q_undefined）・
+// 採点が常に 0点になる。parts（小問）はキーワード・模範解答が小問単位に無いため
+// 1設問として扱い、模範解答（(1)(2)両方を含む）で採点する。冪等（2回目以降は現行スキーマのため素通り）。
+function normalizeCaseData(cases) {
+  if (!Array.isArray(cases)) return cases;
+  cases.forEach(c => {
+    if (!Array.isArray(c.questions)) return;
+    c.questions = c.questions.map(q => {
+      if (q.questionNum !== undefined) return q; // 現行スキーマはそのまま
+      const title = q.qTitle || '';
+      const ptsMatch = title.match(/配点\s*(\d+)\s*点/);
+      const kwSum = (q.keywords || []).reduce((a, k) => a + (k.points || 0), 0);
+      return {
+        questionNum: q.qNum,
+        title,
+        description: q.question || '',
+        maxChars: q.charLimit || 100,
+        points: ptsMatch ? parseInt(ptsMatch[1], 10) : (kwSum || 0),
+        keyPoints: (q.keywords || []).map(k => ({ keyword: k.word, score: k.points || 0 })),
+        modelAnswer: q.modelAnswer || '',
+        framework: q.logicProcess || '',
+        overallAdvice: q.advice || ''
+      };
+    });
+  });
+  return cases;
+}
+
+// 設問に1文字以上の下書きがあるか（小問ありの場合はいずれかの小問）
+function isCaseQuestionAnswered(caseId, q) {
+  const drafts = (state.caseExam.drafts && state.caseExam.drafts[caseId]) || {};
+  if (q.subQuestions && q.subQuestions.length > 0) {
+    return q.subQuestions.some(sub => {
+      const t = drafts[`q_${q.questionNum}_sub_${sub.subId}`];
+      return typeof t === 'string' && t.trim().length > 0;
+    });
+  }
+  const t = drafts[`q_${q.questionNum}`];
+  return typeof t === 'string' && t.trim().length > 0;
+}
+
+// 設問ナビの回答済み表示だけを更新する（入力のたびにナビ全体を作り直さない）
+function updateCaseNavAnsweredState() {
+  const c = state.caseExam.activeCase;
+  if (!c || !ui.caseQNav) return;
+  const btns = ui.caseQNav.querySelectorAll('.case-q-nav-btn');
+  (c.questions || []).forEach((q, idx) => {
+    const btn = btns[idx];
+    if (!btn) return;
+    btn.classList.toggle('answered', isCaseQuestionAnswered(c.id, q));
+  });
+}
+
 function initCaseExam() {
+  normalizeCaseData(window.CASES_DATA || []);
   loadCaseDrafts();
 
   // Filter Buttons
@@ -2570,6 +2626,13 @@ function startCaseWorkspace(caseId) {
   state.caseExam.timerSeconds = (targetCase.timeLimitMinutes || 80) * 60;
   startCaseTimer();
 
+  // 下書きインジケータ：未入力のまま「自動保存済」と出ないよう、既存下書きの有無で文言を分ける
+  if (ui.caseDraftIndicator) {
+    const hasDraft = state.caseExam.drafts[targetCase.id] && Object.keys(state.caseExam.drafts[targetCase.id]).length > 0;
+    ui.caseDraftIndicator.textContent = hasDraft ? '💾 自動保存済' : '💾 下書きは自動で保存されます';
+    ui.caseDraftIndicator.style.color = '';
+  }
+
   // Render Story Pane
   ui.storyCompanyName.textContent = targetCase.companyProfile?.business || targetCase.title;
   ui.storyCompanyMeta.innerHTML = `
@@ -2713,9 +2776,10 @@ function renderCaseQuestionsNav() {
 
   ui.caseQNav.innerHTML = (c.questions || []).map((q, idx) => {
     const activeCls = idx === state.caseExam.activeQuestionIndex ? 'active' : '';
+    const answered = isCaseQuestionAnswered(c.id, q);
     return `
-      <button class="case-q-nav-btn ${activeCls}" onclick="renderCaseQuestion(${idx})">
-        第${q.questionNum}問 (${q.points}点)
+      <button class="case-q-nav-btn ${activeCls}${answered ? ' answered' : ''}" onclick="renderCaseQuestion(${idx})">
+        ${answered ? '✓ ' : ''}第${q.questionNum}問 (${q.points}点)
       </button>
     `;
   }).join('');
@@ -2828,6 +2892,7 @@ function onCaseAnswerInput(caseId, fieldKey, textarea, countElId, statusElId, ma
   }
 
   saveCaseDraft(caseId, fieldKey, text);
+  updateCaseNavAnsweredState();
 }
 
 function scoreCaseQuestion(qIndex) {

@@ -7674,3 +7674,22 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .wb-row, .wb-fill { transition: none; }
 }
+
+/* ==========================================================================
+   U11: 2次筆記の学習フロー点検 (2026-11-26, SW v63)
+   - 設問ナビの回答済み表示：下書きのある設問に ✓ と緑の枠を付ける。
+     80分の中で「どこまで書いたか」が一目で分かるようにする。
+   ========================================================================== */
+.case-q-nav-btn.answered {
+  border-color: rgba(16, 185, 129, 0.55);
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.10);
+}
+.case-q-nav-btn.answered.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.28), rgba(5, 150, 105, 0.35));
+  border-color: #10b981;
+  color: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .case-q-nav-btn { transition: none; }
+}
